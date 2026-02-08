@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Enum 定義 ---
+
+// ユーザーの種別
+enum UserType {
+  STUDENT // 学生
+  FACULTY // 教職員
+  ADMIN // 管理者
+  EXTERNAL // 外部利用者など
+}
+
+// アイテム（在庫）の状態
+enum ItemStatus {
+  AVAILABLE // 貸出可能
+  RENTED // 貸出中
+  MAINTENANCE // メンテナンス・修理中
+  LOST // 紛失
+  DISPOSED // 廃棄済み
+}
+
+// 貸出（取引）の状態
+enum RentalStatus {
+  RENTING // 貸出中
+  RETURNED // 返却済み
+  OVERDUE // 延滞中
+  CANCELLED // キャンセル
+}
+
+// 通知の種類
+enum NotificationType {
+  RENTAL_CONFIRMATION // 貸出完了通知
+  RETURN_REMINDER // 返却期限前のリマインド
+  OVERDUE_ALERT // 延滞警告
+  SYSTEM_NOTICE // システムからのお知らせ
+}
+
+// --- Models ---
+
+model User {
+  id           String   @id @default(uuid()) @map("UniqueID")
+  email        String?
+  passwordHash String   @map("password_hash")
+  slackUserId  String?  @map("slack_user_id")
+  slackTeamId  String?  @map("slack_team_id")
+  serialNumber String?  @map("serial_number")
+  userType     UserType @default(STUDENT) @map("user_type")
+  name         String
+  grade        String?
+  major        String?
+  studentId    String   @unique @map("student_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  rentalSetting RentalSetting?
+  rentals       Rental[]
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+
+  @@map("user")
+}
+
+model ExternalUser {
+  id           String   @id @default(uuid()) @map("UniqueID")
+  email        String   @unique
+  slackUserId  String?  @map("slack_user_id")
+  slackTeamId  String?  @map("slack_team_id")
+  serialNumber String?  @map("serial_number")
+  userType     UserType @default(STUDENT) @map("user_type")
+  name         String
+  grade        String?
+  major        String?
+  studentId    String   @unique @map("student_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("external_user")
+}
+
+model VerificationCode {
+  studentId String   @id @map("student_id")
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("verification_codes")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model RentalSetting {
+  id               String    @id @default(uuid()) @map("UniqueID")
+  userId           String    @unique @map("userId")
+  canBorrow        Boolean   @default(true) @map("can_borrow")
+  maxItems         Int       @default(5) @map("max_items")
+  suspendedUntil   DateTime? @map("supended_until")
+  suspentionReason String?   @map("suspention_reason")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("rental_setting")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @map("UniqueID")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  genres Genre[]
+
+  @@map("category")
+}
+
+model Genre {
+  id          String   @id @default(uuid()) @map("UniqueID")
+  categoryId  String   @map("category_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  category       Category        @relation(fields: [categoryId], references: [id])
+  itemTypes      ItemType[]
+  itemTypeGenres ItemTypeGenre[]
+
+  @@map("genre")
+}
+
+model ItemType {
+  id               String   @id @default(uuid()) @map("UniqueID")
+  genreId          String   @map("genre_id")
+  title            String
+  description      String?
+  author           String?
+  publisher        String?
+  isbn             String?
+  manufacturer     String?
+  model            String?
+  rentalPeriodDays Int      @map("rental_period_days")
+  imageUrl         String?  @map("image_url")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  genre          Genre           @relation(fields: [genreId], references: [id])
+  items          Item[]
+  itemTypeGenres ItemTypeGenre[]
+
+  @@map("item_type")
+}
+
+model ItemTypeGenre {
+  id         String   @id @default(uuid()) @map("UniqueID")
+  genreId    String   @map("genre_id")
+  itemTypeId String   @map("item_type_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  genre    Genre    @relation(fields: [genreId], references: [id])
+  itemType ItemType @relation(fields: [itemTypeId], references: [id])
+
+  @@map("item_type_genres")
+}
+
+model Item {
+  id         String     @id @default(uuid()) @map("UniqueID")
+  itemTypeId String     @map("item_typeId")
+  barcode    String?    @unique
+  location   String?
+  status     ItemStatus @default(AVAILABLE)
+  notes      String?
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  itemType ItemType @relation(fields: [itemTypeId], references: [id])
+  rentals  Rental[]
+
+  @@map("item")
+}
+
+model Rental {
+  id         String       @id @default(uuid()) @map("UniqueID")
+  itemId     String       @map("itemId")
+  userId     String       @map("userId")
+  rentedAt   DateTime     @default(now()) @map("rented_at")
+  dueDate    DateTime     @map("due_date")
+  returnedAt DateTime?    @map("returned_at")
+  status     RentalStatus @default(RENTING)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  item          Item           @relation(fields: [itemId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  notifications Notification[]
+
+  @@map("rental")
+}
+
+model Notification {
+  id               String           @id @default(uuid()) @map("UniqueID")
+  rentalId         String?          @map("rental_id")
+  userId           String           @map("user_id")
+  notificationType NotificationType @map("notification_type")
+  status           String
+  scheduledAt      DateTime         @map("scheduled_at")
+  sentAt           DateTime?        @map("sent_at")
+  slackChannelId   String?          @map("slack_channel_id")
+  slackMessage     String?          @map("slack_message")
+  retryCount       Int              @default(0) @map("retry_count")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  rental Rental? @relation(fields: [rentalId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+
+  @@map("notification")
+}

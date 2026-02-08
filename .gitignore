@@ -1,0 +1,42 @@
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+*.log
+Thumbs.db
+
+# --- Dependencies (ライブラリ本体) ---
+node_modules/
+/front/node_modules/
+/back/node_modules/
+
+# --- Environment Variables (最重要：機密情報) ---
+.env
+.env.local
+.env.production
+.env.*.local
+
+# --- Build Outputs (ビルド成果物) ---
+.next/
+dist/
+build/
+out/
+.vercel/
+
+# --- Database ---
+# SQLiteなどファイルベースのDBを使っている場合
+*.db
+*.db-journal
+
+# --- Prisma ---
+# 生成された型定義は node_modules に入るので無視されます
+# schema.prisma 自体はコミットしますが、envファイルは上記の設定で除外されます
+
+# --- Tests ---
+coverage/
+
+# --- Others ---
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

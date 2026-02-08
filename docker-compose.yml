@@ -1,0 +1,73 @@
+services:
+  web: 
+    build: 
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: sinsakai-huyu-front
+    ports: 
+      - "4545:4545"
+    volumes: 
+      - ./front:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    depends_on:
+      - api
+  
+  api:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: sinsakai-huyu-api
+    ports:
+      - "5454:5454"
+    volumes:
+      - ./back:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    # command: sh -c "npx prisma migrate dev --name init && npm run dev"
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  studio:
+      build:
+        context: ./back
+        dockerfile: Dockerfile
+      container_name: sinsakai-huyu-studio
+      ports:
+        - "5555:5555"
+      volumes:
+        - ./back:/app
+        - /app/node_modules
+      env_file:
+        - .env
+      # アプリ（api）と同じDBを見るように設定
+      depends_on:
+        db:
+          condition: service_healthy
+      # ここで起動コマンドを上書きする
+      command: npx prisma studio --port 5555 --browser none
+      
+  db: 
+    image: postgres:16
+    container_name: sinsakai-huyu-db
+    ports: 
+      - "1919:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sinsakai-huyu-db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    
+    healthcheck:              # 追加：これがないとapiが起動に失敗します
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sinsakai-huyu-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes: 
+  pgdata:

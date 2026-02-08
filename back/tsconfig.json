@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    /* 基本設定 */
+    "target": "ESNext",
+    "module": "NodeNext",          /* node20より互換性が高く推奨されます */
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    
+    /* 型定義の設定（ここがエラーの原因になりやすい） */
+    "lib": ["ESNext"],
+    "types": ["node"],             /* @types/node を参照するように明示 */
+    "skipLibCheck": true,    
+          /* 外部ライブラリの型チェックをスキップして高速化 */
+
+    /* 厳格な型チェック */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* 実行環境・互換性 */
+    "esModuleInterop": true,       /* ExpressなどのCommonJSモジュールをimportするために必須 */
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    /* 出力設定 */
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src/**/*"],         /* src配下のファイルを対象にする */
+  "exclude": ["node_modules"]      /* node_modulesは除外 */
+}
