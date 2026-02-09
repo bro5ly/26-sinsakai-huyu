@@ -72,15 +72,44 @@ export class AuthService {
         return this.generateSession(user)
     }
 
-    //  login = async (studentId: string, plainPassword: string, token: string) => {
-    //     const user = await this.userService.findByStudentId(studentId)
-    //     if(!user) throw new Error('USER_NOT_FOUND')
-    //     const isMatch = await bcrypt.compare(plainPassword,user.passwordHash)
-    //     if(!isMatch) throw new Error('INVALID_PASSWORD')
-    //     return this.generateSession(user)
-    // }
+    login = async (studentId: string, plainPassword: string) => {
+        const existsUser = await this.userService.findByStudentId(studentId)
+        if(!existsUser) throw new AppError('ユーザーが見つかりません。',404,'USER_NOT_FOUND')
+        const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
+        if(!isMatch) throw new AppError('パスワードが間違っています',400,'INVALID_PASSWORD')
+        
+        
+        return this.generateSession(existsUser)
+    }
 
-    private async generateSession(user: User): Promise<AuthResponse> {
+
+    // auth.service.ts
+
+    refreshSession = async (refreshToken: string): Promise<AuthResponse> => {
+        // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック
+        const payload = jwtLib.verifyRefreshToken(refreshToken) as { sub: string };
+
+        // 2. 次に、DBにそのトークンが記録されているかチェック（★ここで作成したメソッドを使う）
+        const savedToken = await this.authRepository.findRefreshToken(refreshToken);
+
+        // DBにない ＝ すでにログアウト済み、あるいは不正なトークン
+        if (!savedToken) {
+            throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+        }
+
+        // DB側の期限も一応チェック
+        if (new Date() > savedToken.expiresAt) {
+            throw new AppError('セッションの期限が切れました', 401, 'SESSION_EXPIRED');
+        }
+
+        // 3. 全てOKなら新しいセッションを発行
+        const user = await this.userService.findById(payload.sub);
+        if (!user) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
+
+        return this.generateSession(user);
+    }
+    
+    private async generateSession(user: any): Promise<AuthResponse> {
         const accessToken = jwtLib.signAccessToken({
             sub: user.id,
             role: user.userType
@@ -104,7 +133,8 @@ export class AuthService {
                 name: user.name, 
                 userType: user.userType, 
                 grade: user.grade, 
-                major: user.major
+                major: user.major,
+                studentId: user.studentId
             }
         }
     }

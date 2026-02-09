@@ -36,6 +36,24 @@ export class UserRepository {
         } 
         })
     }
+
+    async findById(userId: string){
+        return await this.db.user.findUnique({
+            where: {
+                id: userId
+            },
+            select:{
+                id: true,
+                studentId: true,
+                name: true,
+                userType: true,
+                passwordHash: true,
+                grade: true,
+                major: true
+            }
+        })
+    }
+
     async findByStudentId(studentId: string){
         return await this.db.user.findUnique({
             where: {
@@ -44,9 +62,11 @@ export class UserRepository {
             select:{
                 id: true,
                 studentId: true,
-                passwordHash: true,
+                name: true,
                 userType: true,
-                email: true
+                passwordHash: true,
+                grade: true,
+                major: true
             }
         })
     }
