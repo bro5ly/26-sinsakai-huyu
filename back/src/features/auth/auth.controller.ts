@@ -91,27 +91,27 @@ export class AuthController {
     }
 
     refreshSession = async (req: Request, res: Response) => {
-    try {
-        // cookie-parserを導入している前提です
-        const token = req.cookies.refreshToken;
-        // if (!token) throw new AppError('リフレッシュトークンがありません', 401, 'REFRESH_TOKEN_NOT_FOUND');
+        try {
+            // cookie-parserを導入している前提です
+            const token = req.cookies.refreshToken;
+            // if (!token) throw new AppError('リフレッシュトークンがありません', 401, 'REFRESH_TOKEN_NOT_FOUND');
 
-        const data = await this.authService.refreshSession(token);
+            const data = await this.authService.refreshSession(token);
 
-        // 新しいリフレッシュトークンを再度クッキーにセット（回転させる）
-        res.cookie('refreshToken', data.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 
-        });
+            // 新しいリフレッシュトークンを再度クッキーにセット（回転させる）
+            res.cookie('refreshToken', data.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000 
+            });
 
-        return sendSuccess(res, {
-            user: data.user,
-            accessToken: data.accessToken
-        }, 200);
-    } catch (err: any) {
-        return handleError(res, err);
+            return sendSuccess(res, {
+                user: data.user,
+                accessToken: data.accessToken
+            }, 200);
+        } catch (err: any) {
+            return handleError(res, err);
     }
 }
 }
