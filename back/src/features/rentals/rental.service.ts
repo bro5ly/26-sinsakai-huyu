@@ -7,7 +7,18 @@ export class RentalService {
     signInWithIc = async (serialNumber: string) => {
         const data = await this.rentalRepository.findBySerialNumber(serialNumber)
         if(!data) throw new AppError('認証に失敗しました', 401, 'AUTH_FAILED')
-        return { message: '認証に成功しました', session: await this.generateSession(data.id), data: data.rentals }
+        return {
+            message: '認証に成功しました',
+            session: await this.generateSession(data.id),
+            user: {
+                id: data.id,
+                studentId: data.studentId,
+                name: data.name,
+                grade: data.grade,
+                major: data.major
+            },
+            data: data.rentals
+        }
     }
 
     checkoutItem = async (userId: string, barcode: string) => {

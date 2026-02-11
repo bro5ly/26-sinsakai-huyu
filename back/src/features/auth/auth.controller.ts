@@ -90,6 +90,23 @@ export class AuthController {
         }
     }
 
+
+    logout = async (req: Request, res: Response) => {
+        try {
+            // 1. クッキーをクリアする (設定を送信時と合わせるのがコツ)
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/' // signup/login時のパスと合わせる
+            });
+
+            return sendSuccess(res, { message: "Logged out successfully" }, 200);
+        } catch (err: any) {
+            return handleError(res, err);
+        }
+    }
+
     refreshSession = async (req: Request, res: Response) => {
         try {
             // cookie-parserを導入している前提です

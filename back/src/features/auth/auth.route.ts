@@ -21,6 +21,7 @@ router.post('/request-verification',authController.requestVerification)
 router.post('/verify-code',authController.verifyCode)
 router.post('/signup', authController.signup)
 router.post('/login',authController.login)
+router.post('/logout',authController.logout)
 router.post('/refreshSession',authController.refreshSession)
 
 export default router
