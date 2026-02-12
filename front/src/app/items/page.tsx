@@ -3,16 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi, ApiError, type ItemsResponse } from '@/lib/auth-api';
+import { useItems } from '@/hooks/useItems';
+import { Item } from '@/types';
 
 export default function ItemsPage() {
   const router = useRouter();
   const { isAuthenticated, logout } = useAuth();
+  const { allItems: items, loading: isLoading, error: fetchError } = useItems();
 
-  const [items, setItems] = useState<ItemsResponse['data']>([]);
-  const [filteredItems, setFilteredItems] = useState<ItemsResponse['data']>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -22,38 +21,14 @@ export default function ItemsPage() {
       router.push('/auth');
       return;
     }
-
-    loadItems();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     filterItems();
   }, [items, searchQuery, statusFilter, categoryFilter]);
 
-  const loadItems = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const data = await authApi.getAllItems();
-      setItems(data.data);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-        if (err.status === 401) {
-          logout();
-          router.push('/auth');
-        }
-      } else {
-        setError('アイテムの取得に失敗しました');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const filterItems = () => {
-    let filtered = items;
+    let filtered = items || [];
 
     // ステータスフィルター
     if (statusFilter !== 'ALL') {
@@ -79,7 +54,7 @@ export default function ItemsPage() {
   };
 
   const categories = Array.from(
-    new Set(items.map((item) => item.itemType.genre.category.name))
+    new Set((items || []).map((item) => item.itemType.genre.category.name))
   );
 
   const getStatusBadgeColor = (status: string) => {
@@ -116,7 +91,7 @@ export default function ItemsPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">読み込み中...</p>
@@ -152,9 +127,9 @@ export default function ItemsPage() {
 
       {/* コンテンツ */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {error && (
+        {fetchError && (
           <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-            {error}
+            {fetchError}
           </div>
         )}
 

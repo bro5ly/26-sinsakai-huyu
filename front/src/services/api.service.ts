@@ -1,0 +1,66 @@
+import { ApiError } from "@/types";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5454";
+
+export class ApiService {
+  protected baseUrl: string;
+
+  constructor(baseUrl: string = API_BASE_URL) {
+    this.baseUrl = baseUrl;
+  }
+
+  protected async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      throw new ApiError("レスポンスが空です", 204, "NO_CONTENT");
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new ApiError(
+        data.message || "リクエストに失敗しました",
+        response.status,
+        data.code
+      );
+    }
+
+    return data;
+  }
+
+  public async get<T>(
+    endpoint: string,
+    accessToken?: string
+  ): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "GET",
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
+  }
+
+  public async post<T>(
+    endpoint: string,
+    body?: unknown,
+    options: { accessToken?: string; credentials?: RequestCredentials } = {}
+  ): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: body ? JSON.stringify(body) : undefined,
+      headers: options.accessToken
+        ? { Authorization: `Bearer ${options.accessToken}` }
+        : {},
+      credentials: options.credentials,
+    });
+  }
+}

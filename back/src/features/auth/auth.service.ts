@@ -77,8 +77,17 @@ export class AuthService {
         if(!existsUser) throw new AppError('ユーザーが見つかりません。',404,'USER_NOT_FOUND')
         const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
         if(!isMatch) throw new AppError('パスワードが間違っています',400,'INVALID_PASSWORD')
-        
-        
+
+        // serialNumberがnullの場合、ExternalUserから取得
+        if (!existsUser.serialNumber) {
+            console.log('⚠️ [login] User has no serialNumber, fetching from ExternalUser...');
+            const externalUser = await this.userService.findByExternalStudentId(studentId);
+            if (externalUser?.serialNumber) {
+                console.log('✅ [login] Found serialNumber in ExternalUser:', externalUser.serialNumber);
+                existsUser.serialNumber = externalUser.serialNumber;
+            }
+        }
+
         return this.generateSession(existsUser)
     }
 
@@ -106,10 +115,27 @@ export class AuthService {
         const user = await this.userService.findById(payload.sub);
         if (!user) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
 
+        // serialNumberがnullの場合、ExternalUserから取得
+        if (!user.serialNumber && user.studentId) {
+            console.log('⚠️ [refreshSession] User has no serialNumber, fetching from ExternalUser...');
+            const externalUser = await this.userService.findByExternalStudentId(user.studentId);
+            if (externalUser?.serialNumber) {
+                console.log('✅ [refreshSession] Found serialNumber in ExternalUser:', externalUser.serialNumber);
+                user.serialNumber = externalUser.serialNumber;
+            }
+        }
+
         return this.generateSession(user);
     }
     
     private async generateSession(user: any): Promise<AuthResponse> {
+        console.log('🔍 [generateSession] Input user:', {
+            id: user.id,
+            studentId: user.studentId,
+            serialNumber: user.serialNumber,
+            name: user.name
+        });
+
         const accessToken = jwtLib.signAccessToken({
             sub: user.id,
             role: user.userType
@@ -125,17 +151,22 @@ export class AuthService {
 
         await this.authRepository.saveRefreshToken({userId: user.id,refreshToken,expiredAt})
 
-        return {
+        const response = {
             accessToken,
             refreshToken,
             user: {
                 id: user.id,
-                name: user.name, 
-                userType: user.userType, 
-                grade: user.grade, 
+                name: user.name,
+                userType: user.userType,
+                grade: user.grade,
                 major: user.major,
-                studentId: user.studentId
+                studentId: user.studentId,
+                serialNumber: user.serialNumber
             }
-        }
+        };
+
+        console.log('🔍 [generateSession] Response user:', response.user);
+
+        return response;
     }
 }

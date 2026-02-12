@@ -23,11 +23,12 @@ export class ItemRepository {
     }
 
     async getMyInfo(userId: string) {
-        return await this.db.user.findUnique({
+        const user = await this.db.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
                 studentId: true,
+                serialNumber: true,
                 name: true,
                 email: true,
                 grade: true,
@@ -60,5 +61,27 @@ export class ItemRepository {
                 }
             }
         });
+
+        console.log('🔍 [ItemRepository.getMyInfo] User from DB:', {
+            id: user?.id,
+            studentId: user?.studentId,
+            serialNumber: user?.serialNumber,
+            name: user?.name
+        });
+
+        // serialNumberがnullの場合、ExternalUserから取得
+        if (user && !user.serialNumber && user.studentId) {
+            console.log('⚠️ [getMyInfo] User has no serialNumber, fetching from ExternalUser...');
+            const externalUser = await this.db.externalUser.findUnique({
+                where: { studentId: user.studentId },
+                select: { serialNumber: true }
+            });
+            if (externalUser?.serialNumber) {
+                console.log('✅ [getMyInfo] Found serialNumber in ExternalUser:', externalUser.serialNumber);
+                user.serialNumber = externalUser.serialNumber;
+            }
+        }
+
+        return user;
     }
 }

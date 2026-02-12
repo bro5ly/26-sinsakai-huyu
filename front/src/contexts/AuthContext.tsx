@@ -8,8 +8,13 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import type { AuthUser } from "@/lib/auth-api";
-import { authApi } from "@/lib/auth-api";
+import { User, RentalSetting, Rental } from "@/types";
+import { authService } from "@/services";
+
+type AuthUser = User & {
+  rentalSetting?: RentalSetting | null;
+  rentals?: Rental[];
+};
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -49,20 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  // マウント時にCookieから状態を復元 (※user情報は必要に応じてAPIで再取得が望ましい)
-  useEffect(() => {
-    const at = getATFromCookie();
-    const storedUser = localStorage.getItem("user"); // ユーザー名表示用などの非機密情報なら保持もアリ
-
-    if (at) {
-      setAccessToken(at);
-      if (storedUser) setUser(JSON.parse(storedUser));
-    }
-
-    // 古いATの遺産を掃除
-    localStorage.removeItem("accessToken");
-  }, []);
-
   const setAuth = useCallback(
     (newUser: AuthUser | null, token: string | null) => {
       setUser(newUser);
@@ -78,10 +69,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // マウント時にCookieから状態を復元し、ユーザー情報を取得
+  useEffect(() => {
+    const at = getATFromCookie();
+
+    const initAuth = async () => {
+      if (at) {
+        setAccessToken(at);
+        // ユーザー情報を取得
+        try {
+          const myInfo = await authService.getMyInfo(at);
+          if (myInfo.success && myInfo.data) {
+            console.log("✅ User info loaded:", {
+              studentId: myInfo.data.studentId,
+              serialNumber: myInfo.data.serialNumber,
+              name: myInfo.data.name
+            });
+            setUser(myInfo.data);
+            return; // 成功したら終了
+          }
+        } catch (error: any) {
+          // 401エラーの場合のみリフレッシュを試みる
+          if (error?.status === 401 || error?.message?.includes("401")) {
+            console.log("AT expired (401), trying refresh...");
+            try {
+              const refreshRes = await authService.refreshSession();
+              if (refreshRes.success && refreshRes.user) {
+                const userData = {
+                  ...refreshRes.user,
+                  rentalSetting: null,
+                  rentals: []
+                };
+                setAuth(userData, refreshRes.accessToken);
+
+                // 完全なユーザー情報を取得
+                const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
+                if (retryInfo.success && retryInfo.data) {
+                  console.log("✅ User info after refresh:", {
+                    studentId: retryInfo.data.studentId,
+                    serialNumber: retryInfo.data.serialNumber,
+                    name: retryInfo.data.name
+                  });
+                  setUser(retryInfo.data);
+                }
+                return; // 成功したら終了
+              }
+            } catch (refreshError) {
+              console.log("RefreshSession failed, clearing auth");
+              setAuth(null, null);
+              return;
+            }
+          }
+          // 401以外のエラーの場合はそのまま失敗
+          console.error("Failed to get user info:", error);
+          setAuth(null, null);
+        }
+      } else {
+        // ATがない場合はリフレッシュを試みる
+        try {
+          const refreshRes = await authService.refreshSession();
+          if (refreshRes.success && refreshRes.user) {
+            const userData = {
+              ...refreshRes.user,
+              rentalSetting: null,
+              rentals: []
+            };
+            setAuth(userData, refreshRes.accessToken);
+
+            // 完全なユーザー情報を取得
+            const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
+            if (retryInfo.success && retryInfo.data) {
+              setUser(retryInfo.data);
+            }
+          }
+        } catch (error) {
+          console.log("No AT and refresh failed");
+          // リフレッシュも失敗したら何もしない（未認証状態）
+          setAuth(null, null);
+        }
+      }
+    };
+
+    initAuth();
+
+    // 古いATの遺産を掃除
+    localStorage.removeItem("accessToken");
+  }, [setAuth]);
+
   const logout = useCallback(async () => {
     try {
       // 1. バックエンドにRT(HttpOnly Cookie)を消してもらう
-      await authApi.logout();
+      await authService.logout();
     } catch (error) {
       console.error("Failed to logout from server:", error);
     } finally {

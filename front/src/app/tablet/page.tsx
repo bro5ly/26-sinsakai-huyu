@@ -1,138 +1,29 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState } from "react";
+import { useTabletOperations } from "@/hooks/useTabletOperations";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import BarcodeInput from "@/components/BarcodeInput";
-import { tabletApi, ApiError } from "@/lib/api";
-import { useTablet } from "@/contexts/TabletContext";
 import { Button, Chip, Spinner, Avatar, Switch, Divider } from "@heroui/react";
 
-type Step = "signin" | "action-select" | "checkout" | "return" | "complete";
-
 export default function TabletPage() {
-  const { sessionToken, setSessionToken, userData, setUserData, clearSession } =
-    useTablet();
+  const {
+    step,
+    stepInfo,
+    userData,
+    loading,
+    error,
+    successMessage,
+    completedItem,
+    handleScan,
+    handleReset,
+    selectCheckout,
+    selectReturn,
+    backToActionSelect,
+    resetInactivityTimer,
+  } = useTabletOperations();
 
-  const [step, setStep] = useState<Step>("signin");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
-  const [successMessage, setSuccessMessage] = useState<string>("");
-  const [completedItem, setCompletedItem] = useState<any>(null);
   const [isManualInput, setIsManualInput] = useState(false);
-
-  // --- タイマー制御 ---
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleReset = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setStep("signin");
-    clearSession();
-    setError("");
-    setCompletedItem(null);
-  }, [clearSession]);
-
-  // 1分間無操作でリセットするタイマー
-  const resetInactivityTimer = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    // signin以外のステップにいる時だけタイマーを始動
-    if (step !== "signin") {
-      timeoutRef.current = setTimeout(() => {
-        handleReset();
-      }, 60000); // 1分
-    }
-  }, [step, handleReset]);
-
-  // ステップ変更時や操作時にタイマーを更新
-  useEffect(() => {
-    resetInactivityTimer();
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [step, resetInactivityTimer]);
-
-  const stepInfo = useMemo(() => {
-    switch (step) {
-      case "signin":
-        return {
-          title: "sign in",
-          sub: "ICカードをスキャン",
-          color: "text-slate-800",
-        };
-      case "checkout":
-        return {
-          title: "Checkout",
-          sub: "物品バーコードをスキャン",
-          color: "text-blue-600",
-        };
-      case "return":
-        return {
-          title: "Return",
-          sub: "返却バーコードをスキャン",
-          color: "text-emerald-500",
-        };
-      default:
-        return { title: "", sub: "", color: "" };
-    }
-  }, [step]);
-
-  const handleScan = useCallback(
-    async (barcode: string) => {
-      if (loading) return;
-
-      // 操作があったのでタイマーをリセット
-      resetInactivityTimer();
-
-      setError("");
-      setLoading(true);
-
-      try {
-        if (step === "signin") {
-          const response = await tabletApi.signin(barcode);
-          setSessionToken(response.session);
-          setUserData({
-            id: response.user.id,
-            name: response.user.name,
-            studentId: response.user.studentId,
-            grade: response.user.grade,
-            major: response.user.major,
-            rentals: response.data || [],
-          });
-          setStep("action-select");
-        } else if (step === "checkout" && sessionToken) {
-          const response = await tabletApi.checkout(barcode, sessionToken);
-          setCompletedItem(response.data);
-          setSuccessMessage("Checkout Successful");
-          setStep("complete");
-        } else if (step === "return" && sessionToken) {
-          const response = await tabletApi.returnItem(barcode, sessionToken);
-          setCompletedItem(response.data);
-          setSuccessMessage("Return Successful");
-          setStep("complete");
-        }
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          handleReset();
-          setError("Session Expired. Please sign in again.");
-        } else {
-          setError(
-            err instanceof ApiError ? err.message : "エラーが発生しました",
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      step,
-      loading,
-      sessionToken,
-      setSessionToken,
-      setUserData,
-      handleReset,
-      resetInactivityTimer,
-    ],
-  );
 
   return (
     <div className="h-screen bg-[#F8F9FB] text-slate-900 flex overflow-hidden font-sans select-none">
@@ -233,7 +124,7 @@ export default function TabletPage() {
                 variant="flat"
                 className="font-black"
               >
-                {userData.rentals.length} Items
+                {userData.getRentalCount()} Items
               </Chip>
             </div>
           )}
@@ -271,7 +162,7 @@ export default function TabletPage() {
                   variant="flat"
                   size="lg"
                   className="rounded-full px-8 font-black text-xs"
-                  onPress={() => setStep("action-select")}
+                  onPress={backToActionSelect}
                 >
                   Back
                 </Button>
@@ -282,13 +173,13 @@ export default function TabletPage() {
           {step === "action-select" && (
             <div className="grid grid-cols-1 gap-6 animate-appearance-in">
               <Button
-                onPress={() => setStep("checkout")}
+                onPress={selectCheckout}
                 className="h-32 bg-blue-600 text-white font-black italic text-4xl rounded-[2.5rem] shadow-xl shadow-blue-200"
               >
                 CHECKOUT
               </Button>
               <Button
-                onPress={() => setStep("return")}
+                onPress={selectReturn}
                 className="h-32 bg-emerald-500 text-white font-black italic text-4xl rounded-[2.5rem] shadow-xl shadow-emerald-200"
               >
                 RETURN
@@ -323,7 +214,7 @@ export default function TabletPage() {
                     Target Item
                   </p>
                   <p className="font-black text-2xl text-slate-800 tracking-tight">
-                    {completedItem.item.itemType.title}
+                    {completedItem.item?.itemType?.title || "Unknown Item"}
                   </p>
                 </div>
               )}
@@ -332,7 +223,7 @@ export default function TabletPage() {
                   color="primary"
                   size="lg"
                   className="h-20 font-black italic text-2xl rounded-3xl shadow-xl shadow-blue-200"
-                  onPress={() => setStep("action-select")}
+                  onPress={backToActionSelect}
                 >
                   Next Operation
                 </Button>

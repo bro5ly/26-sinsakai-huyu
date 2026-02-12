@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { authApi, ApiError, type ItemsResponse } from "@/lib/auth-api";
+import { useItems } from "@/hooks/useItems";
 import {
   Card,
   CardBody,
@@ -11,49 +11,25 @@ import {
   Chip,
   Spinner,
   Divider,
-  Image,
 } from "@heroui/react";
 
 export default function ItemDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated, accessToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const title = decodeURIComponent(params.title as string);
 
-  const [allItems, setAllItems] = useState<ItemsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { allItems, loading: isLoading, error } = useItems();
+  const items = (allItems || []).filter(item => item.itemType.title === title);
+  const itemType = items.length > 0 ? items[0].itemType : null;
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/auth");
-      return;
     }
-    loadData();
   }, [isAuthenticated]);
 
-  const loadData = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const itemsData = await authApi.getAllItems();
-      setAllItems(itemsData);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("情報の取得に失敗しました");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const items =
-    allItems?.data?.filter((item) => item.itemType.title === title) || [];
-  const itemType = items.length > 0 ? items[0].itemType : null;
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white">
         <Spinner size="lg" color="current" />
