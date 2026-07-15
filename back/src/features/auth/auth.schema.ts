@@ -30,5 +30,11 @@ export const signupSchema = z.object({
   registrationToken: z.string().min(1, "トークンが不正です"),
 });
 
+export const loginSchema = z.object({
+  plainPassword: z.string().min(8, "パスワードは8文字以上必要です"),
+  studentId: studentIdSchema,
+});
+
 // Serviceの型をここから抽出
 export type SignupInput = z.infer<typeof signupSchema>;
+export type loginInput = z.infer<typeof loginSchema>

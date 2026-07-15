@@ -36,19 +36,55 @@ export class UserRepository {
         } 
         })
     }
+
+    async findById(userId: string){
+        const user = await this.db.user.findUnique({
+            where: {
+                id: userId
+            },
+            select:{
+                id: true,
+                studentId: true,
+                serialNumber: true,
+                name: true,
+                userType: true,
+                passwordHash: true,
+                grade: true,
+                major: true
+            }
+        })
+        console.log('🔍 [UserRepository.findById] User from DB:', {
+            id: user?.id,
+            studentId: user?.studentId,
+            serialNumber: user?.serialNumber,
+            name: user?.name
+        });
+        return user;
+    }
+
     async findByStudentId(studentId: string){
-        return await this.db.user.findUnique({
+        const user = await this.db.user.findUnique({
             where: {
                 studentId
             },
             select:{
                 id: true,
                 studentId: true,
-                passwordHash: true,
+                serialNumber: true,
+                name: true,
                 userType: true,
-                email: true
+                passwordHash: true,
+                grade: true,
+                major: true
             }
         })
+        console.log('🔍 [UserRepository.findByStudentId] User from DB:', {
+            id: user?.id,
+            studentId: user?.studentId,
+            serialNumber: user?.serialNumber,
+            name: user?.name
+        });
+        return user;
     }
 
     async findByExternalStudentId(studentId: string){

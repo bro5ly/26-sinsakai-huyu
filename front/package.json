@@ -9,8 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroui/accordion": "^2.2.27",
+    "@heroui/react": "^2.8.8",
+    "framer-motion": "^12.34.0",
+    "html5-qrcode": "^2.3.8",
     "next": "16.1.6",
     "react": "19.2.3",
+    "react-barcode": "^1.6.1",
     "react-dom": "19.2.3"
   },
   "devDependencies": {

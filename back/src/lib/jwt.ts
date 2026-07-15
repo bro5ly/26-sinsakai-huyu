@@ -33,3 +33,16 @@ export const verifyRegistrationToken = (token: string) => {
         throw new Error('INVALID_OR_EXPIRED_REGISTRATION_TOKEN')
     }
 }
+
+export const signTabletToken = (payload: { sub: string; role: string }) => {
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: '3m' });
+};
+
+// 検証用（既存の verifyAccessToken を使っても良いですが、名前を分けておくと分かりやすいです）
+export const verifyTabletToken = (token: string) => {
+  try {
+    return jwt.verify(token, ACCESS_SECRET);
+  } catch (err) {
+    throw new Error('TABLET_SESSION_EXPIRED_OR_INVALID');
+  }
+};

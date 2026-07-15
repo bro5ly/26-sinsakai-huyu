@@ -18,6 +18,12 @@ export class AuthRepository {
             }
         })
     }
+
+    async findRefreshToken(refreshToken: string){
+        return this.db.refreshToken.findFirst({
+            where: {token: refreshToken}
+        })
+    }
     
 
     async saveTmpCode(data: {verificationCode: string, studentId: string,expiredAt: Date}){

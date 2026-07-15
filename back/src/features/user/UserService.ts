@@ -19,6 +19,9 @@ export class UserService {
     async findByStudentId(studentId: string){
         return await this.userRepository.findByStudentId(studentId)
     }
+    async findById(userId: string){
+        return await this.userRepository.findById(userId)
+    }
      async findByExternalStudentId(studentId: string){
         return await this.userRepository.findByExternalStudentId(studentId)
     }

@@ -1,6 +1,6 @@
 import type { AuthService } from "./auth.service.js";
 import type { Request, Response } from "express";
-import { codeVerificationSchema, requestVerificationSchema, signupSchema } from "./auth.schema.js";
+import { codeVerificationSchema, loginSchema, requestVerificationSchema, signupSchema, studentIdSchema } from "./auth.schema.js";
 import { handleError, sendSuccess } from "@/lib/response-handler.js";
 
 export class AuthController {
@@ -62,4 +62,73 @@ export class AuthController {
             return handleError(res,err)
         }
     }
+
+    login = async (req: Request, res: Response) => {
+        try {
+            const {studentId,plainPassword} = loginSchema.parse(req.body)
+            const data = await this.authService.login(studentId,plainPassword)
+
+            // クッキーにセットする処理（signupと同じ）
+            res.cookie('refreshToken', data.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000 
+            });
+
+
+            return sendSuccess(
+                res,
+                {
+                    user: data.user,
+                    accessToken: data.accessToken
+                },
+                200
+            )
+        } catch (err: any) {
+            return handleError(res,err)
+        }
+    }
+
+
+    logout = async (req: Request, res: Response) => {
+        try {
+            // 1. クッキーをクリアする (設定を送信時と合わせるのがコツ)
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/' // signup/login時のパスと合わせる
+            });
+
+            return sendSuccess(res, { message: "Logged out successfully" }, 200);
+        } catch (err: any) {
+            return handleError(res, err);
+        }
+    }
+
+    refreshSession = async (req: Request, res: Response) => {
+        try {
+            // cookie-parserを導入している前提です
+            const token = req.cookies.refreshToken;
+            // if (!token) throw new AppError('リフレッシュトークンがありません', 401, 'REFRESH_TOKEN_NOT_FOUND');
+
+            const data = await this.authService.refreshSession(token);
+
+            // 新しいリフレッシュトークンを再度クッキーにセット（回転させる）
+            res.cookie('refreshToken', data.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000 
+            });
+
+            return sendSuccess(res, {
+                user: data.user,
+                accessToken: data.accessToken
+            }, 200);
+        } catch (err: any) {
+            return handleError(res, err);
+    }
+}
 }
