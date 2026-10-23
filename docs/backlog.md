@@ -51,7 +51,8 @@
 型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
 
 - [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
-- [ ] `shared/`を作り、APIの入力と出力の形をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
+- [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
+- [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
 - [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
 - [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
 - [ ] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる
