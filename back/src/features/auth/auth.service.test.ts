@@ -1,10 +1,12 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import { AuthService, type AuthStore, type Mailer, type UserStore } from "./auth.service.js";
 
-// 今の応答の文言・コードをそのまま確かめる(変えるのは docs/backlog.md 0.8)
+// 名前に「現状:」が付いたテストは、仕様では変えると決まっている今の動きを守るもの(動きを変えない整理の間だけ)。
+// docs/backlog.md 0.8 で仕様に合わせて書き直す。付いていないものは仕様(docs/spec.md の番号)のテスト
 let passwordHash = "";
 beforeAll(async () => {
     passwordHash = await bcrypt.hash("password123", 4);
@@ -48,19 +50,19 @@ const sessionUser = {
 };
 
 describe("requestVerification(登録の認証コードを送る)", () => {
-    it("A1 名簿に無い学籍番号なら、断る(404)", async () => {
+    it("現状: A1 名簿に無い学籍番号なら、断る(404。仕様は名簿にいてもいなくても同じ応答: R-16・auth.md 4.6)", async () => {
         const service = new AuthService(users(), auth(), mailer(), new FakeRoster([yamada]));
 
         await expect(service.requestVerification("99999999")).rejects.toMatchObject({ statusCode: 404, code: "SUTUDENT_ID_NOT_FOUND" });
     });
 
-    it("A2 登録済みの学籍番号なら、断る(409)", async () => {
+    it("現状: A2 登録済みの学籍番号なら、断る(409。仕様は同上)", async () => {
         const service = new AuthService(users(), auth(), mailer(), new FakeRoster([yamada]));
 
         await expect(service.requestVerification("20240001")).rejects.toMatchObject({ statusCode: 409, code: "ALREADY_EXISTS_USER" });
     });
 
-    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る", async () => {
+    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る(R-4)", async () => {
         const saved: { verificationCode: string; studentId: string }[] = [];
         const sent: { to: string; code: string }[] = [];
         const service = new AuthService(
@@ -80,7 +82,7 @@ describe("requestVerification(登録の認証コードを送る)", () => {
 });
 
 describe("signUp(パスワードを決めて登録する)", () => {
-    it("A4 名簿にいれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す", async () => {
+    it("A4 名簿にいれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す(R-9・R-10)", async () => {
         const created: { studentId: string; passwordHash: string }[] = [];
         const service = new AuthService(
             users({
@@ -111,7 +113,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
 });
 
 describe("login(学籍番号とパスワードでログインする)", () => {
-    it("A6 パスワードが合えば、名簿の名前・カードの番号で返し、リフレッシュトークンを保存する", async () => {
+    it("A6 パスワードが合えば、名簿の名前で返し、リフレッシュトークンを保存する(R-11)", async () => {
         const savedFor: string[] = [];
         const service = new AuthService(
             users(),
@@ -126,13 +128,13 @@ describe("login(学籍番号とパスワードでログインする)", () => {
         expect(savedFor).toEqual(["user-1"]);
     });
 
-    it("A7 パスワードが違えば、断る(400 INVALID_PASSWORD)", async () => {
+    it("現状: A7 パスワードが違えば、断る(400 INVALID_PASSWORD。仕様は401で、学籍番号が無いときと同じ応答: R-16)", async () => {
         const service = new AuthService(users(), auth(), mailer(), new FakeRoster([yamada]));
 
         await expect(service.login("20240001", "wrongpass1")).rejects.toMatchObject({ statusCode: 400, code: "INVALID_PASSWORD" });
     });
 
-    it("A8 名簿から消えていれば、パスワードが合っても断る(404 USER_NOT_FOUND。Q13)", async () => {
+    it("現状: A8 名簿から消えていれば、パスワードが合っても断る(Q13。仕様では理由を言わない401: R-A14)", async () => {
         const service = new AuthService(users(), auth(), mailer(), new FakeRoster([]));
 
         await expect(service.login("20240001", "password123")).rejects.toMatchObject({ statusCode: 404, code: "USER_NOT_FOUND" });
@@ -150,5 +152,92 @@ describe("refreshSession(リフレッシュトークンでセッションを続�
         );
 
         await expect(service.refreshSession(token)).rejects.toMatchObject({ statusCode: 404, code: "USER_NOT_FOUND" });
+    });
+});
+
+describe("verifyCode(認証コードを確かめる)", () => {
+    const record = (overrides: Partial<{ code: string; expiresAt: Date }> = {}) => ({
+        studentId: "20260001",
+        code: "123456",
+        expiresAt: new Date(Date.now() + 10 * 60_000),
+        createdAt: new Date(),
+        ...overrides,
+    });
+
+    it("V1 コードが合い期限内なら、コードを消し、その学籍番号の登録用トークンを返す(R-6)", async () => {
+        const deleted: string[] = [];
+        const service = new AuthService(
+            users(),
+            auth({ checkTmpCode: async () => record(), deleteTmpCode: async (id) => (deleted.push(id), undefined as never) }),
+            mailer(),
+            new FakeRoster([unregistered]),
+        );
+
+        const result = await service.verifyCode("20260001", "123456");
+
+        expect(deleted).toEqual(["20260001"]);
+        expect(jwtLib.verifyRegistrationToken(result.registrationToken)).toMatchObject({ studentId: "20260001" });
+    });
+
+    it("V2 コードが違えば、断り、コードは消さない(R-7)", async () => {
+        const deleted: string[] = [];
+        const service = new AuthService(
+            users(),
+            auth({ checkTmpCode: async () => record(), deleteTmpCode: async (id) => (deleted.push(id), undefined as never) }),
+            mailer(),
+            new FakeRoster([unregistered]),
+        );
+
+        await expect(service.verifyCode("20260001", "654321")).rejects.toMatchObject({ statusCode: 400, code: "INVALID_CODE" });
+        expect(deleted).toEqual([]);
+    });
+
+    it("現状: V3 期限切れなら、断る(410。仕様では「断る」だけで、docs/api.md では401 INVALID_CODE)(R-7)", async () => {
+        const service = new AuthService(users(), auth({ checkTmpCode: async () => record({ expiresAt: new Date(Date.now() - 60_000) }) }), mailer(), new FakeRoster([]));
+
+        await expect(service.verifyCode("20260001", "123456")).rejects.toMatchObject({ statusCode: 410 });
+    });
+
+    it("現状: V4 コードを申請していなければ、断る(400 TMPCODE_NOT_FOUND)(R-7)", async () => {
+        const service = new AuthService(users(), auth({ checkTmpCode: async () => null }), mailer(), new FakeRoster([]));
+
+        await expect(service.verifyCode("20260001", "123456")).rejects.toMatchObject({ statusCode: 400, code: "TMPCODE_NOT_FOUND" });
+    });
+});
+
+describe("refreshSession(リフレッシュの通常の流れと、壊れたトークン)", () => {
+    // 発行から1分たったトークン(同じ秒に発行すると、新しいトークンが古いものと同じ文字列になるため)
+    const oldToken = () =>
+        jwt.sign({ sub: "user-1", iat: Math.floor(Date.now() / 1000) - 60 }, process.env["JWT_REFRESH_SECRET"] ?? "", { expiresIn: "7d" });
+    const saved = (token: string, expiresAt = new Date(Date.now() + 60_000)) => ({ id: "rt-1", token, userId: "user-1", expiresAt, createdAt: new Date() });
+
+    it("F1 DBにある有効なトークンなら、新しいアクセストークンとリフレッシュトークンを出し、DBのトークンを入れ替える(R-13・R-14)", async () => {
+        const token = oldToken();
+        const savedTokens: string[] = [];
+        const service = new AuthService(
+            users(),
+            auth({ findRefreshToken: async () => saved(token), saveRefreshToken: async (data) => (savedTokens.push(data.refreshToken), undefined as never) }),
+            mailer(),
+            new FakeRoster([yamada]),
+        );
+
+        const result = await service.refreshSession(token);
+
+        expect(result.user).toEqual(sessionUser);
+        expect(result.refreshToken).not.toBe(token);
+        expect(savedTokens).toEqual([result.refreshToken]);
+    });
+
+    it("F2 DBに無いトークン(ログアウト済み・入れ替え済み)なら、断る(401 INVALID_SESSION。R-14)", async () => {
+        const service = new AuthService(users(), auth({ findRefreshToken: async () => null }), mailer(), new FakeRoster([yamada]));
+
+        await expect(service.refreshSession(oldToken())).rejects.toMatchObject({ statusCode: 401, code: "INVALID_SESSION" });
+    });
+
+    it("F3 DBの期限が切れていれば、断る(401 SESSION_EXPIRED)", async () => {
+        const token = oldToken();
+        const service = new AuthService(users(), auth({ findRefreshToken: async () => saved(token, new Date(Date.now() - 1000)) }), mailer(), new FakeRoster([yamada]));
+
+        await expect(service.refreshSession(token)).rejects.toMatchObject({ statusCode: 401, code: "SESSION_EXPIRED" });
     });
 });

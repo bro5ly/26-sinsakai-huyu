@@ -14,7 +14,7 @@ const store = (overrides: Partial<RentalStore> = {}): RentalStore => ({
 });
 
 describe("signInWithIc(カードの番号で本人確認する)", () => {
-    it("R1 カードの番号が名簿にあり登録済みなら、名簿の名前・学年・専攻で返す", async () => {
+    it("現状: R1 カードの番号が名簿にあり登録済みなら、名簿の名前・学年・専攻で返す(R-17。仕様は表示用の名前だけ: R-A13)", async () => {
         const service = new RentalService(store(), new FakeRoster([rosterEntry()]));
 
         const result = await service.signInWithIc("IC-CARD-003");
@@ -35,5 +35,24 @@ describe("signInWithIc(カードの番号で本人確認する)", () => {
         const service = new RentalService(store(), new FakeRoster([rosterEntry(), unregistered]));
 
         await expect(service.signInWithIc("SN-001")).rejects.toMatchObject({ statusCode: 401, code: "AUTH_FAILED" });
+    });
+});
+
+describe("signInWithIc(借りている物の一覧)", () => {
+    it("R4 借りている物があれば、返却期限から決めた状態付きで返す(R-17・R-30)", async () => {
+        const rental = (id: string, dueDate: Date) => ({ id, itemId: `item-${id}`, userId: "user-3", rentedAt: new Date(), dueDate, returnedAt: null });
+        const withRentals = {
+            ...registered,
+            rentals: [rental("r1", new Date(Date.now() + 86_400_000)), rental("r2", new Date(Date.now() - 86_400_000))],
+        };
+        // テストに要る項目だけを持つ形。repository の戻り値の型(物品と種類の中身まで)をすべて作らないため
+        const service = new RentalService(store({ findUserWithActiveRentals: async () => withRentals as never }), new FakeRoster([rosterEntry()]));
+
+        const result = await service.signInWithIc("IC-CARD-003");
+
+        expect(result.data.map((r) => [r.id, r.status])).toEqual([
+            ["r1", "RENTING"],
+            ["r2", "OVERDUE"],
+        ]);
     });
 });
