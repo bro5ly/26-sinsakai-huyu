@@ -155,6 +155,14 @@ describe("refreshSession(リフレッシュトークンでセッションを続�
     });
 });
 
+describe("signUp(壊れた登録用トークン)", () => {
+    it("A10 登録用トークンが壊れていれば、断る(401 INVALID_TOKEN。docs/api.md 3.2。500にしない)", async () => {
+        const service = new AuthService(users({ findByStudentId: async () => null }), auth(), mailer(), new FakeRoster([unregistered]));
+
+        await expect(service.signUp("password123", "broken-token")).rejects.toMatchObject({ statusCode: 401, code: "INVALID_TOKEN" });
+    });
+});
+
 describe("verifyCode(認証コードを確かめる)", () => {
     const record = (overrides: Partial<{ code: string; expiresAt: Date }> = {}) => ({
         studentId: "20260001",
@@ -239,5 +247,17 @@ describe("refreshSession(リフレッシュの通常の流れと、壊れたト�
         const service = new AuthService(users(), auth({ findRefreshToken: async () => saved(token, new Date(Date.now() - 1000)) }), mailer(), new FakeRoster([yamada]));
 
         await expect(service.refreshSession(token)).rejects.toMatchObject({ statusCode: 401, code: "SESSION_EXPIRED" });
+    });
+
+    it("F4 トークンが壊れていれば、断る(401 INVALID_SESSION。docs/api.md 3.2。500にしない)", async () => {
+        const service = new AuthService(users(), auth(), mailer(), new FakeRoster([yamada]));
+
+        await expect(service.refreshSession("broken-token")).rejects.toMatchObject({ statusCode: 401, code: "INVALID_SESSION" });
+    });
+
+    it("F5 トークンが無ければ(Cookieが無い)、断る(401 INVALID_SESSION。500にしない)", async () => {
+        const service = new AuthService(users(), auth(), mailer(), new FakeRoster([yamada]));
+
+        await expect(service.refreshSession(undefined as unknown as string)).rejects.toMatchObject({ statusCode: 401, code: "INVALID_SESSION" });
     });
 });

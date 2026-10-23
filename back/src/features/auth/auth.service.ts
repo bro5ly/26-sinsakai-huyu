@@ -64,7 +64,13 @@ export class AuthService {
 
     signUp = async (plainPassword: string, registerToken: string): Promise<AuthResponse> => {
 
-        const {studentId} = jwtLib.verifyRegistrationToken(registerToken) as {studentId: string}
+        // 壊れている・期限切れのトークンはJWTのライブラリの例外になるので、401に変える(500にしない。docs/api.md 3.2)
+        let studentId: string
+        try {
+            ({studentId} = jwtLib.verifyRegistrationToken(registerToken) as {studentId: string})
+        } catch {
+            throw new AppError('登録の手続きをやり直してください',401,'INVALID_TOKEN')
+        }
 
         const existsUser = await this.users.findByStudentId(studentId)
         if(existsUser) throw new AppError('すでに登録されています',409,'ALREADY_EXISTS_USER')
@@ -91,8 +97,14 @@ export class AuthService {
     // auth.service.ts
 
     refreshSession = async (refreshToken: string): Promise<AuthResponse> => {
-        // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック
-        const payload = jwtLib.verifyRefreshToken(refreshToken) as { sub: string };
+        // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック。Cookieが無い・壊れているときも401にする(500にしない)
+        if (!refreshToken) throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+        let payload: { sub: string };
+        try {
+            payload = jwtLib.verifyRefreshToken(refreshToken) as { sub: string };
+        } catch {
+            throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+        }
 
         // 2. 次に、DBにそのトークンが記録されているかチェック（★ここで作成したメソッドを使う）
         const savedToken = await this.authRepository.findRefreshToken(refreshToken);
