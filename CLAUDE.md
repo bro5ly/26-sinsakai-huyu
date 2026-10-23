@@ -35,10 +35,11 @@
 | 起動 | `docker compose up -d`(web 4545 / api 5454 / db 1919 / Prisma Studio 5555) |
 | マイグレーション | `docker compose exec api npm run db:migrate`(スキーマを変えたら`--name <内容>`を付ける) |
 | テストデータ | `docker compose exec api npm run db:seed`(**全テーブルを消してから入れ直す**) |
+| テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts` |
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
 
-自動テストはまだ無い。変更したら上の型チェックとビルドを通し、APIは`curl`で、画面はブラウザで確かめる。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
+APIのコンテナはNode 24。依存を足した人がいたら`docker compose up -d --build -V api`で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
 
 ## コーディング規約
 

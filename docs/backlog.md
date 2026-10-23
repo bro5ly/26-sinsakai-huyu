@@ -11,10 +11,11 @@
 
 ## 0. テストの土台
 
-- [ ] `back/`にVitestを入れ、`docker compose exec api npm test`で動くようにする
-- [ ] テストの置き場所を決める(元のファイルの隣に`*.test.ts`)
-- [ ] CLAUDE.mdのコマンドの表に足す
-- [ ] 最初の練習: `rental.status.ts`の`rentalStatus`・`itemAvailability`のテストを書く(副作用が無く、境界は「期限ちょうど」)
+- [x] `back/`にVitest 5.0.5を入れ、`docker compose exec api npm test`で動くようにする(Vitest 5はNode 22以上なので、APIのイメージをNode 20(サポート切れ)から24に上げた)
+- [x] テストの置き場所を決める(`src/`の中で元のファイルの隣に`*.test.ts`)
+- [x] CLAUDE.mdのコマンドの表に足す
+- [ ] 最初の練習: `rental.status.test.ts`の`it.todo`(S1〜S6・I1〜I4)を開発者が書く(副作用が無く、境界は「期限ちょうど」)
+- [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める
 
 ## 0.5 データベースの見直し(貸し出しのリファクタの前に)
 
