@@ -20,22 +20,31 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
 
+export type UserAvgAggregateOutputType = {
+  maxItems: number | null
+}
+
+export type UserSumAggregateOutputType = {
+  maxItems: number | null
+}
+
 export type UserMinAggregateOutputType = {
   id: string | null
-  email: string | null
+  studentId: string | null
   passwordHash: string | null
+  role: $Enums.Role | null
   slackUserId: string | null
   slackTeamId: string | null
-  serialNumber: string | null
-  userType: $Enums.UserType | null
-  name: string | null
-  grade: string | null
-  major: string | null
-  studentId: string | null
+  canBorrow: boolean | null
+  maxItems: number | null
+  suspendedUntil: Date | null
+  suspensionReason: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -43,16 +52,15 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  email: string | null
+  studentId: string | null
   passwordHash: string | null
+  role: $Enums.Role | null
   slackUserId: string | null
   slackTeamId: string | null
-  serialNumber: string | null
-  userType: $Enums.UserType | null
-  name: string | null
-  grade: string | null
-  major: string | null
-  studentId: string | null
+  canBorrow: boolean | null
+  maxItems: number | null
+  suspendedUntil: Date | null
+  suspensionReason: string | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -60,16 +68,15 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
-  email: number
+  studentId: number
   passwordHash: number
+  role: number
   slackUserId: number
   slackTeamId: number
-  serialNumber: number
-  userType: number
-  name: number
-  grade: number
-  major: number
-  studentId: number
+  canBorrow: number
+  maxItems: number
+  suspendedUntil: number
+  suspensionReason: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -77,18 +84,25 @@ export type UserCountAggregateOutputType = {
 }
 
 
+export type UserAvgAggregateInputType = {
+  maxItems?: true
+}
+
+export type UserSumAggregateInputType = {
+  maxItems?: true
+}
+
 export type UserMinAggregateInputType = {
   id?: true
-  email?: true
+  studentId?: true
   passwordHash?: true
+  role?: true
   slackUserId?: true
   slackTeamId?: true
-  serialNumber?: true
-  userType?: true
-  name?: true
-  grade?: true
-  major?: true
-  studentId?: true
+  canBorrow?: true
+  maxItems?: true
+  suspendedUntil?: true
+  suspensionReason?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -96,16 +110,15 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
-  email?: true
+  studentId?: true
   passwordHash?: true
+  role?: true
   slackUserId?: true
   slackTeamId?: true
-  serialNumber?: true
-  userType?: true
-  name?: true
-  grade?: true
-  major?: true
-  studentId?: true
+  canBorrow?: true
+  maxItems?: true
+  suspendedUntil?: true
+  suspensionReason?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -113,16 +126,15 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
-  email?: true
+  studentId?: true
   passwordHash?: true
+  role?: true
   slackUserId?: true
   slackTeamId?: true
-  serialNumber?: true
-  userType?: true
-  name?: true
-  grade?: true
-  major?: true
-  studentId?: true
+  canBorrow?: true
+  maxItems?: true
+  suspendedUntil?: true
+  suspensionReason?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -167,6 +179,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UserAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UserSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -197,26 +221,29 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
+  _avg?: UserAvgAggregateInputType
+  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
 
 export type UserGroupByOutputType = {
   id: string
-  email: string | null
+  studentId: string
   passwordHash: string
+  role: $Enums.Role
   slackUserId: string | null
   slackTeamId: string | null
-  serialNumber: string | null
-  userType: $Enums.UserType
-  name: string
-  grade: string | null
-  major: string | null
-  studentId: string
+  canBorrow: boolean
+  maxItems: number
+  suspendedUntil: Date | null
+  suspensionReason: string | null
   isActive: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -241,20 +268,19 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  email?: Prisma.StringNullableFilter<"User"> | string | null
+  studentId?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   slackUserId?: Prisma.StringNullableFilter<"User"> | string | null
   slackTeamId?: Prisma.StringNullableFilter<"User"> | string | null
-  serialNumber?: Prisma.StringNullableFilter<"User"> | string | null
-  userType?: Prisma.EnumUserTypeFilter<"User"> | $Enums.UserType
-  name?: Prisma.StringFilter<"User"> | string
-  grade?: Prisma.StringNullableFilter<"User"> | string | null
-  major?: Prisma.StringNullableFilter<"User"> | string | null
-  studentId?: Prisma.StringFilter<"User"> | string
+  canBorrow?: Prisma.BoolFilter<"User"> | boolean
+  maxItems?: Prisma.IntFilter<"User"> | number
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  rentalSetting?: Prisma.XOR<Prisma.RentalSettingNullableScalarRelationFilter, Prisma.RentalSettingWhereInput> | null
+  externalUser?: Prisma.XOR<Prisma.ExternalUserScalarRelationFilter, Prisma.ExternalUserWhereInput>
   rentals?: Prisma.RentalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
@@ -262,20 +288,19 @@ export type UserWhereInput = {
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   slackUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   slackTeamId?: Prisma.SortOrderInput | Prisma.SortOrder
-  serialNumber?: Prisma.SortOrderInput | Prisma.SortOrder
-  userType?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  grade?: Prisma.SortOrderInput | Prisma.SortOrder
-  major?: Prisma.SortOrderInput | Prisma.SortOrder
-  studentId?: Prisma.SortOrder
+  canBorrow?: Prisma.SortOrder
+  maxItems?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  rentalSetting?: Prisma.RentalSettingOrderByWithRelationInput
+  externalUser?: Prisma.ExternalUserOrderByWithRelationInput
   rentals?: Prisma.RentalOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
   refreshTokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
@@ -287,19 +312,18 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
-  email?: Prisma.StringNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   slackUserId?: Prisma.StringNullableFilter<"User"> | string | null
   slackTeamId?: Prisma.StringNullableFilter<"User"> | string | null
-  serialNumber?: Prisma.StringNullableFilter<"User"> | string | null
-  userType?: Prisma.EnumUserTypeFilter<"User"> | $Enums.UserType
-  name?: Prisma.StringFilter<"User"> | string
-  grade?: Prisma.StringNullableFilter<"User"> | string | null
-  major?: Prisma.StringNullableFilter<"User"> | string | null
+  canBorrow?: Prisma.BoolFilter<"User"> | boolean
+  maxItems?: Prisma.IntFilter<"User"> | number
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  rentalSetting?: Prisma.XOR<Prisma.RentalSettingNullableScalarRelationFilter, Prisma.RentalSettingWhereInput> | null
+  externalUser?: Prisma.XOR<Prisma.ExternalUserScalarRelationFilter, Prisma.ExternalUserWhereInput>
   rentals?: Prisma.RentalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
@@ -307,22 +331,23 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   slackUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   slackTeamId?: Prisma.SortOrderInput | Prisma.SortOrder
-  serialNumber?: Prisma.SortOrderInput | Prisma.SortOrder
-  userType?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  grade?: Prisma.SortOrderInput | Prisma.SortOrder
-  major?: Prisma.SortOrderInput | Prisma.SortOrder
-  studentId?: Prisma.SortOrder
+  canBorrow?: Prisma.SortOrder
+  maxItems?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
+  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
+  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -330,16 +355,15 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
-  email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  studentId?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
+  role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   slackUserId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   slackTeamId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  serialNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  userType?: Prisma.EnumUserTypeWithAggregatesFilter<"User"> | $Enums.UserType
-  name?: Prisma.StringWithAggregatesFilter<"User"> | string
-  grade?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  major?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  studentId?: Prisma.StringWithAggregatesFilter<"User"> | string
+  canBorrow?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  maxItems?: Prisma.IntWithAggregatesFilter<"User"> | number
+  suspendedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  suspensionReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -347,20 +371,18 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   id?: string
-  email?: string | null
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingCreateNestedOneWithoutUserInput
+  externalUser: Prisma.ExternalUserCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
@@ -368,20 +390,18 @@ export type UserCreateInput = {
 
 export type UserUncheckedCreateInput = {
   id?: string
-  email?: string | null
+  studentId: string
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -389,20 +409,18 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUpdateOneWithoutUserNestedInput
+  externalUser?: Prisma.ExternalUserUpdateOneRequiredWithoutUserNestedInput
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
@@ -410,20 +428,18 @@ export type UserUpdateInput = {
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedUpdateOneWithoutUserNestedInput
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -431,16 +447,15 @@ export type UserUncheckedUpdateInput = {
 
 export type UserCreateManyInput = {
   id?: string
-  email?: string | null
+  studentId: string
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -448,16 +463,14 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -465,16 +478,15 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -482,33 +494,35 @@ export type UserUncheckedUpdateManyInput = {
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   slackUserId?: Prisma.SortOrder
   slackTeamId?: Prisma.SortOrder
-  serialNumber?: Prisma.SortOrder
-  userType?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  grade?: Prisma.SortOrder
-  major?: Prisma.SortOrder
-  studentId?: Prisma.SortOrder
+  canBorrow?: Prisma.SortOrder
+  maxItems?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
+export type UserAvgOrderByAggregateInput = {
+  maxItems?: Prisma.SortOrder
+}
+
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   slackUserId?: Prisma.SortOrder
   slackTeamId?: Prisma.SortOrder
-  serialNumber?: Prisma.SortOrder
-  userType?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  grade?: Prisma.SortOrder
-  major?: Prisma.SortOrder
-  studentId?: Prisma.SortOrder
+  canBorrow?: Prisma.SortOrder
+  maxItems?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -516,19 +530,27 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
+  studentId?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   slackUserId?: Prisma.SortOrder
   slackTeamId?: Prisma.SortOrder
-  serialNumber?: Prisma.SortOrder
-  userType?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  grade?: Prisma.SortOrder
-  major?: Prisma.SortOrder
-  studentId?: Prisma.SortOrder
+  canBorrow?: Prisma.SortOrder
+  maxItems?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type UserSumOrderByAggregateInput = {
+  maxItems?: Prisma.SortOrder
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type UserScalarRelationFilter = {
@@ -540,20 +562,64 @@ export type StringFieldUpdateOperationsInput = {
   set?: string
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
+export type EnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role
 }
 
-export type EnumUserTypeFieldUpdateOperationsInput = {
-  set?: $Enums.UserType
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutExternalUserInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExternalUserInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUncheckedCreateNestedOneWithoutExternalUserInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExternalUserInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutExternalUserNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExternalUserInput
+  upsert?: Prisma.UserUpsertWithoutExternalUserInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutExternalUserInput, Prisma.UserUpdateWithoutExternalUserInput>, Prisma.UserUncheckedUpdateWithoutExternalUserInput>
+}
+
+export type UserUncheckedUpdateOneWithoutExternalUserNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutExternalUserInput
+  upsert?: Prisma.UserUpsertWithoutExternalUserInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutExternalUserInput, Prisma.UserUpdateWithoutExternalUserInput>, Prisma.UserUncheckedUpdateWithoutExternalUserInput>
 }
 
 export type UserCreateNestedOneWithoutRefreshTokensInput = {
@@ -568,20 +634,6 @@ export type UserUpdateOneRequiredWithoutRefreshTokensNestedInput = {
   upsert?: Prisma.UserUpsertWithoutRefreshTokensInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRefreshTokensInput, Prisma.UserUpdateWithoutRefreshTokensInput>, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
-}
-
-export type UserCreateNestedOneWithoutRentalSettingInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutRentalSettingInput, Prisma.UserUncheckedCreateWithoutRentalSettingInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRentalSettingInput
-  connect?: Prisma.UserWhereUniqueInput
-}
-
-export type UserUpdateOneRequiredWithoutRentalSettingNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutRentalSettingInput, Prisma.UserUncheckedCreateWithoutRentalSettingInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRentalSettingInput
-  upsert?: Prisma.UserUpsertWithoutRentalSettingInput
-  connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRentalSettingInput, Prisma.UserUpdateWithoutRentalSettingInput>, Prisma.UserUncheckedUpdateWithoutRentalSettingInput>
 }
 
 export type UserCreateNestedOneWithoutRentalsInput = {
@@ -612,42 +664,126 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
 }
 
-export type UserCreateWithoutRefreshTokensInput = {
+export type UserCreateWithoutExternalUserInput = {
   id?: string
-  email?: string | null
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingCreateNestedOneWithoutUserInput
+  rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutExternalUserInput = {
+  id?: string
+  passwordHash: string
+  role?: $Enums.Role
+  slackUserId?: string | null
+  slackTeamId?: string | null
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutExternalUserInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+}
+
+export type UserUpsertWithoutExternalUserInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutExternalUserInput, Prisma.UserUncheckedUpdateWithoutExternalUserInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutExternalUserInput, Prisma.UserUncheckedCreateWithoutExternalUserInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutExternalUserInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutExternalUserInput, Prisma.UserUncheckedUpdateWithoutExternalUserInput>
+}
+
+export type UserUpdateWithoutExternalUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutExternalUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRefreshTokensInput = {
+  id?: string
+  passwordHash: string
+  role?: $Enums.Role
+  slackUserId?: string | null
+  slackTeamId?: string | null
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  externalUser: Prisma.ExternalUserCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRefreshTokensInput = {
   id?: string
-  email?: string | null
+  studentId: string
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
@@ -670,176 +806,72 @@ export type UserUpdateToOneWithWhereWithoutRefreshTokensInput = {
 
 export type UserUpdateWithoutRefreshTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUpdateOneWithoutUserNestedInput
+  externalUser?: Prisma.ExternalUserUpdateOneRequiredWithoutUserNestedInput
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedUpdateOneWithoutUserNestedInput
-  rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
-  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type UserCreateWithoutRentalSettingInput = {
-  id?: string
-  email?: string | null
-  passwordHash: string
-  slackUserId?: string | null
-  slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
-  isActive?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
-  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
-}
-
-export type UserUncheckedCreateWithoutRentalSettingInput = {
-  id?: string
-  email?: string | null
-  passwordHash: string
-  slackUserId?: string | null
-  slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
-  isActive?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
-  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type UserCreateOrConnectWithoutRentalSettingInput = {
-  where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutRentalSettingInput, Prisma.UserUncheckedCreateWithoutRentalSettingInput>
-}
-
-export type UserUpsertWithoutRentalSettingInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutRentalSettingInput, Prisma.UserUncheckedUpdateWithoutRentalSettingInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutRentalSettingInput, Prisma.UserUncheckedCreateWithoutRentalSettingInput>
-  where?: Prisma.UserWhereInput
-}
-
-export type UserUpdateToOneWithWhereWithoutRentalSettingInput = {
-  where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutRentalSettingInput, Prisma.UserUncheckedUpdateWithoutRentalSettingInput>
-}
-
-export type UserUpdateWithoutRentalSettingInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
-  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
-}
-
-export type UserUncheckedUpdateWithoutRentalSettingInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRentalsInput = {
   id?: string
-  email?: string | null
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingCreateNestedOneWithoutUserInput
+  externalUser: Prisma.ExternalUserCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRentalsInput = {
   id?: string
-  email?: string | null
+  studentId: string
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedCreateNestedOneWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
 }
@@ -862,80 +894,72 @@ export type UserUpdateToOneWithWhereWithoutRentalsInput = {
 
 export type UserUpdateWithoutRentalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUpdateOneWithoutUserNestedInput
+  externalUser?: Prisma.ExternalUserUpdateOneRequiredWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRentalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
   id?: string
-  email?: string | null
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingCreateNestedOneWithoutUserInput
+  externalUser: Prisma.ExternalUserCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
-  email?: string | null
+  studentId: string
   passwordHash: string
+  role?: $Enums.Role
   slackUserId?: string | null
   slackTeamId?: string | null
-  serialNumber?: string | null
-  userType?: $Enums.UserType
-  name: string
-  grade?: string | null
-  major?: string | null
-  studentId: string
+  canBorrow?: boolean
+  maxItems?: number
+  suspendedUntil?: Date | string | null
+  suspensionReason?: string | null
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedCreateNestedOneWithoutUserInput
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
 }
@@ -958,40 +982,36 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUpdateOneWithoutUserNestedInput
+  externalUser?: Prisma.ExternalUserUpdateOneRequiredWithoutUserNestedInput
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  canBorrow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxItems?: Prisma.IntFieldUpdateOperationsInput | number
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rentalSetting?: Prisma.RentalSettingUncheckedUpdateOneWithoutUserNestedInput
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -1047,20 +1067,19 @@ export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends runtime.Ty
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
+  studentId?: boolean
   passwordHash?: boolean
+  role?: boolean
   slackUserId?: boolean
   slackTeamId?: boolean
-  serialNumber?: boolean
-  userType?: boolean
-  name?: boolean
-  grade?: boolean
-  major?: boolean
-  studentId?: boolean
+  canBorrow?: boolean
+  maxItems?: boolean
+  suspendedUntil?: boolean
+  suspensionReason?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  rentalSetting?: boolean | Prisma.User$rentalSettingArgs<ExtArgs>
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
@@ -1069,86 +1088,88 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
+  studentId?: boolean
   passwordHash?: boolean
+  role?: boolean
   slackUserId?: boolean
   slackTeamId?: boolean
-  serialNumber?: boolean
-  userType?: boolean
-  name?: boolean
-  grade?: boolean
-  major?: boolean
-  studentId?: boolean
+  canBorrow?: boolean
+  maxItems?: boolean
+  suspendedUntil?: boolean
+  suspensionReason?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  email?: boolean
+  studentId?: boolean
   passwordHash?: boolean
+  role?: boolean
   slackUserId?: boolean
   slackTeamId?: boolean
-  serialNumber?: boolean
-  userType?: boolean
-  name?: boolean
-  grade?: boolean
-  major?: boolean
-  studentId?: boolean
+  canBorrow?: boolean
+  maxItems?: boolean
+  suspendedUntil?: boolean
+  suspensionReason?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
-  email?: boolean
+  studentId?: boolean
   passwordHash?: boolean
+  role?: boolean
   slackUserId?: boolean
   slackTeamId?: boolean
-  serialNumber?: boolean
-  userType?: boolean
-  name?: boolean
-  grade?: boolean
-  major?: boolean
-  studentId?: boolean
+  canBorrow?: boolean
+  maxItems?: boolean
+  suspendedUntil?: boolean
+  suspensionReason?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "slackUserId" | "slackTeamId" | "serialNumber" | "userType" | "name" | "grade" | "major" | "studentId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "passwordHash" | "role" | "slackUserId" | "slackTeamId" | "canBorrow" | "maxItems" | "suspendedUntil" | "suspensionReason" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  rentalSetting?: boolean | Prisma.User$rentalSettingArgs<ExtArgs>
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  externalUser?: boolean | Prisma.ExternalUserDefaultArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    rentalSetting: Prisma.$RentalSettingPayload<ExtArgs> | null
+    externalUser: Prisma.$ExternalUserPayload<ExtArgs>
     rentals: Prisma.$RentalPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
     refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    email: string | null
+    studentId: string
     passwordHash: string
+    role: $Enums.Role
     slackUserId: string | null
     slackTeamId: string | null
-    serialNumber: string | null
-    userType: $Enums.UserType
-    name: string
-    grade: string | null
-    major: string | null
-    studentId: string
+    canBorrow: boolean
+    maxItems: number
+    suspendedUntil: Date | null
+    suspensionReason: string | null
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1546,7 +1567,7 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  rentalSetting<T extends Prisma.User$rentalSettingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rentalSettingArgs<ExtArgs>>): Prisma.Prisma__RentalSettingClient<runtime.Types.Result.GetResult<Prisma.$RentalSettingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  externalUser<T extends Prisma.ExternalUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ExternalUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ExternalUserClient<runtime.Types.Result.GetResult<Prisma.$ExternalUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   rentals<T extends Prisma.User$rentalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rentalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RentalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   refreshTokens<T extends Prisma.User$refreshTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1580,16 +1601,15 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly email: Prisma.FieldRef<"User", 'String'>
+  readonly studentId: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
+  readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly slackUserId: Prisma.FieldRef<"User", 'String'>
   readonly slackTeamId: Prisma.FieldRef<"User", 'String'>
-  readonly serialNumber: Prisma.FieldRef<"User", 'String'>
-  readonly userType: Prisma.FieldRef<"User", 'UserType'>
-  readonly name: Prisma.FieldRef<"User", 'String'>
-  readonly grade: Prisma.FieldRef<"User", 'String'>
-  readonly major: Prisma.FieldRef<"User", 'String'>
-  readonly studentId: Prisma.FieldRef<"User", 'String'>
+  readonly canBorrow: Prisma.FieldRef<"User", 'Boolean'>
+  readonly maxItems: Prisma.FieldRef<"User", 'Int'>
+  readonly suspendedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly suspensionReason: Prisma.FieldRef<"User", 'String'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -1842,6 +1862,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1912,6 +1936,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1978,25 +2006,6 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
-}
-
-/**
- * User.rentalSetting
- */
-export type User$rentalSettingArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the RentalSetting
-   */
-  select?: Prisma.RentalSettingSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the RentalSetting
-   */
-  omit?: Prisma.RentalSettingOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.RentalSettingInclude<ExtArgs> | null
-  where?: Prisma.RentalSettingWhereInput
 }
 
 /**

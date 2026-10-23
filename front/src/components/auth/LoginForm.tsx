@@ -32,7 +32,7 @@ export const LoginForm = ({
         <Input
           label="Student ID"
           variant="flat"
-          placeholder="S2024001"
+          placeholder="20240001"
           value={studentId}
           onValueChange={onStudentIdChange}
           isRequired

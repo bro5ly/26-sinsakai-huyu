@@ -168,7 +168,7 @@ export type ItemGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type ItemGroupByOutputType = {
   id: string
   itemTypeId: string
-  barcode: string | null
+  barcode: string
   location: string | null
   status: $Enums.ItemStatus
   notes: string | null
@@ -200,7 +200,7 @@ export type ItemWhereInput = {
   NOT?: Prisma.ItemWhereInput | Prisma.ItemWhereInput[]
   id?: Prisma.StringFilter<"Item"> | string
   itemTypeId?: Prisma.StringFilter<"Item"> | string
-  barcode?: Prisma.StringNullableFilter<"Item"> | string | null
+  barcode?: Prisma.StringFilter<"Item"> | string
   location?: Prisma.StringNullableFilter<"Item"> | string | null
   status?: Prisma.EnumItemStatusFilter<"Item"> | $Enums.ItemStatus
   notes?: Prisma.StringNullableFilter<"Item"> | string | null
@@ -213,7 +213,7 @@ export type ItemWhereInput = {
 export type ItemOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   itemTypeId?: Prisma.SortOrder
-  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -242,7 +242,7 @@ export type ItemWhereUniqueInput = Prisma.AtLeast<{
 export type ItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   itemTypeId?: Prisma.SortOrder
-  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -259,7 +259,7 @@ export type ItemScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ItemScalarWhereWithAggregatesInput | Prisma.ItemScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Item"> | string
   itemTypeId?: Prisma.StringWithAggregatesFilter<"Item"> | string
-  barcode?: Prisma.StringNullableWithAggregatesFilter<"Item"> | string | null
+  barcode?: Prisma.StringWithAggregatesFilter<"Item"> | string
   location?: Prisma.StringNullableWithAggregatesFilter<"Item"> | string | null
   status?: Prisma.EnumItemStatusWithAggregatesFilter<"Item"> | $Enums.ItemStatus
   notes?: Prisma.StringNullableWithAggregatesFilter<"Item"> | string | null
@@ -269,7 +269,7 @@ export type ItemScalarWhereWithAggregatesInput = {
 
 export type ItemCreateInput = {
   id?: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -282,7 +282,7 @@ export type ItemCreateInput = {
 export type ItemUncheckedCreateInput = {
   id?: string
   itemTypeId: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -293,7 +293,7 @@ export type ItemUncheckedCreateInput = {
 
 export type ItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -306,7 +306,7 @@ export type ItemUpdateInput = {
 export type ItemUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   itemTypeId?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -318,7 +318,7 @@ export type ItemUncheckedUpdateInput = {
 export type ItemCreateManyInput = {
   id?: string
   itemTypeId: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -328,7 +328,7 @@ export type ItemCreateManyInput = {
 
 export type ItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -339,7 +339,7 @@ export type ItemUpdateManyMutationInput = {
 export type ItemUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   itemTypeId?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -457,7 +457,7 @@ export type ItemUpdateOneRequiredWithoutRentalsNestedInput = {
 
 export type ItemCreateWithoutItemTypeInput = {
   id?: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -468,7 +468,7 @@ export type ItemCreateWithoutItemTypeInput = {
 
 export type ItemUncheckedCreateWithoutItemTypeInput = {
   id?: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -509,7 +509,7 @@ export type ItemScalarWhereInput = {
   NOT?: Prisma.ItemScalarWhereInput | Prisma.ItemScalarWhereInput[]
   id?: Prisma.StringFilter<"Item"> | string
   itemTypeId?: Prisma.StringFilter<"Item"> | string
-  barcode?: Prisma.StringNullableFilter<"Item"> | string | null
+  barcode?: Prisma.StringFilter<"Item"> | string
   location?: Prisma.StringNullableFilter<"Item"> | string | null
   status?: Prisma.EnumItemStatusFilter<"Item"> | $Enums.ItemStatus
   notes?: Prisma.StringNullableFilter<"Item"> | string | null
@@ -519,7 +519,7 @@ export type ItemScalarWhereInput = {
 
 export type ItemCreateWithoutRentalsInput = {
   id?: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -531,7 +531,7 @@ export type ItemCreateWithoutRentalsInput = {
 export type ItemUncheckedCreateWithoutRentalsInput = {
   id?: string
   itemTypeId: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -557,7 +557,7 @@ export type ItemUpdateToOneWithWhereWithoutRentalsInput = {
 
 export type ItemUpdateWithoutRentalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -569,7 +569,7 @@ export type ItemUpdateWithoutRentalsInput = {
 export type ItemUncheckedUpdateWithoutRentalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   itemTypeId?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -579,7 +579,7 @@ export type ItemUncheckedUpdateWithoutRentalsInput = {
 
 export type ItemCreateManyItemTypeInput = {
   id?: string
-  barcode?: string | null
+  barcode: string
   location?: string | null
   status?: $Enums.ItemStatus
   notes?: string | null
@@ -589,7 +589,7 @@ export type ItemCreateManyItemTypeInput = {
 
 export type ItemUpdateWithoutItemTypeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -600,7 +600,7 @@ export type ItemUpdateWithoutItemTypeInput = {
 
 export type ItemUncheckedUpdateWithoutItemTypeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -611,7 +611,7 @@ export type ItemUncheckedUpdateWithoutItemTypeInput = {
 
 export type ItemUncheckedUpdateManyWithoutItemTypeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.StringFieldUpdateOperationsInput | string
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumItemStatusFieldUpdateOperationsInput | $Enums.ItemStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -721,7 +721,7 @@ export type $ItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     itemTypeId: string
-    barcode: string | null
+    barcode: string
     location: string | null
     status: $Enums.ItemStatus
     notes: string | null

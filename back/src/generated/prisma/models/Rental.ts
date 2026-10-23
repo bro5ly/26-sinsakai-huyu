@@ -31,7 +31,6 @@ export type RentalMinAggregateOutputType = {
   rentedAt: Date | null
   dueDate: Date | null
   returnedAt: Date | null
-  status: $Enums.RentalStatus | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -43,7 +42,6 @@ export type RentalMaxAggregateOutputType = {
   rentedAt: Date | null
   dueDate: Date | null
   returnedAt: Date | null
-  status: $Enums.RentalStatus | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,7 +53,6 @@ export type RentalCountAggregateOutputType = {
   rentedAt: number
   dueDate: number
   returnedAt: number
-  status: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -69,7 +66,6 @@ export type RentalMinAggregateInputType = {
   rentedAt?: true
   dueDate?: true
   returnedAt?: true
-  status?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -81,7 +77,6 @@ export type RentalMaxAggregateInputType = {
   rentedAt?: true
   dueDate?: true
   returnedAt?: true
-  status?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -93,7 +88,6 @@ export type RentalCountAggregateInputType = {
   rentedAt?: true
   dueDate?: true
   returnedAt?: true
-  status?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -178,7 +172,6 @@ export type RentalGroupByOutputType = {
   rentedAt: Date
   dueDate: Date
   returnedAt: Date | null
-  status: $Enums.RentalStatus
   createdAt: Date
   updatedAt: Date
   _count: RentalCountAggregateOutputType | null
@@ -211,7 +204,6 @@ export type RentalWhereInput = {
   rentedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   dueDate?: Prisma.DateTimeFilter<"Rental"> | Date | string
   returnedAt?: Prisma.DateTimeNullableFilter<"Rental"> | Date | string | null
-  status?: Prisma.EnumRentalStatusFilter<"Rental"> | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   item?: Prisma.XOR<Prisma.ItemScalarRelationFilter, Prisma.ItemWhereInput>
@@ -226,7 +218,6 @@ export type RentalOrderByWithRelationInput = {
   rentedAt?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
   returnedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   item?: Prisma.ItemOrderByWithRelationInput
@@ -244,7 +235,6 @@ export type RentalWhereUniqueInput = Prisma.AtLeast<{
   rentedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   dueDate?: Prisma.DateTimeFilter<"Rental"> | Date | string
   returnedAt?: Prisma.DateTimeNullableFilter<"Rental"> | Date | string | null
-  status?: Prisma.EnumRentalStatusFilter<"Rental"> | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   item?: Prisma.XOR<Prisma.ItemScalarRelationFilter, Prisma.ItemWhereInput>
@@ -259,7 +249,6 @@ export type RentalOrderByWithAggregationInput = {
   rentedAt?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
   returnedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.RentalCountOrderByAggregateInput
@@ -277,7 +266,6 @@ export type RentalScalarWhereWithAggregatesInput = {
   rentedAt?: Prisma.DateTimeWithAggregatesFilter<"Rental"> | Date | string
   dueDate?: Prisma.DateTimeWithAggregatesFilter<"Rental"> | Date | string
   returnedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Rental"> | Date | string | null
-  status?: Prisma.EnumRentalStatusWithAggregatesFilter<"Rental"> | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Rental"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Rental"> | Date | string
 }
@@ -287,7 +275,6 @@ export type RentalCreateInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   item: Prisma.ItemCreateNestedOneWithoutRentalsInput
@@ -302,7 +289,6 @@ export type RentalUncheckedCreateInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRentalInput
@@ -313,7 +299,6 @@ export type RentalUpdateInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   item?: Prisma.ItemUpdateOneRequiredWithoutRentalsNestedInput
@@ -328,7 +313,6 @@ export type RentalUncheckedUpdateInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRentalNestedInput
@@ -341,7 +325,6 @@ export type RentalCreateManyInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -351,7 +334,6 @@ export type RentalUpdateManyMutationInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -363,7 +345,6 @@ export type RentalUncheckedUpdateManyInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -385,7 +366,6 @@ export type RentalCountOrderByAggregateInput = {
   rentedAt?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
   returnedAt?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -397,7 +377,6 @@ export type RentalMaxOrderByAggregateInput = {
   rentedAt?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
   returnedAt?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -409,7 +388,6 @@ export type RentalMinOrderByAggregateInput = {
   rentedAt?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
   returnedAt?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -503,10 +481,6 @@ export type RentalUncheckedUpdateManyWithoutItemNestedInput = {
   deleteMany?: Prisma.RentalScalarWhereInput | Prisma.RentalScalarWhereInput[]
 }
 
-export type EnumRentalStatusFieldUpdateOperationsInput = {
-  set?: $Enums.RentalStatus
-}
-
 export type RentalCreateNestedOneWithoutNotificationsInput = {
   create?: Prisma.XOR<Prisma.RentalCreateWithoutNotificationsInput, Prisma.RentalUncheckedCreateWithoutNotificationsInput>
   connectOrCreate?: Prisma.RentalCreateOrConnectWithoutNotificationsInput
@@ -528,7 +502,6 @@ export type RentalCreateWithoutUserInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   item: Prisma.ItemCreateNestedOneWithoutRentalsInput
@@ -541,7 +514,6 @@ export type RentalUncheckedCreateWithoutUserInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRentalInput
@@ -583,7 +555,6 @@ export type RentalScalarWhereInput = {
   rentedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   dueDate?: Prisma.DateTimeFilter<"Rental"> | Date | string
   returnedAt?: Prisma.DateTimeNullableFilter<"Rental"> | Date | string | null
-  status?: Prisma.EnumRentalStatusFilter<"Rental"> | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Rental"> | Date | string
 }
@@ -593,7 +564,6 @@ export type RentalCreateWithoutItemInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutRentalsInput
@@ -606,7 +576,6 @@ export type RentalUncheckedCreateWithoutItemInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRentalInput
@@ -643,7 +612,6 @@ export type RentalCreateWithoutNotificationsInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   item: Prisma.ItemCreateNestedOneWithoutRentalsInput
@@ -657,7 +625,6 @@ export type RentalUncheckedCreateWithoutNotificationsInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -683,7 +650,6 @@ export type RentalUpdateWithoutNotificationsInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   item?: Prisma.ItemUpdateOneRequiredWithoutRentalsNestedInput
@@ -697,7 +663,6 @@ export type RentalUncheckedUpdateWithoutNotificationsInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -708,7 +673,6 @@ export type RentalCreateManyUserInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -718,7 +682,6 @@ export type RentalUpdateWithoutUserInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   item?: Prisma.ItemUpdateOneRequiredWithoutRentalsNestedInput
@@ -731,7 +694,6 @@ export type RentalUncheckedUpdateWithoutUserInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRentalNestedInput
@@ -743,7 +705,6 @@ export type RentalUncheckedUpdateManyWithoutUserInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -754,7 +715,6 @@ export type RentalCreateManyItemInput = {
   rentedAt?: Date | string
   dueDate: Date | string
   returnedAt?: Date | string | null
-  status?: $Enums.RentalStatus
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -764,7 +724,6 @@ export type RentalUpdateWithoutItemInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutRentalsNestedInput
@@ -777,7 +736,6 @@ export type RentalUncheckedUpdateWithoutItemInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutRentalNestedInput
@@ -789,7 +747,6 @@ export type RentalUncheckedUpdateManyWithoutItemInput = {
   rentedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   returnedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumRentalStatusFieldUpdateOperationsInput | $Enums.RentalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -832,7 +789,6 @@ export type RentalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   rentedAt?: boolean
   dueDate?: boolean
   returnedAt?: boolean
-  status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   item?: boolean | Prisma.ItemDefaultArgs<ExtArgs>
@@ -848,7 +804,6 @@ export type RentalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   rentedAt?: boolean
   dueDate?: boolean
   returnedAt?: boolean
-  status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   item?: boolean | Prisma.ItemDefaultArgs<ExtArgs>
@@ -862,7 +817,6 @@ export type RentalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   rentedAt?: boolean
   dueDate?: boolean
   returnedAt?: boolean
-  status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   item?: boolean | Prisma.ItemDefaultArgs<ExtArgs>
@@ -876,12 +830,11 @@ export type RentalSelectScalar = {
   rentedAt?: boolean
   dueDate?: boolean
   returnedAt?: boolean
-  status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RentalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "itemId" | "userId" | "rentedAt" | "dueDate" | "returnedAt" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["rental"]>
+export type RentalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "itemId" | "userId" | "rentedAt" | "dueDate" | "returnedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["rental"]>
 export type RentalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   item?: boolean | Prisma.ItemDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -911,7 +864,6 @@ export type $RentalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     rentedAt: Date
     dueDate: Date
     returnedAt: Date | null
-    status: $Enums.RentalStatus
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["rental"]>
@@ -1346,7 +1298,6 @@ export interface RentalFieldRefs {
   readonly rentedAt: Prisma.FieldRef<"Rental", 'DateTime'>
   readonly dueDate: Prisma.FieldRef<"Rental", 'DateTime'>
   readonly returnedAt: Prisma.FieldRef<"Rental", 'DateTime'>
-  readonly status: Prisma.FieldRef<"Rental", 'RentalStatus'>
   readonly createdAt: Prisma.FieldRef<"Rental", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Rental", 'DateTime'>
 }

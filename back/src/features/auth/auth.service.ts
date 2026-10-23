@@ -1,11 +1,11 @@
 import * as jwtLib from "@/lib/jwt.js"
 import bcrypt from "bcrypt"
 import { UserService } from "../user/UserService.js"
+import type { UserWithProfile } from "../user/UserRepository.js"
 import type { AuthRepository } from "./auth.repository.js"
 import type { MailService } from "@/lib/mail.js"
 import { AppError } from "@/lib/error.js"
 import type { AuthResponse, VerificationResponse, VerifyCodeResponse } from "./auth.types.js"
-import type { User } from "@/generated/prisma/client.js"
 
 
 export class AuthService {
@@ -78,16 +78,6 @@ export class AuthService {
         const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
         if(!isMatch) throw new AppError('パスワードが間違っています',400,'INVALID_PASSWORD')
 
-        // serialNumberがnullの場合、ExternalUserから取得
-        if (!existsUser.serialNumber) {
-            console.log('⚠️ [login] User has no serialNumber, fetching from ExternalUser...');
-            const externalUser = await this.userService.findByExternalStudentId(studentId);
-            if (externalUser?.serialNumber) {
-                console.log('✅ [login] Found serialNumber in ExternalUser:', externalUser.serialNumber);
-                existsUser.serialNumber = externalUser.serialNumber;
-            }
-        }
-
         return this.generateSession(existsUser)
     }
 
@@ -115,30 +105,13 @@ export class AuthService {
         const user = await this.userService.findById(payload.sub);
         if (!user) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
 
-        // serialNumberがnullの場合、ExternalUserから取得
-        if (!user.serialNumber && user.studentId) {
-            console.log('⚠️ [refreshSession] User has no serialNumber, fetching from ExternalUser...');
-            const externalUser = await this.userService.findByExternalStudentId(user.studentId);
-            if (externalUser?.serialNumber) {
-                console.log('✅ [refreshSession] Found serialNumber in ExternalUser:', externalUser.serialNumber);
-                user.serialNumber = externalUser.serialNumber;
-            }
-        }
-
         return this.generateSession(user);
     }
-    
-    private async generateSession(user: any): Promise<AuthResponse> {
-        console.log('🔍 [generateSession] Input user:', {
-            id: user.id,
-            studentId: user.studentId,
-            serialNumber: user.serialNumber,
-            name: user.name
-        });
 
+    private async generateSession(user: UserWithProfile): Promise<AuthResponse> {
         const accessToken = jwtLib.signAccessToken({
             sub: user.id,
-            role: user.userType
+            role: user.role
         })
 
         const refreshToken = jwtLib.signRefreshToken({
@@ -151,22 +124,19 @@ export class AuthService {
 
         await this.authRepository.saveRefreshToken({userId: user.id,refreshToken,expiredAt})
 
-        const response = {
+        const profile = user.externalUser
+        return {
             accessToken,
             refreshToken,
             user: {
                 id: user.id,
-                name: user.name,
-                userType: user.userType,
-                grade: user.grade,
-                major: user.major,
+                name: profile.name,
+                userType: profile.userType,
+                grade: profile.grade,
+                major: profile.major,
                 studentId: user.studentId,
-                serialNumber: user.serialNumber
+                serialNumber: profile.serialNumber
             }
         };
-
-        console.log('🔍 [generateSession] Response user:', response.user);
-
-        return response;
     }
 }

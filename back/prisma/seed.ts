@@ -1,4 +1,4 @@
-import { UserType, ItemStatus } from "../src/generated/prisma/client.js";
+import { UserType, ItemStatus, Role } from "../src/generated/prisma/client.js";
 import { prisma } from "../src/lib/prisma.js";
 import bcrypt from "bcrypt";
 
@@ -13,7 +13,7 @@ async function main() {
   await prisma.itemType.deleteMany();
   await prisma.genre.deleteMany();
   await prisma.category.deleteMany();
-  await prisma.rentalSetting.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.verificationCode.deleteMany();
   await prisma.user.deleteMany();
@@ -21,7 +21,8 @@ async function main() {
 
   console.log("🗑️  Cleaned up existing data");
 
-  // ========== External Users ==========
+  // ========== External Users(名簿) ==========
+  // 20260001・20260002・99990001は未登録(新規登録の確かめ用)。20240001〜003は下で登録済みにする
   const externalUsers = [
     {
       studentId: "20260001",
@@ -45,10 +46,46 @@ async function main() {
       studentId: "99990001",
       name: "管理者 先生",
       email: "admin@example.com",
-      userType: UserType.ADMIN,
+      userType: UserType.FACULTY,
       grade: null,
       major: "教務部",
       serialNumber: "SN-ADMIN",
+    },
+    {
+      studentId: "20240001",
+      name: "山田 太郎",
+      email: "yamada@example.com",
+      userType: UserType.STUDENT,
+      grade: "2年",
+      major: "情報工学科",
+      serialNumber: "IC-CARD-001",
+    },
+    {
+      studentId: "20240002",
+      name: "佐藤 花子",
+      email: "sato@example.com",
+      userType: UserType.STUDENT,
+      grade: "3年",
+      major: "デザイン学科",
+      serialNumber: "IC-CARD-002",
+    },
+    {
+      studentId: "20240003",
+      name: "鈴木 次郎",
+      email: "suzuki@example.com",
+      userType: UserType.STUDENT,
+      grade: "1年",
+      major: "機械工学科",
+      serialNumber: "IC-CARD-003",
+    },
+    {
+      studentId: "90240001",
+      name: "高橋 先生",
+      email: "takahashi@example.com",
+      userType: UserType.FACULTY,
+      grade: null,
+      major: "情報工学科",
+      serialNumber: "IC-CARD-ADMIN",
     },
   ];
 
@@ -61,58 +98,22 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   const user1 = await prisma.user.create({
-    data: {
-      studentId: "S2024001",
-      name: "山田 太郎",
-      email: "yamada@example.com",
-      passwordHash: hashedPassword,
-      serialNumber: "IC-CARD-001", // タブレット認証用シリアル番号
-      userType: UserType.STUDENT,
-      grade: "2年",
-      major: "情報工学科",
-      isActive: true,
-    },
+    data: { studentId: "20240001", passwordHash: hashedPassword },
   });
 
   const user2 = await prisma.user.create({
-    data: {
-      studentId: "S2024002",
-      name: "佐藤 花子",
-      email: "sato@example.com",
-      passwordHash: hashedPassword,
-      serialNumber: "IC-CARD-002",
-      userType: UserType.STUDENT,
-      grade: "3年",
-      major: "デザイン学科",
-      isActive: true,
-    },
+    data: { studentId: "20240002", passwordHash: hashedPassword },
   });
 
-  const user3 = await prisma.user.create({
-    data: {
-      studentId: "S2024003",
-      name: "鈴木 次郎",
-      email: "suzuki@example.com",
-      passwordHash: hashedPassword,
-      serialNumber: "IC-CARD-003",
-      userType: UserType.STUDENT,
-      grade: "1年",
-      major: "機械工学科",
-      isActive: true,
-    },
+  await prisma.user.create({
+    data: { studentId: "20240003", passwordHash: hashedPassword, maxItems: 3 },
+  });
+
+  await prisma.user.create({
+    data: { studentId: "90240001", passwordHash: hashedPassword, role: Role.ADMIN },
   });
 
   console.log("✅ Users created");
-
-  // ========== Rental Settings ==========
-  await prisma.rentalSetting.createMany({
-    data: [
-      { userId: user1.id, canBorrow: true, maxItems: 5 },
-      { userId: user2.id, canBorrow: true, maxItems: 5 },
-      { userId: user3.id, canBorrow: true, maxItems: 3 },
-    ],
-  });
-  console.log("✅ Rental settings created");
 
   // ========== Categories ==========
   const electronicsCategory = await prisma.category.create({
@@ -268,34 +269,12 @@ async function main() {
     dueDate.setDate(dueDate.getDate() + 7);
 
     await prisma.rental.create({
-      data: {
-        itemId: macItem.id,
-        userId: user1.id,
-        rentedAt,
-        dueDate,
-        status: "RENTING",
-      },
-    });
-
-    await prisma.item.update({
-      where: { id: macItem.id },
-      data: { status: ItemStatus.RENTED },
+      data: { itemId: macItem.id, userId: user1.id, rentedAt, dueDate },
     });
 
     // user2がiPadを借りている状態
     await prisma.rental.create({
-      data: {
-        itemId: iPadItem.id,
-        userId: user2.id,
-        rentedAt,
-        dueDate,
-        status: "RENTING",
-      },
-    });
-
-    await prisma.item.update({
-      where: { id: iPadItem.id },
-      data: { status: ItemStatus.RENTED },
+      data: { itemId: iPadItem.id, userId: user2.id, rentedAt, dueDate },
     });
 
     console.log("✅ Test rentals created");
@@ -305,7 +284,9 @@ async function main() {
   console.log("\n📝 Test accounts:");
   console.log("  Student 1: IC-CARD-001 (山田 太郎) - MacBook借りてる");
   console.log("  Student 2: IC-CARD-002 (佐藤 花子) - iPad借りてる");
-  console.log("  Student 3: IC-CARD-003 (鈴木 次郎) - 何も借りてない");
+  console.log("  Student 3: IC-CARD-003 (鈴木 次郎) - 何も借りてない(上限3)");
+  console.log("  Admin:     90240001 / IC-CARD-ADMIN (高橋 先生) - 管理者");
+  console.log("  パスワードはすべて password123");
   console.log("\n🔖 Test barcodes:");
   console.log("  MacBooks: MAC-001 (貸出中), MAC-002, MAC-003");
   console.log("  iPads: IPAD-001 (貸出中), IPAD-002, IPAD-003, IPAD-004");

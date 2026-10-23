@@ -230,6 +230,7 @@ export type ExternalUserWhereInput = {
   major?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
   studentId?: Prisma.StringFilter<"ExternalUser"> | string
   createdAt?: Prisma.DateTimeFilter<"ExternalUser"> | Date | string
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type ExternalUserOrderByWithRelationInput = {
@@ -244,24 +245,26 @@ export type ExternalUserOrderByWithRelationInput = {
   major?: Prisma.SortOrderInput | Prisma.SortOrder
   studentId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type ExternalUserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  serialNumber?: string
   studentId?: string
   AND?: Prisma.ExternalUserWhereInput | Prisma.ExternalUserWhereInput[]
   OR?: Prisma.ExternalUserWhereInput[]
   NOT?: Prisma.ExternalUserWhereInput | Prisma.ExternalUserWhereInput[]
   slackUserId?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
   slackTeamId?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
-  serialNumber?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
   userType?: Prisma.EnumUserTypeFilter<"ExternalUser"> | $Enums.UserType
   name?: Prisma.StringFilter<"ExternalUser"> | string
   grade?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
   major?: Prisma.StringNullableFilter<"ExternalUser"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ExternalUser"> | Date | string
-}, "id" | "email" | "studentId">
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+}, "id" | "email" | "serialNumber" | "studentId">
 
 export type ExternalUserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -309,6 +312,7 @@ export type ExternalUserCreateInput = {
   major?: string | null
   studentId: string
   createdAt?: Date | string
+  user?: Prisma.UserCreateNestedOneWithoutExternalUserInput
 }
 
 export type ExternalUserUncheckedCreateInput = {
@@ -323,6 +327,7 @@ export type ExternalUserUncheckedCreateInput = {
   major?: string | null
   studentId: string
   createdAt?: Date | string
+  user?: Prisma.UserUncheckedCreateNestedOneWithoutExternalUserInput
 }
 
 export type ExternalUserUpdateInput = {
@@ -337,6 +342,7 @@ export type ExternalUserUpdateInput = {
   major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   studentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneWithoutExternalUserNestedInput
 }
 
 export type ExternalUserUncheckedUpdateInput = {
@@ -351,6 +357,7 @@ export type ExternalUserUncheckedUpdateInput = {
   major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   studentId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUncheckedUpdateOneWithoutExternalUserNestedInput
 }
 
 export type ExternalUserCreateManyInput = {
@@ -395,6 +402,11 @@ export type ExternalUserUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type ExternalUserScalarRelationFilter = {
+  is?: Prisma.ExternalUserWhereInput
+  isNot?: Prisma.ExternalUserWhereInput
+}
+
 export type ExternalUserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -437,6 +449,96 @@ export type ExternalUserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
 }
 
+export type ExternalUserCreateNestedOneWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ExternalUserCreateWithoutUserInput, Prisma.ExternalUserUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ExternalUserCreateOrConnectWithoutUserInput
+  connect?: Prisma.ExternalUserWhereUniqueInput
+}
+
+export type ExternalUserUpdateOneRequiredWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ExternalUserCreateWithoutUserInput, Prisma.ExternalUserUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ExternalUserCreateOrConnectWithoutUserInput
+  upsert?: Prisma.ExternalUserUpsertWithoutUserInput
+  connect?: Prisma.ExternalUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ExternalUserUpdateToOneWithWhereWithoutUserInput, Prisma.ExternalUserUpdateWithoutUserInput>, Prisma.ExternalUserUncheckedUpdateWithoutUserInput>
+}
+
+export type EnumUserTypeFieldUpdateOperationsInput = {
+  set?: $Enums.UserType
+}
+
+export type ExternalUserCreateWithoutUserInput = {
+  id?: string
+  email: string
+  slackUserId?: string | null
+  slackTeamId?: string | null
+  serialNumber?: string | null
+  userType?: $Enums.UserType
+  name: string
+  grade?: string | null
+  major?: string | null
+  studentId: string
+  createdAt?: Date | string
+}
+
+export type ExternalUserUncheckedCreateWithoutUserInput = {
+  id?: string
+  email: string
+  slackUserId?: string | null
+  slackTeamId?: string | null
+  serialNumber?: string | null
+  userType?: $Enums.UserType
+  name: string
+  grade?: string | null
+  major?: string | null
+  studentId: string
+  createdAt?: Date | string
+}
+
+export type ExternalUserCreateOrConnectWithoutUserInput = {
+  where: Prisma.ExternalUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.ExternalUserCreateWithoutUserInput, Prisma.ExternalUserUncheckedCreateWithoutUserInput>
+}
+
+export type ExternalUserUpsertWithoutUserInput = {
+  update: Prisma.XOR<Prisma.ExternalUserUpdateWithoutUserInput, Prisma.ExternalUserUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ExternalUserCreateWithoutUserInput, Prisma.ExternalUserUncheckedCreateWithoutUserInput>
+  where?: Prisma.ExternalUserWhereInput
+}
+
+export type ExternalUserUpdateToOneWithWhereWithoutUserInput = {
+  where?: Prisma.ExternalUserWhereInput
+  data: Prisma.XOR<Prisma.ExternalUserUpdateWithoutUserInput, Prisma.ExternalUserUncheckedUpdateWithoutUserInput>
+}
+
+export type ExternalUserUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ExternalUserUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  slackUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slackTeamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userType?: Prisma.EnumUserTypeFieldUpdateOperationsInput | $Enums.UserType
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  grade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  major?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type ExternalUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -451,6 +553,7 @@ export type ExternalUserSelect<ExtArgs extends runtime.Types.Extensions.Internal
   major?: boolean
   studentId?: boolean
   createdAt?: boolean
+  user?: boolean | Prisma.ExternalUser$userArgs<ExtArgs>
 }, ExtArgs["result"]["externalUser"]>
 
 export type ExternalUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -496,10 +599,17 @@ export type ExternalUserSelectScalar = {
 }
 
 export type ExternalUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "slackUserId" | "slackTeamId" | "serialNumber" | "userType" | "name" | "grade" | "major" | "studentId" | "createdAt", ExtArgs["result"]["externalUser"]>
+export type ExternalUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.ExternalUser$userArgs<ExtArgs>
+}
+export type ExternalUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type ExternalUserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $ExternalUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ExternalUser"
-  objects: {}
+  objects: {
+    user: Prisma.$UserPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     email: string
@@ -906,6 +1016,7 @@ readonly fields: ExternalUserFieldRefs;
  */
 export interface Prisma__ExternalUserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  user<T extends Prisma.ExternalUser$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ExternalUser$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -963,6 +1074,10 @@ export type ExternalUserFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * Filter, which ExternalUser to fetch.
    */
   where: Prisma.ExternalUserWhereUniqueInput
@@ -981,6 +1096,10 @@ export type ExternalUserFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * Filter, which ExternalUser to fetch.
    */
   where: Prisma.ExternalUserWhereUniqueInput
@@ -998,6 +1117,10 @@ export type ExternalUserFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the ExternalUser
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
   /**
    * Filter, which ExternalUser to fetch.
    */
@@ -1047,6 +1170,10 @@ export type ExternalUserFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * Filter, which ExternalUser to fetch.
    */
   where?: Prisma.ExternalUserWhereInput
@@ -1095,6 +1222,10 @@ export type ExternalUserFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * Filter, which ExternalUsers to fetch.
    */
   where?: Prisma.ExternalUserWhereInput
@@ -1137,6 +1268,10 @@ export type ExternalUserCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the ExternalUser
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
   /**
    * The data needed to create a ExternalUser.
    */
@@ -1185,6 +1320,10 @@ export type ExternalUserUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the ExternalUser
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
   /**
    * The data needed to update a ExternalUser.
    */
@@ -1252,6 +1391,10 @@ export type ExternalUserUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * The filter to search for the ExternalUser to update in case it exists.
    */
   where: Prisma.ExternalUserWhereUniqueInput
@@ -1278,6 +1421,10 @@ export type ExternalUserDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
+  /**
    * Filter which ExternalUser to delete.
    */
   where: Prisma.ExternalUserWhereUniqueInput
@@ -1298,6 +1445,25 @@ export type ExternalUserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
+ * ExternalUser.user
+ */
+export type ExternalUser$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
  * ExternalUser without action
  */
 export type ExternalUserDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1309,4 +1475,8 @@ export type ExternalUserDefaultArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the ExternalUser
    */
   omit?: Prisma.ExternalUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExternalUserInclude<ExtArgs> | null
 }

@@ -1,0 +1,27 @@
+---
+paths:
+  - "front/src/**"
+---
+
+# フロントエンド(Next.js)のルール
+
+## 置き場所
+
+- `app/`: ページ。データの取得や状態はhooksに出し、ページは組み立てに専念する
+- `components/<画面>/`: 部品。UIはHeroUI(`@heroui/react`)とTailwindで作る
+- `hooks/`: `useAuth`・`useAuthForm`・`useItems`・`useTablet`・`useTabletOperations`
+- `contexts/`: `AuthContext`(Webのログイン状態)、`TabletContext`(タブレットのセッション)
+- `services/`: API呼び出し。`ApiService`を継承して`get`/`post`を使う。`lib/api.ts`・`lib/auth-api.ts`は古い重複なので新しく使わない
+- `types/`: APIの型。**バックエンドの`sendSuccess`の形(`{ success, ...data }`)に合わせる**
+
+## 認証
+
+- アクセストークンは`AuthContext`がCookie`accessToken`(JSから読める)に保存する。リフレッシュトークンはHttpOnly Cookieなので、触れるのはサーバーだけ。リフレッシュ・ログイン・ログアウトの呼び出しには`credentials: "include"`が要る
+- 起動時の流れ: アクセストークンで`/api/items/me` → 401ならリフレッシュ → 失敗ならログアウト状態。ページは`useAuth()`を使うだけでよい
+- `dashboard`は初期化を2秒待ってから`/auth`へ送る(初期化中に送ってしまう不具合の回避)。直すなら`AuthContext`に読み込み中の状態を持たせる
+
+## 気をつけること
+
+- `services/item.service.ts`の`getItemsByTitle`が呼ぶ`/api/items/:title`はバックエンドに無い。詳細ページは`useItems`の全件から絞り込んでいる
+- `app/page.tsx`はNext.jsの初期のまま
+- カメラでの読み取りは`html5-qrcode`(`components/BarcodeScanner.tsx`)、バーコードの表示は`react-barcode`
