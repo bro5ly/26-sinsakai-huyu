@@ -81,4 +81,6 @@
 | `REFACTORING_PROGRESS.md` | 2026-02-12のフロントのリファクタリングと、`serialNumber`の不具合を追った記録 |
 | `README.md` | 発表用の紹介(画面写真・利用者の流れ・今後の展望) |
 
+観点ごとのスキル(TDD・テスト・Express・TypeScript・Prisma・DB・API・アーキテクチャ・セキュリティ・認証・CI/CD・Next.js・Docker・Git・コミット・要件定義など)は`.claude/skills/`にある。第三者のOSSなので、出典・ライセンス・取り込む前の確認・改変は`.claude/skills/ATTRIBUTIONS.md`。**スキルの内容とこのプロジェクトの決まり(このファイル・`.claude/rules/`・`docs/`)が食い違うときは、プロジェクトの決まりを優先する。** スキルを足す・更新するときは、ATTRIBUTIONS.mdの確認をやり直し、改変したらその節にライセンスと変えたことを書く。
+
 領域ごとの細かいルールは`.claude/rules/`にあり、該当するファイルを触ったときに自動で読み込まれる: `backend.md`(`back/src/`)、`database.md`(`back/prisma/`)、`frontend.md`(`front/src/`)。
