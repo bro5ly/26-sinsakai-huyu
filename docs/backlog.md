@@ -46,7 +46,21 @@
 - [ ] 名簿を使うservice(登録・ログイン・リフレッシュ・`/items/me`・カード認証)に`Roster`を外から渡す。テストでは偽の名簿を渡す
 - [ ] 名簿に無い人・名簿が止まっているときの扱い(Q12・Q13)を判断表にする
 
-## 0.7 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
+## 0.7 APIの形を`shared/`にまとめる(2026-10-23決定)
+
+型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
+
+- [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
+- [ ] `shared/`を作り、APIの入力と出力の形をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
+- [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
+- [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
+- [ ] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる
+- [ ] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(`npm test`・`npm run typecheck`・`npm run check`など。中で`docker compose exec ...`を呼ぶ)。CLAUDE.mdのコマンドの表も直す
+- [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
+
+## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
+
+新しいAPIの形は`shared/`に書く(0.7)。
 
 - [ ] 判断表T(タブレットで借りられるか)から例の表を作る
 - [ ] タブレットの端末の登録(R-A1〜A3)
@@ -83,7 +97,7 @@
 
 - [ ] 利用者の情報を出す`console.log`を消す(ずれ5)
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
-- [ ] フロントの古いAPI呼び出し(`lib/api.ts`・`lib/auth-api.ts`)を`services/`にまとめる
+- (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
 - [ ] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11)
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
 

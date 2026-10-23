@@ -317,6 +317,7 @@
 | 14 | カード認証の応答に名前・学籍番号・学年・専攻・借りている物が入り、回数の制限も無い | `rental.service.ts`の`signInWithIc` | `docs/auth.md` R-A12・A13・4.6 |
 | 15 | タブレットのセッションが長く取り消せない(トークン3分、画面は無操作1分、完了画面から続けて操作できる) | `lib/jwt.ts`、`front/src/hooks/useTabletOperations.ts` | `docs/auth.md` R-A8〜A11 |
 | 16 | 無効な人(`is_active = false`)も、Webのログインとタブレットで認証できる | `auth.service.ts`、`rental.repository.ts` | `docs/auth.md` R-A14 |
+| 17 | APIの型を4か所で別々に書いていて、ずれている(画面の`UserType`に`FACULTY`が無く`TEACHER`がある、`ItemStatus`に`LOST`・`DISPOSED`が無く`RETIRED`がある、`rentalSetting`の項目が違う、カード認証の`user`の項目が違う)。ダッシュボードは`as any`でずれを隠している | `front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`、`back/src/features/*/…types.ts` | `docs/backlog.md`の0.7 |
 
 ## 11. 要確認
 
