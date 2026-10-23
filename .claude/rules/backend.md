@@ -20,5 +20,5 @@ APIの一覧と認証の流れは`docs/architecture.md`。
 - `tabletMiddleware`は失敗を`next(err)`で渡しているが、エラーハンドラが無いのでJSONではなくExpress既定の応答になる。直すなら`handleError(res, ...)`に揃える
 - アクセストークンとタブレット用トークンは同じ秘密鍵で署名され、ミドルウェアは`role`を見ていない(互いに通ってしまう)。権限で分けるならここを直す
 - 登録用トークンはリフレッシュトークンの秘密鍵で署名されている(`lib/jwt.ts`の`REGISTRATION_SECRET`)
-- 名前・メール・カードの番号は`ExternalUser`にだけある。`User`を取るときは`externalUser`を一緒に`select`する(`UserRepository`の`userWithProfile`)
+- 名前・メール・カードの番号は名簿(今は`ExternalUser`)にだけある。本番の名簿は学校のDBかAPIになるので、**名簿を読むJOIN(`externalUser`)を新しく増やさない**。名簿の窓口(`Roster`)ができたらそこを通す(`docs/backlog.md`の0.6)
 - 貸し出しの状態と物品の「貸出中」はDBに無い。`rental.status.ts`の`rentalStatus`・`itemAvailability`で組み立てて返す

@@ -97,6 +97,8 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 | `rental` | 貸し出しの記録。`rentedAt`・`dueDate`・`returnedAt`。状態の列は持たない |
 | `notification` | 通知の予定(Slack用)。未使用 |
 
+**名簿は本番では学校のDBかAPIになる前提**(2026-10-23決定)。今の`external_user`表と、`user.student_id`の外部キー・JOINは仮の形で、名簿の窓口(`Roster`)に置き換える予定(`docs/backlog.md`の0.6)。新しく名簿を読むコードを書くときは、`externalUser`のJOINを増やさない。
+
 2026-10-23に、名簿の写し・`rental_setting`・「貸出中」の二重管理をやめた(理由は`docs/spec.md`の要確認Q5と`docs/backlog.md`の0.5)。
 
 ### 状態
