@@ -14,7 +14,7 @@
 - [x] `back/`にVitest 5.0.5を入れ、`docker compose exec api npm test`で動くようにする(Vitest 5はNode 22以上なので、APIのイメージをNode 20(サポート切れ)から24に上げた)
 - [x] テストの置き場所を決める(`src/`の中で元のファイルの隣に`*.test.ts`)
 - [x] CLAUDE.mdのコマンドの表に足す
-- [ ] `rental.status.test.ts`の`it.todo`(S1〜S6・I1〜I4)を書く(実装を優先する方針になったので、Claudeが書く)
+- [x] `rental.status.test.ts`(S1〜S6・I1〜I4)を書いた。期限の比べ方を`<=`に変えるとS4が赤になることも確かめた
 - [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める
 
 ## 0.5 データベースの見直し(貸し出しのリファクタの前に)
