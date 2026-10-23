@@ -1,31 +1,19 @@
 import {prisma} from "@/lib/prisma.js"
 
-// 名前・メール・カードの番号は名簿(ExternalUser)にだけあるので、いつも一緒に取る
-const userWithProfile = {
+// このシステムのDBにある利用者だけを読む。名前・メール・カードの番号は名簿の窓口(Roster)から取る
+const userSelect = {
     id: true,
     studentId: true,
     passwordHash: true,
     role: true,
-    externalUser: {
-        select: {
-            name: true,
-            email: true,
-            serialNumber: true,
-            userType: true,
-            grade: true,
-            major: true,
-        }
-    }
 } as const
-
-export type UserWithProfile = NonNullable<Awaited<ReturnType<UserRepository["findById"]>>>
 
 export class UserRepository {
     constructor(private readonly db = prisma){}
     async create(data: {studentId: string, passwordHash: string}){
         return await this.db.user.create({
             data,
-            select: userWithProfile
+            select: userSelect
         })
     }
 
@@ -34,7 +22,7 @@ export class UserRepository {
             where: {
                 id: userId
             },
-            select: userWithProfile
+            select: userSelect
         })
     }
 
@@ -43,17 +31,7 @@ export class UserRepository {
             where: {
                 studentId
             },
-            select: userWithProfile
-        })
-    }
-
-    async findByExternalStudentId(studentId: string){
-        return await this.db.externalUser.findUnique({
-            where: {studentId},
-            select: {
-                email: true,
-                studentId: true,
-            }
+            select: userSelect
         })
     }
 }

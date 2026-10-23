@@ -1,23 +1,28 @@
 import * as jwtLib from "@/lib/jwt.js"
 import bcrypt from "bcrypt"
-import { UserService } from "../user/UserService.js"
-import type { UserWithProfile } from "../user/UserRepository.js"
+import type { UserRepository } from "../user/UserRepository.js"
+import type { Roster, RosterEntry } from "../roster/roster.js"
 import type { AuthRepository } from "./auth.repository.js"
 import type { MailService } from "@/lib/mail.js"
 import { AppError } from "@/lib/error.js"
 import type { AuthResponse, VerificationResponse, VerifyCodeResponse } from "./auth.types.js"
 
+// テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
+export type UserStore = Pick<UserRepository, "create" | "findById" | "findByStudentId">
+export type AuthStore = Pick<AuthRepository, "saveRefreshToken" | "findRefreshToken" | "saveTmpCode" | "checkTmpCode" | "deleteTmpCode">
+export type Mailer = Pick<MailService, "sendCode">
+type User = NonNullable<Awaited<ReturnType<UserStore["findById"]>>>
 
 export class AuthService {
-    constructor(private userService: UserService, private authRepository: AuthRepository, private mailService: MailService){}
+    constructor(private users: UserStore, private authRepository: AuthStore, private mailService: Mailer, private roster: Roster){}
 
     requestVerification = async (studentId: string): Promise<VerificationResponse> => {
         //1. 受け取った学籍番号が別dbにあるか確認
-        const student = await this.userService.findByExternalStudentId(studentId);
+        const student = await this.roster.findByStudentId(studentId);
         if(!student) throw new AppError('ユーザーが見つかりません',404,'SUTUDENT_ID_NOT_FOUND')
 
         
-        const existsUser = await this.userService.findByStudentId(studentId)
+        const existsUser = await this.users.findByStudentId(studentId)
         if(existsUser) throw new AppError('すでに登録されています',409,'ALREADY_EXISTS_USER')
         //2. 存在する場合、dbからemailを取得
         //3. コードを作成してemailに送信
@@ -61,24 +66,25 @@ export class AuthService {
 
         const {studentId} = jwtLib.verifyRegistrationToken(registerToken) as {studentId: string}
 
-        const existsUser = await this.userService.findByStudentId(studentId)
+        const existsUser = await this.users.findByStudentId(studentId)
         if(existsUser) throw new AppError('すでに登録されています',409,'ALREADY_EXISTS_USER')
 
-        const passwordHash = await bcrypt.hash(plainPassword,10)
+        const entry = await this.roster.findByStudentId(studentId)
+        if(!entry) throw new AppError('ユーザーの作成に失敗しました',400,'CREATE_USER_FAILED')
 
-        const user = await this.userService.create(studentId, passwordHash)
-        if(!user) throw new AppError('ユーザーの作成に失敗しました',400,'CREATE_USER_FAILED')
-         
-        return this.generateSession(user)
+        const passwordHash = await bcrypt.hash(plainPassword,10)
+        const user = await this.users.create({studentId, passwordHash})
+
+        return this.generateSession(user, entry)
     }
 
     login = async (studentId: string, plainPassword: string) => {
-        const existsUser = await this.userService.findByStudentId(studentId)
+        const existsUser = await this.users.findByStudentId(studentId)
         if(!existsUser) throw new AppError('ユーザーが見つかりません。',404,'USER_NOT_FOUND')
         const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
         if(!isMatch) throw new AppError('パスワードが間違っています',400,'INVALID_PASSWORD')
 
-        return this.generateSession(existsUser)
+        return this.generateSession(existsUser, await this.rosterEntryOf(existsUser))
     }
 
 
@@ -102,13 +108,20 @@ export class AuthService {
         }
 
         // 3. 全てOKなら新しいセッションを発行
-        const user = await this.userService.findById(payload.sub);
+        const user = await this.users.findById(payload.sub);
         if (!user) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
 
-        return this.generateSession(user);
+        return this.generateSession(user, await this.rosterEntryOf(user));
     }
 
-    private async generateSession(user: UserWithProfile): Promise<AuthResponse> {
+    // 名簿から消えた人(卒業など)は、登録が残っていても通さない(docs/spec.md Q13)
+    private async rosterEntryOf(user: User): Promise<RosterEntry> {
+        const entry = await this.roster.findByStudentId(user.studentId)
+        if (!entry) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND')
+        return entry
+    }
+
+    private async generateSession(user: User, profile: RosterEntry): Promise<AuthResponse> {
         const accessToken = jwtLib.signAccessToken({
             sub: user.id,
             role: user.role
@@ -124,7 +137,6 @@ export class AuthService {
 
         await this.authRepository.saveRefreshToken({userId: user.id,refreshToken,expiredAt})
 
-        const profile = user.externalUser
         return {
             accessToken,
             refreshToken,
