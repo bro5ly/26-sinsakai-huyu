@@ -25,7 +25,7 @@ export const SignupRequestForm = ({
       <Input
         label="Student ID"
         variant="flat"
-        placeholder="S2024001"
+        placeholder="20240001"
         value={studentId}
         onValueChange={onStudentIdChange}
         description="A code will be sent to your registered email."

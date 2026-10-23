@@ -22,7 +22,7 @@ async function main() {
   console.log("🗑️  Cleaned up existing data");
 
   // ========== External Users(名簿) ==========
-  // 20260001・20260002・99990001は未登録(新規登録の確かめ用)。S2024001〜003は下で登録済みにする
+  // 20260001・20260002・99990001は未登録(新規登録の確かめ用)。20240001〜003は下で登録済みにする
   const externalUsers = [
     {
       studentId: "20260001",
@@ -52,7 +52,7 @@ async function main() {
       serialNumber: "SN-ADMIN",
     },
     {
-      studentId: "S2024001",
+      studentId: "20240001",
       name: "山田 太郎",
       email: "yamada@example.com",
       userType: UserType.STUDENT,
@@ -61,7 +61,7 @@ async function main() {
       serialNumber: "IC-CARD-001",
     },
     {
-      studentId: "S2024002",
+      studentId: "20240002",
       name: "佐藤 花子",
       email: "sato@example.com",
       userType: UserType.STUDENT,
@@ -70,7 +70,7 @@ async function main() {
       serialNumber: "IC-CARD-002",
     },
     {
-      studentId: "S2024003",
+      studentId: "20240003",
       name: "鈴木 次郎",
       email: "suzuki@example.com",
       userType: UserType.STUDENT,
@@ -79,7 +79,7 @@ async function main() {
       serialNumber: "IC-CARD-003",
     },
     {
-      studentId: "T2024001",
+      studentId: "90240001",
       name: "高橋 先生",
       email: "takahashi@example.com",
       userType: UserType.FACULTY,
@@ -98,19 +98,19 @@ async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
   const user1 = await prisma.user.create({
-    data: { studentId: "S2024001", passwordHash: hashedPassword },
+    data: { studentId: "20240001", passwordHash: hashedPassword },
   });
 
   const user2 = await prisma.user.create({
-    data: { studentId: "S2024002", passwordHash: hashedPassword },
+    data: { studentId: "20240002", passwordHash: hashedPassword },
   });
 
   await prisma.user.create({
-    data: { studentId: "S2024003", passwordHash: hashedPassword, maxItems: 3 },
+    data: { studentId: "20240003", passwordHash: hashedPassword, maxItems: 3 },
   });
 
   await prisma.user.create({
-    data: { studentId: "T2024001", passwordHash: hashedPassword, role: Role.ADMIN },
+    data: { studentId: "90240001", passwordHash: hashedPassword, role: Role.ADMIN },
   });
 
   console.log("✅ Users created");
@@ -285,7 +285,7 @@ async function main() {
   console.log("  Student 1: IC-CARD-001 (山田 太郎) - MacBook借りてる");
   console.log("  Student 2: IC-CARD-002 (佐藤 花子) - iPad借りてる");
   console.log("  Student 3: IC-CARD-003 (鈴木 次郎) - 何も借りてない(上限3)");
-  console.log("  Admin:     T2024001 / IC-CARD-ADMIN (高橋 先生) - 管理者");
+  console.log("  Admin:     90240001 / IC-CARD-ADMIN (高橋 先生) - 管理者");
   console.log("  パスワードはすべて password123");
   console.log("\n🔖 Test barcodes:");
   console.log("  MacBooks: MAC-001 (貸出中), MAC-002, MAC-003");
