@@ -1,4 +1,7 @@
-import type { UserType } from "@/generated/prisma/enums.js";
+// 名簿上の種別。名簿の窓口が自分で持ち、このシステムのDB(Prisma)の型には依存しない。
+// 学校の名簿の呼び方(「生徒」など)からの変換は、各実装の中で行う
+export const rosterUserTypes = ["STUDENT", "FACULTY", "EXTERNAL"] as const;
+export type RosterUserType = (typeof rosterUserTypes)[number];
 
 // 学校の名簿の1人分。名前・メール・カードの番号は名簿にだけあり、このシステムのDBには写さない
 export interface RosterEntry {
@@ -6,7 +9,7 @@ export interface RosterEntry {
     name: string;
     email: string;
     serialNumber: string | null;
-    userType: UserType;
+    userType: RosterUserType;
     grade: string | null;
     major: string | null;
 }

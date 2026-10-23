@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma.js";
-import type { Roster, RosterEntry } from "./roster.js";
+import type { UserType } from "@/generated/prisma/enums.js";
+import type { Roster, RosterEntry, RosterUserType } from "./roster.js";
 
 const entrySelect = {
     studentId: true,
@@ -11,19 +12,33 @@ const entrySelect = {
     major: true,
 } as const;
 
-// 仮の名簿(external_user表)を読む実装。学校のDB・APIの実装ができたら、route での組み立てを差し替える
+// 表で対応させる。どちらかの種別が増えたら、ここが型チェックで落ちる
+const toRosterUserType: Record<UserType, RosterUserType> = {
+    STUDENT: "STUDENT",
+    FACULTY: "FACULTY",
+    EXTERNAL: "EXTERNAL",
+};
+
+type Row = { studentId: string; name: string; email: string; serialNumber: string | null; userType: UserType; grade: string | null; major: string | null };
+
+const toEntry = (row: Row): RosterEntry => ({ ...row, userType: toRosterUserType[row.userType] });
+
+// 仮の名簿(external_user表)を読む実装。学校のDB・APIの実装ができたら、組み立てを差し替える
 export class PrismaRoster implements Roster {
     constructor(private readonly db = prisma) {}
 
     async findByStudentId(studentId: string): Promise<RosterEntry | null> {
-        return await this.db.externalUser.findUnique({ where: { studentId }, select: entrySelect });
+        const row = await this.db.externalUser.findUnique({ where: { studentId }, select: entrySelect });
+        return row ? toEntry(row) : null;
     }
 
     async findBySerialNumber(serialNumber: string): Promise<RosterEntry | null> {
-        return await this.db.externalUser.findUnique({ where: { serialNumber }, select: entrySelect });
+        const row = await this.db.externalUser.findUnique({ where: { serialNumber }, select: entrySelect });
+        return row ? toEntry(row) : null;
     }
 
     async findManyByStudentIds(studentIds: string[]): Promise<RosterEntry[]> {
-        return await this.db.externalUser.findMany({ where: { studentId: { in: studentIds } }, select: entrySelect });
+        const rows = await this.db.externalUser.findMany({ where: { studentId: { in: studentIds } }, select: entrySelect });
+        return rows.map(toEntry);
     }
 }
