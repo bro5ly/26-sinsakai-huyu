@@ -4,19 +4,12 @@ import { prisma } from "@/lib/prisma.js";
 
 export class RentalRepository {
     constructor (private readonly db = prisma){}
-    async findBySerialNumber(serialNumber: string){
-        return await this.db.user.findFirst({
-            where: {externalUser: {serialNumber}},
+    async findUserWithActiveRentals(studentId: string){
+        return await this.db.user.findUnique({
+            where: {studentId},
             select:{
                 id: true,
                 studentId: true,
-                externalUser: {
-                    select: {
-                        name: true,
-                        grade: true,
-                        major: true,
-                    }
-                },
                 rentals:{
                     where: {returnedAt: null},
                     include:{
