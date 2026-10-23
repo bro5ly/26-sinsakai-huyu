@@ -4,8 +4,8 @@ description: Use when implementing any feature or bugfix, before writing impleme
 ---
 
 > **このプロジェクトでの使い方(この節だけ改変で追加)**
-> - **テストは開発者が書く**(学ぶため。CLAUDE.mdの「開発の進め方」)。Claudeはテストを書かず、この手順を案内し、例の表・`it.todo`の並び・穴埋めの形を用意し、書かれたテストと赤・緑を確かめる
-> - 既存のコードには「Delete means delete」を当てはめない。動きを変えない整理(`refactor:`)は、先に今の動きを確かめるテストを開発者が書いて緑にしてから行う(`docs/backlog.md`の「進め方」)
+> - **テストを誰が書くかはCLAUDE.mdの「開発の進め方」に従う**(2026-10-23から: 実装を優先し、Claudeがテストも書いてこの手順で進める。最後のほうの機能だけ開発者が練習で書き、そこではClaudeは手順の案内・例の表・`it.todo`・穴埋めの形を用意して確かめる)
+> - 既存のコードには「Delete means delete」を当てはめない。動きを変えない整理(`refactor:`)は、先に今の動きを確かめるテストを書いて緑にしてから行う(`docs/backlog.md`の「進め方」)
 > - テストはDockerの中で動かす(`docker compose exec api npm test`)
 >
 > 出典: [obra/superpowers](https://github.com/obra/superpowers) `skills/test-driven-development`(MIT License, Copyright (c) 2025 Jesse Vincent。全文は同じフォルダの`LICENSE-upstream`)。2026-10-23にこの節を足した。以下の本文は元のまま。

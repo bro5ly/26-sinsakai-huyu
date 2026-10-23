@@ -6,7 +6,7 @@
 
 | 観点 | スキル | 出典(取得したコミット) | ライセンス | 改変 |
 |---|---|---|---|---|
-| TDD | `test-driven-development` | [obra/superpowers](https://github.com/obra/superpowers) `skills/test-driven-development` (2ce8aa1) | MIT, Copyright (c) 2025 Jesse Vincent | あり: 冒頭に「このプロジェクトでの使い方」(テストは開発者が書く、既存コードを消さない) |
+| TDD | `test-driven-development` | [obra/superpowers](https://github.com/obra/superpowers) `skills/test-driven-development` (2ce8aa1) | MIT, Copyright (c) 2025 Jesse Vincent | あり: 冒頭に「このプロジェクトでの使い方」(テストを誰が書くかはCLAUDE.mdに従う、既存コードを消さない) |
 | テストの書き方 | `javascript-testing-patterns` | [wshobson/agents](https://github.com/wshobson/agents) `plugins/javascript-typescript/skills/javascript-testing-patterns` (0874a27) | MIT, Copyright (c) 2024 Seth Hobson | なし |
 | テストの考え方 | `property-based-testing` | [trailofbits/skills](https://github.com/trailofbits/skills) `plugins/property-based-testing/skills/property-based-testing` (1e0cb77) | CC BY-SA 4.0, Trail of Bits | なし(改変するなら、改変した部分もCC BY-SA 4.0で公開し、変えたことを書く) |
 | Node.js・Express | `nodejs-backend-patterns` | wshobson/agents `plugins/javascript-typescript/skills/nodejs-backend-patterns` | MIT, Copyright (c) 2024 Seth Hobson | なし |
