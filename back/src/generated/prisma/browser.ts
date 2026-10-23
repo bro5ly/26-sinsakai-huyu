@@ -38,11 +38,6 @@ export type VerificationCode = Prisma.VerificationCodeModel
  */
 export type RefreshToken = Prisma.RefreshTokenModel
 /**
- * Model RentalSetting
- * 
- */
-export type RentalSetting = Prisma.RentalSettingModel
-/**
  * Model Category
  * 
  */

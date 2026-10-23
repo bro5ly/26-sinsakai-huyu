@@ -388,7 +388,6 @@ export const ModelName = {
   ExternalUser: 'ExternalUser',
   VerificationCode: 'VerificationCode',
   RefreshToken: 'RefreshToken',
-  RentalSetting: 'RentalSetting',
   Category: 'Category',
   Genre: 'Genre',
   ItemType: 'ItemType',
@@ -411,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "externalUser" | "verificationCode" | "refreshToken" | "rentalSetting" | "category" | "genre" | "itemType" | "itemTypeGenre" | "item" | "rental" | "notification"
+    modelProps: "user" | "externalUser" | "verificationCode" | "refreshToken" | "category" | "genre" | "itemType" | "itemTypeGenre" | "item" | "rental" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -708,80 +707,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RefreshTokenCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RefreshTokenCountAggregateOutputType> | number
-        }
-      }
-    }
-    RentalSetting: {
-      payload: Prisma.$RentalSettingPayload<ExtArgs>
-      fields: Prisma.RentalSettingFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.RentalSettingFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.RentalSettingFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        findFirst: {
-          args: Prisma.RentalSettingFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.RentalSettingFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        findMany: {
-          args: Prisma.RentalSettingFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>[]
-        }
-        create: {
-          args: Prisma.RentalSettingCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        createMany: {
-          args: Prisma.RentalSettingCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.RentalSettingCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>[]
-        }
-        delete: {
-          args: Prisma.RentalSettingDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        update: {
-          args: Prisma.RentalSettingUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        deleteMany: {
-          args: Prisma.RentalSettingDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.RentalSettingUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.RentalSettingUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>[]
-        }
-        upsert: {
-          args: Prisma.RentalSettingUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$RentalSettingPayload>
-        }
-        aggregate: {
-          args: Prisma.RentalSettingAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateRentalSetting>
-        }
-        groupBy: {
-          args: Prisma.RentalSettingGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.RentalSettingGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.RentalSettingCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.RentalSettingCountAggregateOutputType> | number
         }
       }
     }
@@ -1344,16 +1269,15 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
-  email: 'email',
+  studentId: 'studentId',
   passwordHash: 'passwordHash',
+  role: 'role',
   slackUserId: 'slackUserId',
   slackTeamId: 'slackTeamId',
-  serialNumber: 'serialNumber',
-  userType: 'userType',
-  name: 'name',
-  grade: 'grade',
-  major: 'major',
-  studentId: 'studentId',
+  canBorrow: 'canBorrow',
+  maxItems: 'maxItems',
+  suspendedUntil: 'suspendedUntil',
+  suspensionReason: 'suspensionReason',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1398,19 +1322,6 @@ export const RefreshTokenScalarFieldEnum = {
 } as const
 
 export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
-
-
-export const RentalSettingScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  canBorrow: 'canBorrow',
-  maxItems: 'maxItems',
-  suspendedUntil: 'suspendedUntil',
-  suspentionReason: 'suspentionReason',
-  updatedAt: 'updatedAt'
-} as const
-
-export type RentalSettingScalarFieldEnum = (typeof RentalSettingScalarFieldEnum)[keyof typeof RentalSettingScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
@@ -1483,7 +1394,6 @@ export const RentalScalarFieldEnum = {
   rentedAt: 'rentedAt',
   dueDate: 'dueDate',
   returnedAt: 'returnedAt',
-  status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1554,16 +1464,16 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'UserType'
+ * Reference to a field of type 'Role'
  */
-export type EnumUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserType'>
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
     
 
 
 /**
- * Reference to a field of type 'UserType[]'
+ * Reference to a field of type 'Role[]'
  */
-export type ListEnumUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserType[]'>
+export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role[]'>
     
 
 
@@ -1571,20 +1481,6 @@ export type ListEnumUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime[]'
- */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 
@@ -1603,6 +1499,34 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'UserType'
+ */
+export type EnumUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserType'>
+    
+
+
+/**
+ * Reference to a field of type 'UserType[]'
+ */
+export type ListEnumUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserType[]'>
+    
+
+
+/**
  * Reference to a field of type 'ItemStatus'
  */
 export type EnumItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ItemStatus'>
@@ -1613,20 +1537,6 @@ export type EnumItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
  * Reference to a field of type 'ItemStatus[]'
  */
 export type ListEnumItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ItemStatus[]'>
-    
-
-
-/**
- * Reference to a field of type 'RentalStatus'
- */
-export type EnumRentalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RentalStatus'>
-    
-
-
-/**
- * Reference to a field of type 'RentalStatus[]'
- */
-export type ListEnumRentalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RentalStatus[]'>
     
 
 
@@ -1756,7 +1666,6 @@ export type GlobalOmitConfig = {
   externalUser?: Prisma.ExternalUserOmit
   verificationCode?: Prisma.VerificationCodeOmit
   refreshToken?: Prisma.RefreshTokenOmit
-  rentalSetting?: Prisma.RentalSettingOmit
   category?: Prisma.CategoryOmit
   genre?: Prisma.GenreOmit
   itemType?: Prisma.ItemTypeOmit

@@ -1,90 +1,50 @@
-import type { User } from "@/generated/prisma/client.js"
 import {prisma} from "@/lib/prisma.js"
 
-export type UserCreate = Omit<User,
-        'id'|
-        'slackUserId' | 
-        'slackTeamId' | 
-        'isActive' | 
-        'createdAt' | 
-        'updatedAt'
-    >
+// 名前・メール・カードの番号は名簿(ExternalUser)にだけあるので、いつも一緒に取る
+const userWithProfile = {
+    id: true,
+    studentId: true,
+    passwordHash: true,
+    role: true,
+    externalUser: {
+        select: {
+            name: true,
+            email: true,
+            serialNumber: true,
+            userType: true,
+            grade: true,
+            major: true,
+        }
+    }
+} as const
+
+export type UserWithProfile = NonNullable<Awaited<ReturnType<UserRepository["findById"]>>>
 
 export class UserRepository {
     constructor(private readonly db = prisma){}
-    async create(data: UserCreate){
-        const {
-            name,
-            email,
-            passwordHash,
-            serialNumber,
-            userType,
-            grade,
-            major,
-            studentId
-        } = data
+    async create(data: {studentId: string, passwordHash: string}){
         return await this.db.user.create({
-            data: {
-            name,
-            email,
-            passwordHash,
-            serialNumber,
-            userType,
-            grade,
-            major,
-            studentId
-        } 
+            data,
+            select: userWithProfile
         })
     }
 
     async findById(userId: string){
-        const user = await this.db.user.findUnique({
+        return await this.db.user.findUnique({
             where: {
                 id: userId
             },
-            select:{
-                id: true,
-                studentId: true,
-                serialNumber: true,
-                name: true,
-                userType: true,
-                passwordHash: true,
-                grade: true,
-                major: true
-            }
+            select: userWithProfile
         })
-        console.log('🔍 [UserRepository.findById] User from DB:', {
-            id: user?.id,
-            studentId: user?.studentId,
-            serialNumber: user?.serialNumber,
-            name: user?.name
-        });
-        return user;
     }
 
     async findByStudentId(studentId: string){
-        const user = await this.db.user.findUnique({
+        return await this.db.user.findUnique({
             where: {
                 studentId
             },
-            select:{
-                id: true,
-                studentId: true,
-                serialNumber: true,
-                name: true,
-                userType: true,
-                passwordHash: true,
-                grade: true,
-                major: true
-            }
+            select: userWithProfile
         })
-        console.log('🔍 [UserRepository.findByStudentId] User from DB:', {
-            id: user?.id,
-            studentId: user?.studentId,
-            serialNumber: user?.serialNumber,
-            name: user?.name
-        });
-        return user;
     }
 
     async findByExternalStudentId(studentId: string){
@@ -92,11 +52,6 @@ export class UserRepository {
             where: {studentId},
             select: {
                 email: true,
-                serialNumber: true,
-                userType: true,
-                name: true,
-                grade: true,
-                major: true,
                 studentId: true,
             }
         })

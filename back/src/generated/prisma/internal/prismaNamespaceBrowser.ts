@@ -55,7 +55,6 @@ export const ModelName = {
   ExternalUser: 'ExternalUser',
   VerificationCode: 'VerificationCode',
   RefreshToken: 'RefreshToken',
-  RentalSetting: 'RentalSetting',
   Category: 'Category',
   Genre: 'Genre',
   ItemType: 'ItemType',
@@ -83,16 +82,15 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
-  email: 'email',
+  studentId: 'studentId',
   passwordHash: 'passwordHash',
+  role: 'role',
   slackUserId: 'slackUserId',
   slackTeamId: 'slackTeamId',
-  serialNumber: 'serialNumber',
-  userType: 'userType',
-  name: 'name',
-  grade: 'grade',
-  major: 'major',
-  studentId: 'studentId',
+  canBorrow: 'canBorrow',
+  maxItems: 'maxItems',
+  suspendedUntil: 'suspendedUntil',
+  suspensionReason: 'suspensionReason',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -137,19 +135,6 @@ export const RefreshTokenScalarFieldEnum = {
 } as const
 
 export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
-
-
-export const RentalSettingScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  canBorrow: 'canBorrow',
-  maxItems: 'maxItems',
-  suspendedUntil: 'suspendedUntil',
-  suspentionReason: 'suspentionReason',
-  updatedAt: 'updatedAt'
-} as const
-
-export type RentalSettingScalarFieldEnum = (typeof RentalSettingScalarFieldEnum)[keyof typeof RentalSettingScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
@@ -222,7 +207,6 @@ export const RentalScalarFieldEnum = {
   rentedAt: 'rentedAt',
   dueDate: 'dueDate',
   returnedAt: 'returnedAt',
-  status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

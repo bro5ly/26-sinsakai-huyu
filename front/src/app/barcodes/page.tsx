@@ -38,6 +38,7 @@ export default function BarcodesPage() {
       { code: 'IC-CARD-001', name: '山田 太郎', type: 'ICカード' },
       { code: 'IC-CARD-002', name: '佐藤 花子', type: 'ICカード' },
       { code: 'IC-CARD-003', name: '鈴木 次郎', type: 'ICカード' },
+      { code: 'IC-CARD-ADMIN', name: '高橋 先生(管理者)', type: 'ICカード' },
     ];
 
     setItems(testItems);

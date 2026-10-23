@@ -12,32 +12,28 @@
 export const UserType = {
   STUDENT: 'STUDENT',
   FACULTY: 'FACULTY',
-  ADMIN: 'ADMIN',
   EXTERNAL: 'EXTERNAL'
 } as const
 
 export type UserType = (typeof UserType)[keyof typeof UserType]
 
 
+export const Role = {
+  MEMBER: 'MEMBER',
+  ADMIN: 'ADMIN'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]
+
+
 export const ItemStatus = {
   AVAILABLE: 'AVAILABLE',
-  RENTED: 'RENTED',
   MAINTENANCE: 'MAINTENANCE',
   LOST: 'LOST',
   DISPOSED: 'DISPOSED'
 } as const
 
 export type ItemStatus = (typeof ItemStatus)[keyof typeof ItemStatus]
-
-
-export const RentalStatus = {
-  RENTING: 'RENTING',
-  RETURNED: 'RETURNED',
-  OVERDUE: 'OVERDUE',
-  CANCELLED: 'CANCELLED'
-} as const
-
-export type RentalStatus = (typeof RentalStatus)[keyof typeof RentalStatus]
 
 
 export const NotificationType = {

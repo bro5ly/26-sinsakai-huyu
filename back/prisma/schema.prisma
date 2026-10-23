@@ -15,29 +15,25 @@ datasource db {
 
 // --- Enum 定義 ---
 
-// ユーザーの種別
+// 名簿上の種別(学校が決める)
 enum UserType {
   STUDENT // 学生
   FACULTY // 教職員
-  ADMIN // 管理者
   EXTERNAL // 外部利用者など
 }
 
-// アイテム（在庫）の状態
+// このシステムでの権限(名簿ではなく、このシステムが決める)
+enum Role {
+  MEMBER // 一般
+  ADMIN // 管理者(在庫管理ができる)
+}
+
+// 物そのものの状態。貸出中かどうかはここではなく、返却されていない Rental があるかで決まる
 enum ItemStatus {
-  AVAILABLE // 貸出可能
-  RENTED // 貸出中
+  AVAILABLE // 使える
   MAINTENANCE // メンテナンス・修理中
   LOST // 紛失
   DISPOSED // 廃棄済み
-}
-
-// 貸出（取引）の状態
-enum RentalStatus {
-  RENTING // 貸出中
-  RETURNED // 返却済み
-  OVERDUE // 延滞中
-  CANCELLED // キャンセル
 }
 
 // 通知の種類
@@ -50,23 +46,23 @@ enum NotificationType {
 
 // --- Models ---
 
+// このシステムに登録した人。名前・メール・カードの番号などは名簿(ExternalUser)にだけ持ち、写さない
 model User {
-  id           String   @id @default(uuid()) @map("UniqueID")
-  email        String?
-  passwordHash String   @map("password_hash")
-  slackUserId  String?  @map("slack_user_id")
-  slackTeamId  String?  @map("slack_team_id")
-  serialNumber String?  @map("serial_number")
-  userType     UserType @default(STUDENT) @map("user_type")
-  name         String
-  grade        String?
-  major        String?
-  studentId    String   @unique @map("student_id")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id               String    @id @default(uuid()) @map("UniqueID")
+  studentId        String    @unique @map("student_id")
+  passwordHash     String    @map("password_hash")
+  role             Role      @default(MEMBER)
+  slackUserId      String?   @map("slack_user_id")
+  slackTeamId      String?   @map("slack_team_id")
+  canBorrow        Boolean   @default(true) @map("can_borrow")
+  maxItems         Int       @default(5) @map("max_items")
+  suspendedUntil   DateTime? @map("suspended_until")
+  suspensionReason String?   @map("suspension_reason")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  rentalSetting RentalSetting?
+  externalUser  ExternalUser   @relation(fields: [studentId], references: [studentId])
   rentals       Rental[]
   notifications Notification[]
   refreshTokens RefreshToken[]
@@ -74,18 +70,21 @@ model User {
   @@map("user")
 }
 
+// 学校の名簿の代わり
 model ExternalUser {
   id           String   @id @default(uuid()) @map("UniqueID")
   email        String   @unique
   slackUserId  String?  @map("slack_user_id")
   slackTeamId  String?  @map("slack_team_id")
-  serialNumber String?  @map("serial_number")
+  serialNumber String?  @unique @map("serial_number")
   userType     UserType @default(STUDENT) @map("user_type")
   name         String
   grade        String?
   major        String?
   studentId    String   @unique @map("student_id")
   createdAt    DateTime @default(now()) @map("created_at")
+
+  user User?
 
   @@map("external_user")
 }
@@ -108,20 +107,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@map("refresh_tokens")
-}
-
-model RentalSetting {
-  id               String    @id @default(uuid()) @map("UniqueID")
-  userId           String    @unique @map("userId")
-  canBorrow        Boolean   @default(true) @map("can_borrow")
-  maxItems         Int       @default(5) @map("max_items")
-  suspendedUntil   DateTime? @map("supended_until")
-  suspentionReason String?   @map("suspention_reason")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("rental_setting")
 }
 
 model Category {
@@ -185,7 +170,7 @@ model ItemTypeGenre {
 model Item {
   id         String     @id @default(uuid()) @map("UniqueID")
   itemTypeId String     @map("item_typeId")
-  barcode    String?    @unique
+  barcode    String     @unique
   location   String?
   status     ItemStatus @default(AVAILABLE)
   notes      String?
@@ -198,16 +183,17 @@ model Item {
   @@map("item")
 }
 
+// 貸出中 = returnedAt が空、延滞 = 貸出中で dueDate を過ぎている。状態の列は持たない(returnedAt と食い違うため)
+// 「返却されていない貸し出しは物1つにつき1件」はマイグレーションのSQLで部分インデックスにしている(Prismaでは書けない)
 model Rental {
-  id         String       @id @default(uuid()) @map("UniqueID")
-  itemId     String       @map("itemId")
-  userId     String       @map("userId")
-  rentedAt   DateTime     @default(now()) @map("rented_at")
-  dueDate    DateTime     @map("due_date")
-  returnedAt DateTime?    @map("returned_at")
-  status     RentalStatus @default(RENTING)
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
+  id         String    @id @default(uuid()) @map("UniqueID")
+  itemId     String    @map("itemId")
+  userId     String    @map("userId")
+  rentedAt   DateTime  @default(now()) @map("rented_at")
+  dueDate    DateTime  @map("due_date")
+  returnedAt DateTime? @map("returned_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   item          Item           @relation(fields: [itemId], references: [id])
   user          User           @relation(fields: [userId], references: [id])
