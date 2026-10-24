@@ -80,6 +80,8 @@
     - 名簿の切り替え`ROSTER_SOURCE`は、学校の名簿の実装ができるまで足さない。今は`buildDeps()`の1か所で`PrismaRoster`を作るだけ(D2)
     - ①は済み(2026-10-24)。あわせて、repositoryと名簿の窓口のPrismaを省略できないようにし(K1)、`lib/mail.ts`で`.env`を読み直すのをやめた(K2)。設定(`FRONTEND_URL`など)を1か所で読むかは④で決める(K3)
     - ②は済み(2026-10-24)。`src/app.test.ts`のH1〜H20(`supertest` 7.3.1)
+    - ③の`route()`は`lib/route.ts`に置く。ログインが要るrouteは`route({ auth: true, body }, ...)`と書き、そのときだけ`user`(必ずある型)を渡す。無ければ`route()`が`UNAUTHENTICATED`で断るので、controllerの二重の確認(K4)は消える(R6)。コミットは「`route()`を足す」→ auth → items → rentals の4つに分ける(R7)
+    - 環境変数は`src/config.ts`の`loadConfig(env)`でZodで1回だけ検証し、足りなければ起動のときに止める(K3を変更)。④の最初にやる(G1)。`server.ts`で読み、`buildDeps(config)`・`createApp(deps, config)`に引数で渡す。`lib/jwt.ts`は0.8で作り直すので、今は`config.ts`から読むだけ(G2)。必須にするのは今の既定値が無いものだけで、`PORT`・`FRONTEND_URL`は今の既定値を残す(G3)
 - [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)

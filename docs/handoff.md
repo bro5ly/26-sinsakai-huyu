@@ -58,7 +58,7 @@ C7: `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を�
 
 **クラウドとMacの分担**: クラウドではテスト・型チェック・画面のビルドまでを確かめてコミットとpushをする。PRを`main`に入れる前に、開発者のMacで`git pull`・`docker compose up -d --build -V api`・`npm test`・`docker compose logs api --tail 5`(「server is running」)・`curl`(ログイン・カード認証・貸し出し・返却)を確かめる。PRを出す前に開発者に声をかける。
 
-**今の段**: ①・②は済み(2026-10-24。K1・K2も済み、K3は④で決める)。②のテストは`src/app.test.ts`のH1〜H20。結果を見せて、③に進むかの答え待ち。Macでの`curl`はまだ(依存が増えたので`docker compose up -d --build -V api`が要る)
+**今の段**: ①・②は済み(2026-10-24。K1・K2も済み)。③(controllerを`*.routes.ts`と`route()`に置き換える。R6・R7)の作業中。④の最初に環境変数を`config.ts`にまとめる(G1〜G3)。Macでの`curl`はまだ(依存が増えたので`docker compose up -d --build -V api`が要る)
 
 ## 4. このあとの順番
 
