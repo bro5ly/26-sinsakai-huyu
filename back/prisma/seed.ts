@@ -1,6 +1,9 @@
 import { UserType, ItemStatus, Role } from "../src/generated/prisma/client.js";
-import { prisma } from "../src/lib/prisma.js";
+import { createPrisma } from "../src/lib/prisma.js";
+import { getConfig } from "../src/config.js";
 import bcrypt from "bcrypt";
+
+const prisma = createPrisma(getConfig().databaseUrl);
 
 async function main() {
   console.log("🌱 Seeding database...");

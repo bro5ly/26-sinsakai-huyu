@@ -55,6 +55,12 @@ describe("toProblem(エラーを応答の形に変える)", () => {
             expect(toProblem(err)).toMatchObject({ status: 400, code: "VALIDATION_ERROR" });
         });
 
+        it("P8 JSONが大きすぎる(Expressの読み取りの上限を超えた)は、413 PAYLOAD_TOO_LARGE(500にしない。K8)", () => {
+            const err = Object.assign(new Error("request entity too large"), { type: "entity.too.large", status: 413 });
+
+            expect(toProblem(err)).toMatchObject({ status: 413, title: "Content Too Large", code: "PAYLOAD_TOO_LARGE" });
+        });
+
         it("P7 表のcodeは、どれも4xxか5xxのステータスと、空でない文言を持つ", () => {
             for (const code of Object.keys(errorCatalog) as ErrorCode[]) {
                 const problem = toProblem(new DomainError(code));

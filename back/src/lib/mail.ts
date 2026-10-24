@@ -1,24 +1,24 @@
 // src/lib/mail.ts
 import nodemailer from "nodemailer";
-import 'dotenv/config'; // これを一番上に書く
+import type { Config } from "@/config.js";
 
 export class MailService {
   private transporter;
 
-  constructor() {
+  constructor(private readonly mail: Config["mail"]) {
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: Number(process.env.MAIL_PORT) || 2525, // Portは数値型にする必要があります
+      host: mail.host,
+      port: mail.port,
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: mail.user,
+        pass: mail.pass,
       },
     });
   }
 
   async sendCode(email: string, code: string) {
     const mailOptions = {
-      from: process.env.MAIL_FROM || '"図書管理システム" <noreply@example.com>',
+      from: this.mail.from,
       to: email,
       subject: "【重要】認証コードのお知らせ",
       text: `あなたの認証コードは ${code} です。15分以内に入力してください。`,

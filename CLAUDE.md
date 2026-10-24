@@ -13,7 +13,7 @@
 
 | ディレクトリ | 中身 |
 |---|---|
-| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に route・controller・service・repository・schema・types |
+| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に routes・service・repository・schema・types。本物の部品は`src/deps.ts`の`buildDeps()`で作り、`src/app.ts`の`createApp(deps)`で組み立てる |
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
@@ -24,7 +24,7 @@
 
 - **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
-- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。controllerに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
+- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
@@ -48,12 +48,12 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 - バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
-- 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存はrouteファイルで`new`して渡す(DIコンテナは使わない)
-- 入力の検証は`*.schema.ts`のZodで、controllerの先頭で`parse`する
+- 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール)を`new`するのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
+- 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
-- ブランチは`feature/<内容>`を切り、`main`へPRを出す
+- ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)
 - コミットは内容ごとに分ける(DBの変更・不具合の修正・文書は別のコミット)。**文は日本語**で、1行目の頭に種類を付ける(2026-10-23から。それより前は`feature: <名前> <内容>`):
   | 種類 | 使うとき |
   |---|---|
@@ -86,6 +86,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 5. **作業の後に結果を見せる**: テストの赤・緑、型チェック、`curl`の結果、確かめていないこと。ここで止まり、次に進むかを聞く
 6. 途中で予定と違うことが起きたら(テストは緑なのにAPIが違う、など)、先に進まず報告する
 7. **聞いた質問に答えが無かったら、実装に入る前に聞き直す**。「おすすめどおりだろう」と決めつけない(2026-10-24、開発者の希望。H2・H3・H8を答えなしで進めてしまったため)。「基本的に叩き台どおり」と言われたときも、条件付きの叩き台(「〜なら B」など)や、開発者にしか分からないことは聞き直す。**ただし、返事から読み取れることは聞き直さない**(1つの返事が複数の質問の答えになっていることもある。しつこくしない)
+8. **確認なしで進めてよいと自分で判断したこと(文書・決まりの直しなど)も、後で「確認せずに直したもの」としてまとめて見せる**(2026-10-24、開発者の希望。CLAUDE.mdと`.claude/rules/`を確認なしで直したため。直したこと自体はよかった)
 
 ## ドキュメント
 
@@ -93,13 +94,14 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 | ファイル | 内容 |
 |---|---|
+| `docs/handoff.md` | **セッションの引き継ぎ**。今いる所、答えをもらっていない質問、環境の注意、最初に開発者と認識を確かめる文章。新しいセッションは最初に読む |
 | `docs/spec.md` | 要件定義。何を満たすべきか、どこまで実装済みか、現状とのずれ、要確認 |
 | `docs/backlog.md` | 残タスクと順番(リファクタと修正 → 在庫管理)。進め方(TDD) |
 | `docs/auth.md` | 認証の作り直しの要件と方針(2026-10-23決定): タブレットの端末の登録、カードの番号 + PIN、セッションの期限、学籍番号とカードの番号の区別、総当たり対策、トークンの用途の分離 |
 | `docs/api.md` | API設計(作り直しの案): URL・メソッド・ステータス・成功とエラーの形(RFC 9457)・資源の形・エラーの`code`の一覧・今のAPIとの対応 |
 | `docs/architecture.md` | 仕組み: APIの一覧、認証とトークンの流れ、データモデル、レイヤの分け方 |
 | `REFACTORING_PROGRESS.md` | 2026-02-12のフロントのリファクタリングと、`serialNumber`の不具合を追った記録 |
-| `README.md` | 発表用の紹介(画面写真・利用者の流れ・今後の展望) |
+| `README.md` | 採用担当の人向けの紹介(今の状態、設計で考えたこと、AIと一緒に開発するための取り組み、分かっている課題、動かし方) |
 
 観点ごとのスキル(TDD・テスト・Express・TypeScript・Prisma・DB・API・アーキテクチャ・セキュリティ・認証・CI/CD・Next.js・Docker・Git・コミット・要件定義など)は`.claude/skills/`にある。第三者のOSSなので、出典・ライセンス・取り込む前の確認・改変は`.claude/skills/ATTRIBUTIONS.md`。**スキルの内容とこのプロジェクトの決まり(このファイル・`.claude/rules/`・`docs/`)が食い違うときは、プロジェクトの決まりを優先する。** スキルを足す・更新するときは、ATTRIBUTIONS.mdの確認をやり直し、改変したらその節にライセンスと変えたことを書く。
 

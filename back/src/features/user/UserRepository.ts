@@ -1,4 +1,4 @@
-import {prisma} from "@/lib/prisma.js"
+import type { PrismaClient } from "@/generated/prisma/client.js";
 
 // このシステムのDBにある利用者だけを読む。名前・メール・カードの番号は名簿の窓口(Roster)から取る
 const userSelect = {
@@ -9,7 +9,7 @@ const userSelect = {
 } as const
 
 export class UserRepository {
-    constructor(private readonly db = prisma){}
+    constructor(private readonly db: PrismaClient){}
     async create(data: {studentId: string, passwordHash: string}){
         return await this.db.user.create({
             data,

@@ -22,6 +22,7 @@ export const errorCatalog = {
     HAS_OVERDUE: { status: 409, detail: "返却期限を過ぎた物があります。先に返してください" },
     LIMIT_REACHED: { status: 409, detail: "借りられる数の上限です" },
     CONFLICT: { status: 409, detail: "ほかの操作とぶつかりました。もう一度やり直してください" },
+    PAYLOAD_TOO_LARGE: { status: 413, detail: "送られたデータが大きすぎます" },
     PIN_LOCKED: { status: 423, detail: "PINがロックされています。Webで再設定してください" },
     RATE_LIMITED: { status: 429, detail: "回数が多すぎます。しばらくしてからやり直してください" },
     INTERNAL_ERROR: { status: 500, detail: "予期せぬエラーが発生しました" },

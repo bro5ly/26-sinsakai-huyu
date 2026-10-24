@@ -1,20 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client.js";
 
-const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
-};
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-
-export const prisma =
-  globalForPrisma.prisma ||
+// 接続先は外から受け取る。作るのは deps.ts の buildDeps() と prisma/seed.ts だけ
+export const createPrisma = (databaseUrl: string) =>
   new PrismaClient({
-    adapter,
+    adapter: new PrismaPg({ connectionString: databaseUrl }),
   });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}

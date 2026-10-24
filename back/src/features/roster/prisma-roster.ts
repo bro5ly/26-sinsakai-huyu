@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma.js";
+import type { PrismaClient } from "@/generated/prisma/client.js";
 import type { UserType } from "@/generated/prisma/enums.js";
 import type { Roster, RosterEntry, RosterUserType } from "./roster.js";
 
@@ -25,7 +25,7 @@ const toEntry = (row: Row): RosterEntry => ({ ...row, userType: toRosterUserType
 
 // 仮の名簿(external_user表)を読む実装。学校のDB・APIの実装ができたら、組み立てを差し替える
 export class PrismaRoster implements Roster {
-    constructor(private readonly db = prisma) {}
+    constructor(private readonly db: PrismaClient) {}
 
     async findByStudentId(studentId: string): Promise<RosterEntry | null> {
         const row = await this.db.externalUser.findUnique({ where: { studentId }, select: entrySelect });
