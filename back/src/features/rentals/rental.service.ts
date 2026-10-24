@@ -1,4 +1,4 @@
-import { AppError } from "@/lib/error.js";
+import { DomainError } from "@/lib/domain-error.js";
 import type { RentalRepository } from "./rental.repository.js";
 import type { Roster } from "../roster/roster.js";
 import { signTabletToken } from "@/lib/jwt.js";
@@ -11,9 +11,9 @@ export class RentalService {
     constructor(private rentalRepository: RentalStore, private roster: Roster){}
     signInWithIc = async (serialNumber: string) => {
         const entry = await this.roster.findBySerialNumber(serialNumber)
-        if(!entry) throw new AppError('認証に失敗しました', 401, 'AUTH_FAILED')
+        if(!entry) throw new DomainError('INVALID_CARD_OR_PIN')
         const data = await this.rentalRepository.findUserWithActiveRentals(entry.studentId)
-        if(!data) throw new AppError('認証に失敗しました', 401, 'AUTH_FAILED')
+        if(!data) throw new DomainError('INVALID_CARD_OR_PIN')
         const now = new Date()
         return {
             message: '認証に成功しました',
@@ -32,18 +32,16 @@ export class RentalService {
     checkoutItem = async (userId: string, barcode: string) => {
 
         const item = await this.rentalRepository.findByBarcode(barcode);
-        if(!item) throw new AppError('指定されたバーコードの物品が見つかりません',404,'ITEM_NOT_FOUND' )
+        if(!item) throw new DomainError('ITEM_NOT_FOUND')
         const period = item.itemType.rentalPeriodDays ?? 7
         const dueDate = new Date()
         dueDate.setDate(dueDate.getDate() + period)
         const rental = await this.rentalRepository.saveCheckout(userId,barcode,dueDate)
-        if(!rental) throw new AppError('貸し出しに失敗しました',400,'RENT_FAILED')
         return { message: '貸し出しが完了しました', data: {...rental, status: rentalStatus(rental, new Date())} }
     }
 
     returnItem = async (barcode: string) => {
         const returnInfo = await this.rentalRepository.saveReturned(barcode)
-        if(!returnInfo) throw new AppError('返却に失敗しました',400,'RETURN_FAILED')
         return { message: '返却が完了しました', data: {...returnInfo, status: rentalStatus(returnInfo, new Date())} }
     }
 

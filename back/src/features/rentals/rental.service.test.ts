@@ -24,17 +24,17 @@ describe("signInWithIc(カードの番号で本人確認する)", () => {
         expect(typeof result.session).toBe("string");
     });
 
-    it("R2 カードの番号が名簿に無いなら、断る(AUTH_FAILED)", async () => {
+    it("R2 カードの番号が名簿に無いなら、断る(INVALID_CARD_OR_PIN)", async () => {
         const service = new RentalService(store(), new FakeRoster([rosterEntry()]));
 
-        await expect(service.signInWithIc("IC-CARD-999")).rejects.toMatchObject({ statusCode: 401, code: "AUTH_FAILED" });
+        await expect(service.signInWithIc("IC-CARD-999")).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
     });
 
-    it("R3 名簿にはいるが登録していないなら、断る(AUTH_FAILED)", async () => {
+    it("R3 名簿にはいるが登録していないなら、断る(INVALID_CARD_OR_PIN)", async () => {
         const unregistered = rosterEntry({ studentId: "20260001", serialNumber: "SN-001" });
         const service = new RentalService(store(), new FakeRoster([rosterEntry(), unregistered]));
 
-        await expect(service.signInWithIc("SN-001")).rejects.toMatchObject({ statusCode: 401, code: "AUTH_FAILED" });
+        await expect(service.signInWithIc("SN-001")).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
     });
 });
 

@@ -30,7 +30,7 @@ export class ApiService {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || "リクエストに失敗しました",
+        data.detail || data.message || "リクエストに失敗しました",
         response.status,
         data.code
       );

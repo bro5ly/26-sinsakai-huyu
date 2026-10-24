@@ -1,6 +1,6 @@
 import type { ItemRepository } from "./item.repository.js";
 import type { Roster } from "../roster/roster.js";
-import { AppError } from "@/lib/error.js";
+import { DomainError } from "@/lib/domain-error.js";
 import { itemAvailability, rentalStatus } from "../rentals/rental.status.js";
 
 export type ItemStore = Pick<ItemRepository, "findAll" | "getMyInfo">
@@ -21,12 +21,12 @@ export class ItemService {
         const user = await this.itemRepository.getMyInfo(userId);
 
         if (!user) {
-            throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
+            throw new DomainError('UNAUTHENTICATED');
         }
         // 名簿から消えた人(卒業など)は、登録が残っていても通さない(docs/spec.md Q13)
         const entry = await this.roster.findByStudentId(user.studentId);
         if (!entry) {
-            throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
+            throw new DomainError('UNAUTHENTICATED');
         }
 
         const { rentals, canBorrow, maxItems, suspendedUntil, suspensionReason, ...rest } = user;

@@ -41,16 +41,16 @@ describe("getMyInfo(自分の情報)", () => {
         });
     });
 
-    it("M2 利用者がいなければ、断る(404 USER_NOT_FOUND)", async () => {
+    it("M2 利用者がいなければ、断る(UNAUTHENTICATED)", async () => {
         const service = new ItemService(store(), new FakeRoster([rosterEntry()]));
 
-        await expect(service.getMyInfo("user-x")).rejects.toMatchObject({ statusCode: 404, code: "USER_NOT_FOUND" });
+        await expect(service.getMyInfo("user-x")).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
     });
 
-    it("M3 名簿から消えていれば、断る(404 USER_NOT_FOUND。Q13)", async () => {
+    it("M3 名簿から消えていれば、断る(UNAUTHENTICATED。Q13)", async () => {
         const service = new ItemService(store(), new FakeRoster([]));
 
-        await expect(service.getMyInfo("user-3")).rejects.toMatchObject({ statusCode: 404, code: "USER_NOT_FOUND" });
+        await expect(service.getMyInfo("user-3")).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
     });
 });
 

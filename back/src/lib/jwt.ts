@@ -1,5 +1,6 @@
 // lib/jwt.ts
 import jwt from 'jsonwebtoken';
+import { DomainError } from './domain-error.js';
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
@@ -39,10 +40,11 @@ export const signTabletToken = (payload: { sub: string; role: string }) => {
 };
 
 // 検証用（既存の verifyAccessToken を使っても良いですが、名前を分けておくと分かりやすいです）
+// 期限切れは「もう一度カードを読む」、それ以外(改ざん・壊れたトークン)はログインしていない扱い(docs/backlog.md 0.7 H5)
 export const verifyTabletToken = (token: string) => {
   try {
     return jwt.verify(token, ACCESS_SECRET);
   } catch (err) {
-    throw new Error('TABLET_SESSION_EXPIRED_OR_INVALID');
+    throw new DomainError(err instanceof jwt.TokenExpiredError ? 'SESSION_EXPIRED' : 'UNAUTHENTICATED');
   }
 };
