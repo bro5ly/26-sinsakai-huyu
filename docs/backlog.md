@@ -16,6 +16,7 @@
 - [x] CLAUDE.mdのコマンドの表に足す
 - [x] `rental.status.test.ts`(S1〜S6・I1〜I4)を書いた。期限の比べ方を`<=`に変えるとS4が赤になることも確かめた
 - [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める
+- [ ] APIのイメージ(`node:24-bookworm-slim`)にOpenSSLが無く、Prismaの道具(マイグレーション)が「OpenSSLの版が分からない」と警告する。今は動いているが、TLSで外部のDBにつなぐときに動かなくなるおそれがある。Dockerfileで`openssl`を入れる(2026-10-24、後回しに決定。ブランチ`fix/api-image-openssl`を`main`から切ってある)
 
 ## 0.5 データベースの見直し(貸し出しのリファクタの前に)
 
