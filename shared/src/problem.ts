@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { errorCatalog, type ErrorCode } from "./error-codes.js";
+import { errorCatalog, type ErrorCode } from "@sinsakai/shared/error-codes";
 
 const errorCodes = Object.keys(errorCatalog) as [ErrorCode, ...ErrorCode[]];
 

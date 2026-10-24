@@ -1,6 +1,7 @@
 {
   // back(NodeNext)と front(bundler)の両方から、TypeScriptのまま読まれる(ビルドしない。2026-10-24 P1)。
-  // ここは shared/ だけの型チェック用。import の末尾に .js を付ける書き方は、どちらの読み方でも通る
+  // ここは shared/ だけの型チェック用。shared/ の中のファイルどうしは、相対パスではなく "@sinsakai/shared/…"(package.json の exports)で読む。
+  // "./x.js" と書くと、Next.js の Turbopack が x.ts に読み替えず、画面のビルドが落ちるため(2026-10-24)
   "compilerOptions": {
     "target": "ESNext",
     "module": "NodeNext",
