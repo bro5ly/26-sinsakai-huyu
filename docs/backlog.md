@@ -52,7 +52,27 @@
 
 - [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
 - [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
+- [ ] **エラーの扱いを作り直す(最初にやる。新しいAPIは全部この形で作る。2026-10-24決定 E1〜E4)**
+  - 判断の関数(判断表C・T)は、Resultを返す(`{ ok: true }`か`{ ok: false, reason }`)。HTTPを知らない(E1)
+  - serviceは、断るときに`throw new DomainError(code)`。持つのは`code`だけで、`code`は`docs/api.md`6章の一覧の型で縛る(一覧に無い値は型チェックで落ちる)
+  - `code` → ステータスと画面の文言(`detail`)の対応表を、サーバーの1か所(`errors.ts`)に持つ(E2)
+  - エラー用のミドルウェアを1つにする: `DomainError`は表を引いてRFC 9457で返す、入力の検証の失敗は400 `VALIDATION_ERROR`、想定外は500 `INTERNAL_ERROR`、存在しないURLも同じ形の404。controllerの`try/catch`と`handleError`はなくす(Express 5はthrowをミドルウェアに渡す)
+  - 想定外の例外は、エラーの種類とスタックだけをログに出す。リクエストの中身(学籍番号・パスワードなど)は出さない(E3)
+  - 今の`AppError`・`tabletMiddleware`の`next(err)`・`response-handler.ts`を置き換える
+- [ ] **組み立てとrouteの書き方を作り直す(エラーの扱いの直後。2026-10-24決定 R1〜R5)**
+  - 組み立ては1か所: `src/deps.ts`の`buildDeps()`で本物の依存(Prisma・名簿の窓口・メール)を作り、`createApp(deps)`に渡す。`server.ts`は本物、テストは偽物を渡す(HTTPを通すテストをDB無しで書ける)。名簿の窓口の切り替え(`ROSTER_SOURCE`)もここだけ(R1)
+  - controllerのクラスはなくし、`*.routes.ts`(`createAuthRoutes(deps)`など)に「入力 → service → 返す」を直接書く。判断はserviceと判断の関数に残す(R2)
+  - 入力の検証は小さな関数(`route({ body: schema }, async ({ body, user }) => ...)`)で、検証してから型付きで渡す。`req.body as 型`の決めつけは使わない。スキーマは`shared/`から使う(R3)
+  - `createApp`で、セキュリティのヘッダ(`helmet`)・JSONの大きさの上限・404のミドルウェア・エラー用のミドルウェアをかける。回数の制限(`express-rate-limit`)はログインなどのrouteにだけかける(数字は`docs/auth.md`4.6)(R4)
 - [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
+- [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
+  - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
+  - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
+  - Prismaの型を使ってよいのはrepositoryの中だけ。serviceが見るのは名前の付いた記録の型だけ(T3)
+  - 引数が2つを超える、または同じ型が並ぶときはオブジェクトで渡す。名前はDBの列とそろえる(`expiredAt`ではなく`expiresAt`)(T4)
+  - 日付は中では`Date`、APIの境目(`shared/`のスキーマ)でISOの文字列にする(T5)
+  - ID・学籍番号・カードの番号に別の型を付けること(branded type)は今は入れない。取り違えはテストで見る(T6)
+  - 使われていない型(`ItemWithDetail`・`RentalWithDetails`・`RentalBasic`・`SignupInput`・`loginInput`、画面の`TabletContext`など)はそのとき消す(T7)
 - [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
 - [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
 - [ ] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる
