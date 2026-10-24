@@ -1,0 +1,18 @@
+{
+  // back(NodeNext)と front(bundler)の両方から、TypeScriptのまま読まれる(ビルドしない。2026-10-24 P1)。
+  // ここは shared/ だけの型チェック用。import の末尾に .js を付ける書き方は、どちらの読み方でも通る
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

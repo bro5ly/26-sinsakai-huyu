@@ -1,17 +1,7 @@
 import { ZodError } from "zod";
 import { Prisma } from "@/generated/prisma/client.js";
 import { DomainError } from "./domain-error.js";
-import { errorCatalog, type ErrorCode } from "./error-codes.js";
-
-// RFC 9457 Problem Details に、画面が分岐に使うcodeと、入力の検証の項目ごとのerrorsを足した形(docs/api.md 3.4)
-export interface Problem {
-    type: "about:blank";
-    title: string;
-    status: number;
-    code: ErrorCode;
-    detail: string;
-    errors?: { path: string; message: string }[];
-}
+import { errorCatalog, type ErrorCode, type Problem } from "@sinsakai/shared";
 
 const titles: Record<number, string> = {
     400: "Bad Request",

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client.js";
 import { DomainError } from "./domain-error.js";
-import { errorCatalog, type ErrorCode } from "./error-codes.js";
+import { errorCatalog, type ErrorCode } from "@sinsakai/shared";
 import { toProblem } from "./problem.js";
 
 // エラー → RFC 9457 の Problem Details(docs/api.md 3.4・6章)
