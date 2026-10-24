@@ -58,7 +58,7 @@ C7: `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を�
 
 **クラウドとMacの分担**: クラウドではテスト・型チェック・画面のビルドまでを確かめてコミットとpushをする。PRを`main`に入れる前に、開発者のMacで`git pull`・`docker compose up -d --build -V api`・`npm test`・`docker compose logs api --tail 5`(「server is running」)・`curl`(ログイン・カード認証・貸し出し・返却)を確かめる。PRを出す前に開発者に声をかける。
 
-**今の段**: ①〜④は済み(2026-10-24)。結果を見せて、見つかったこと(JSONが大きすぎると500になる、学校の回線で回数の制限が全員に効くおそれ)の判断と、PRの前のMacでの確かめの答え待ち。Macでは依存が増えたので`docker compose up -d --build -V api`が要る
+**今の段**: ①〜④は済み、K8(大きすぎるJSONを413に)も済み(2026-10-24)。K9(回数の制限が同じWi-Fiの全員に効く)は0.8で学籍番号ごとの制限と一緒に直す。K10はそのまま。PRの前に、開発者のMacで確かめてもらう段。Macでは依存が増えたので`docker compose up -d --build -V api`が要る
 
 ## 4. このあとの順番
 
