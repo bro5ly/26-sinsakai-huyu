@@ -11,9 +11,12 @@ services:
       - /app/node_modules
     env_file:
       - .env
+    environment:
+      # Macのフォルダをコンテナに入れると、変更の通知がときどき落ちる。定期的に見に行く(Next.jsの開発サーバー)
+      WATCHPACK_POLLING: "true"
     depends_on:
       - api
-  
+
   api:
     build:
       context: ./back
@@ -26,6 +29,10 @@ services:
       - /app/node_modules
     env_file:
       - .env
+    environment:
+      # Macのフォルダをコンテナに入れると、変更の通知がときどき落ち、tsx watchが古いコードのまま動く
+      # (2026-10-23に起きた)。定期的に見に行く
+      CHOKIDAR_USEPOLLING: "true"
     # command: sh -c "npx prisma migrate dev --name init && npm run dev"
     depends_on:
       db:
