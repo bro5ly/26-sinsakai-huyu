@@ -82,6 +82,7 @@
     - ②は済み(2026-10-24)。`src/app.test.ts`のH1〜H20(`supertest` 7.3.1)
     - ③の`route()`は`lib/route.ts`に置く。ログインが要るrouteは`route({ auth: true, body }, ...)`と書き、そのときだけ`user`(必ずある型)を渡す。無ければ`route()`が`UNAUTHENTICATED`で断るので、controllerの二重の確認(K4)は消える(R6)。コミットは「`route()`を足す」→ auth → items → rentals の4つに分ける(R7)
     - ③は済み(2026-10-24)。`lib/route.ts`(U1〜U5)と、3つの`*.routes.ts`。controllerは消した
+    - `route()`の形は今のまま(ジェネリクスと条件付き型の1つの関数)にする。`route`と`authRoute`に分ける案・1つ目の引数を`bodySchema`にする案もあったが、型の守り(検証済みの`body`、必ずある`user`)は同じで、開発者が読み慣れる練習として今の形を選んだ(2026-10-24 W1)
     - ④は済み(2026-10-24)。`config.ts`(N1〜N8)、`helmet`(H21・H22)、ログインの回数の制限(H23〜H25)
     - ④のJSONの大きさの上限は、Expressの既定と同じ100kbをはっきり書く(L1)。回数の制限は接続元を`req.ip`で見分け、今は`trust proxy`を設定しない。本番の置き方が決まったら見直す(L2)。版は`helmet` 8.3.0・`express-rate-limit` 8.7.1(C6)
     - 環境変数は`src/config.ts`の`loadConfig(env)`でZodで1回だけ検証し、足りなければ起動のときに止める(K3を変更)。④の最初にやる(G1)。`server.ts`で読み、`buildDeps(config)`・`createApp(deps, config)`に引数で渡す。`lib/jwt.ts`は0.8で作り直すので、今は`config.ts`から読むだけ(G2)。必須にするのは今の既定値が無いものだけで、`PORT`・`FRONTEND_URL`は今の既定値を残す(G3)
