@@ -1,7 +1,7 @@
-import {prisma} from "@/lib/prisma.js"
+import type { PrismaClient } from "@/generated/prisma/client.js";
 
 export class AuthRepository {
-    constructor(private readonly db = prisma){}
+    constructor(private readonly db: PrismaClient){}
     async saveRefreshToken(data: {userId: string, refreshToken: string, expiredAt: Date}){
         return this.db.refreshToken.upsert({
             where: {

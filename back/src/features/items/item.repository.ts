@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma.js";
+import type { PrismaClient } from "@/generated/prisma/client.js";
 
 export class ItemRepository {
-    constructor(private readonly db = prisma) { }
+    constructor(private readonly db: PrismaClient) { }
 
     async findAll() {
         return await this.db.item.findMany({
