@@ -35,7 +35,9 @@
 
 組み立ては`src/deps.ts`の`buildDeps()`(本物の部品を作るのはここだけ)と`src/app.ts`の`createApp(deps, config)`(helmet・CORS・JSON・Cookie・各ルーティング・404・エラー用のミドルウェア)。環境変数を読むのは`src/config.ts`の`loadConfig()`だけで、足りなければ起動のときに止まる。`server.ts`が`getConfig()`で読み、`createApp(buildDeps(config), config).listen(config.port)`する。テストは偽の部品と設定を渡す。
 
-共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`response-handler.ts`(成功は`{ success: true, ...data }`)、`jwt.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
+画面と共通の形は`shared/`(`@sinsakai/shared`): `error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`problem.ts`(失敗の応答の形`problemSchema`)。
+
+共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`response-handler.ts`(成功は`{ success: true, ...data }`)、`jwt.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
 
 `user/`だけは`UserRepository.ts`・`UserService.ts`という古い名前で、routeを持たず`auth`から使われる。
 

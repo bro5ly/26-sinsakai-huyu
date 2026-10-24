@@ -62,8 +62,9 @@
     - Dockerはビルドの起点をリポジトリ直下にし、コンテナにリポジトリ全体をつなぐ。各コンテナで要るものだけを入れる(`npm ci -w back`など)。ロックファイルが直下に1つなので、直下が見えないと入れられないため(P3)
     - 画面のイメージを`node:20-alpine`から`node:24-bookworm-slim`にそろえる。同じ版のnpmでロックファイルを作るため。Node 20はサポートが切れている(P4)
     - 最初のPRは仕組みだけにし、`shared/`にはエラーの`code`の一覧とRFC 9457の形だけを移す。`back`と`front`の両方がそれを使う。APIの形は次から移す(P5)
+    - `shared/`の中のファイルどうしは`@sinsakai/shared/x`で読み、`shared/package.json`の`exports`にファイルごとの入口を書く。`./x.js`と書くと、Next.jsのTurbopackが`x.ts`に読み替えず画面のビルドが落ちたため。`.ts`を付けて読む案(B)は、back・front・sharedの3つのtsconfigを変えるので選ばなかった(P6-A)
 - [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
-- [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
+- [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す(2026-10-24、`shared/src/error-codes.ts`に移した)。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
   - 判断の関数(判断表C・T)は、Resultを返す(`{ ok: true }`か`{ ok: false, reason }`)。HTTPを知らない(E1)
   - serviceは、断るときに`throw new DomainError(code)`。持つのは`code`だけで、`code`は`docs/api.md`6章の一覧の型で縛る(一覧に無い値は型チェックで落ちる)
   - `code` → ステータスと画面の文言(`detail`)の対応表を、サーバーの1か所(`errors.ts`)に持つ(E2)
@@ -150,6 +151,7 @@
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
 - [ ] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11)
+- [ ] 画面のリントのエラー7件を直す(2026-10-24に見つけた。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`dashboard/page.tsx`・`contexts/AuthContext.tsx`の`any`、`items/page.tsx`・`components/BarcodeScanner.tsx`の宣言より前に使っている変数。警告も11件ある
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
 
 ## 4. フロントの認証
