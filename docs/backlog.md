@@ -16,7 +16,7 @@
 - [x] テストの置き場所を決める(`src/`の中で元のファイルの隣に`*.test.ts`)
 - [x] CLAUDE.mdのコマンドの表に足す
 - [x] `rental.status.test.ts`(S1〜S6・I1〜I4)を書いた。期限の比べ方を`<=`に変えるとS4が赤になることも確かめた
-- [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める(2026-10-24、`node:24-bookworm-slim`に上げると決めた。0.7のP4)
+- [x] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める(2026-10-24、`node:24-bookworm-slim`に上げた。0.7のP4)
 - [ ] GitHub Actions(CI)で、pushとPRのたびにAPIのテストと型チェック・画面のビルドとリントを動かす(2026-10-24、開発者の希望で「いずれ」。Macでの同じ確認を繰り返したくなったらやる)
 - [ ] APIのイメージ(`node:24-bookworm-slim`)にOpenSSLが無く、Prismaの道具(マイグレーション)が「OpenSSLの版が分からない」と警告する。今は動いているが、TLSで外部のDBにつなぐときに動かなくなるおそれがある。Dockerfileで`openssl`を入れる(2026-10-24、後回しに決定。ブランチ`fix/api-image-openssl`を`main`から切ってある)
 
@@ -105,7 +105,7 @@
   - 使われていない型(`ItemWithDetail`・`RentalWithDetails`・`RentalBasic`・`SignupInput`・`loginInput`、画面の`TabletContext`など)はそのとき消す(T7)
 - [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
 - [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
-- [ ] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる
+- [x] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる(2026-10-24。各コンテナは`npm ci -w back -w shared`のように要るワークスペースだけを入れる。P3)
 - [ ] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(`npm test`・`npm run typecheck`・`npm run check`など。中で`docker compose exec ...`を呼ぶ)。CLAUDE.mdのコマンドの表も直す
 - [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
 

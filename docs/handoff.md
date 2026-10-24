@@ -48,7 +48,7 @@ PR #9 のマージまでで区切りがついた。0.7の残りは、先にnpm w
 
 ## 5. 環境の注意
 
-**Dockerが使えるとき(開発者のMac)**: `CLAUDE.md`の「コマンド」のとおり、コマンドはコンテナの中で動かす。`curl`で確かめる前に、`docker compose logs api`で再起動を確かめる。環境変数が足りないと、APIは起動のときに`環境変数が足りないか、形が違います: ○○`と出して止まる(seedも同じ)
+**Dockerが使えるとき(開発者のMac)**: `CLAUDE.md`の「コマンド」のとおり、コマンドはコンテナの中で動かす。`curl`で確かめる前に、`docker compose logs api`で再起動を確かめる。環境変数が足りないと、APIは起動のときに`環境変数が足りないか、形が違います: ○○`と出して止まる(seedも同じ)。workspacesにしたとき(2026-10-24)に`node_modules`の場所が変わったので、その前のコンテナが残っていたら、`docker compose down`のあとに`docker compose up -d --build -V`で作り直す
 
 **Dockerが使えないとき(クラウドなど)**:
 - リポジトリの直下で`npm ci`のあと(workspacesなので直下で1回)、`back/`で`npx vitest run`と`npx tsc --noEmit`はDB無しで動く(テストは偽の部品を使う)。Node 22以上が要る(Vitest 5)
