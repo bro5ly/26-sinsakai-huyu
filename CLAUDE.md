@@ -13,7 +13,7 @@
 
 | ディレクトリ | 中身 |
 |---|---|
-| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に routes・service・repository・schema・types。本物の部品は`src/deps.ts`の`buildDeps()`で作り、`src/app.ts`の`createApp(deps)`で組み立てる |
+| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に routes・service・repository・schema・types。本物の部品は`src/deps.ts`の`buildDeps()`で作り、`src/app.ts`の`createApp(deps, config)`で組み立てる(環境変数は`src/config.ts`だけで読む) |
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
