@@ -19,7 +19,7 @@
 - 4つともDocker Composeで起動する。設定はリポジトリ直下の`.env`(全サービス共通)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
 - CORSは`FRONTEND_URL`(既定`http://localhost:4545`)だけを許し、Cookieを通す(`credentials: true`)
 - すべての応答に`helmet`のセキュリティのヘッダを付ける。JSONは100kbまで
-- `POST /api/auth/login`は接続元ごとに15分で20回まで(`express-rate-limit`、メモリで数える)。超えたら429 `RATE_LIMITED`
+- `POST /api/auth/login`は接続元ごとに失敗を15分で20回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。超えたら429 `RATE_LIMITED`
 
 ## バックエンドのレイヤ
 
