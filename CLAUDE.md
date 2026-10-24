@@ -48,12 +48,12 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 - バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
-- 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存はrouteファイルで`new`して渡す(DIコンテナは使わない)
+- 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存は今はrouteファイルで`new`して渡す(DIコンテナは使わない)。`buildDeps()`と`createApp(deps)`の1か所にまとめる作り直しの途中(`docs/backlog.md` 0.7 R1〜R5、`docs/handoff.md`)
 - 入力の検証は`*.schema.ts`のZodで、controllerの先頭で`parse`する
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
-- ブランチは`feature/<内容>`を切り、`main`へPRを出す
+- ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)
 - コミットは内容ごとに分ける(DBの変更・不具合の修正・文書は別のコミット)。**文は日本語**で、1行目の頭に種類を付ける(2026-10-23から。それより前は`feature: <名前> <内容>`):
   | 種類 | 使うとき |
   |---|---|
@@ -93,13 +93,14 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 | ファイル | 内容 |
 |---|---|
+| `docs/handoff.md` | **セッションの引き継ぎ**。今いる所、答えをもらっていない質問、環境の注意、最初に開発者と認識を確かめる文章。新しいセッションは最初に読む |
 | `docs/spec.md` | 要件定義。何を満たすべきか、どこまで実装済みか、現状とのずれ、要確認 |
 | `docs/backlog.md` | 残タスクと順番(リファクタと修正 → 在庫管理)。進め方(TDD) |
 | `docs/auth.md` | 認証の作り直しの要件と方針(2026-10-23決定): タブレットの端末の登録、カードの番号 + PIN、セッションの期限、学籍番号とカードの番号の区別、総当たり対策、トークンの用途の分離 |
 | `docs/api.md` | API設計(作り直しの案): URL・メソッド・ステータス・成功とエラーの形(RFC 9457)・資源の形・エラーの`code`の一覧・今のAPIとの対応 |
 | `docs/architecture.md` | 仕組み: APIの一覧、認証とトークンの流れ、データモデル、レイヤの分け方 |
 | `REFACTORING_PROGRESS.md` | 2026-02-12のフロントのリファクタリングと、`serialNumber`の不具合を追った記録 |
-| `README.md` | 発表用の紹介(画面写真・利用者の流れ・今後の展望) |
+| `README.md` | 採用担当の人向けの紹介(今の状態、設計で考えたこと、AIと一緒に開発するための取り組み、分かっている課題、動かし方) |
 
 観点ごとのスキル(TDD・テスト・Express・TypeScript・Prisma・DB・API・アーキテクチャ・セキュリティ・認証・CI/CD・Next.js・Docker・Git・コミット・要件定義など)は`.claude/skills/`にある。第三者のOSSなので、出典・ライセンス・取り込む前の確認・改変は`.claude/skills/ATTRIBUTIONS.md`。**スキルの内容とこのプロジェクトの決まり(このファイル・`.claude/rules/`・`docs/`)が食い違うときは、プロジェクトの決まりを優先する。** スキルを足す・更新するときは、ATTRIBUTIONS.mdの確認をやり直し、改変したらその節にライセンスと変えたことを書く。
 
