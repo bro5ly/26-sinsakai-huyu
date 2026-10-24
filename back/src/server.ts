@@ -1,9 +1,11 @@
 import 'dotenv/config'
 import { createApp } from "./app.js";
 import { buildDeps } from "./deps.js";
+import { getConfig } from "./config.js";
 
-const PORT = process.env.PORT || 5454
+// 環境変数が足りなければ、ここで止まる(何が足りないかを出す)
+const config = getConfig()
 
-createApp(buildDeps()).listen(PORT,() => {
-    console.log(`server is running on http://localhost:${PORT}`)
+createApp(buildDeps(config), config).listen(config.port,() => {
+    console.log(`server is running on http://localhost:${config.port}`)
 })

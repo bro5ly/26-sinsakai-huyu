@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import type { Deps } from "@/deps.js";
+import { loadConfig } from "@/config.js";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -20,6 +21,9 @@ const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, r
 
 const item = { id: "item-2", barcode: "MAC-002", name: "MacBook 2", status: "AVAILABLE", itemType: { title: "MacBook", rentalPeriodDays: 7 } };
 const rental = { id: "rental-1", itemId: "item-2", userId: "user-1", rentedAt: new Date("2026-10-24T00:00:00Z"), dueDate: new Date("2099-01-01T00:00:00Z"), returnedAt: null };
+
+// 設定はテストの中で決める。鍵は lib/jwt.ts が .env から読むものと同じにする(トークンを作って渡すテストがあるため)
+const testConfig = loadConfig({ DATABASE_URL: "unused", JWT_ACCESS_SECRET: process.env["JWT_ACCESS_SECRET"], JWT_REFRESH_SECRET: process.env["JWT_REFRESH_SECRET"] });
 
 // 本物と同じ形の部品を偽物で作る。テストごとに一部だけ差し替える
 const fakeDeps = (overrides: Partial<Deps> = {}) => {
@@ -63,7 +67,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         ...overrides,
     };
-    return { app: createApp(deps), sentMails, savedRefreshTokens };
+    return { app: createApp(deps, testConfig), sentMails, savedRefreshTokens };
 };
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });

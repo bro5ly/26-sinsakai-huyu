@@ -4,19 +4,20 @@ import { codeVerificationSchema, loginSchema, requestVerificationSchema, signupS
 import { route } from "@/lib/route.js";
 import { sendSuccess } from "@/lib/response-handler.js";
 import type { Deps } from "@/deps.js";
+import type { Config } from "@/config.js";
 
-// リフレッシュトークンのCookie。付けるときと消すときで設定をそろえないと、消えない
-const refreshCookie = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
-} as const
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000
 
 // 失敗は throw するだけでよい(Express 5が middleware/error.middleware.ts に渡す)
-export const createAuthRoutes = (deps: Deps) => {
+export const createAuthRoutes = (deps: Deps, config: Config) => {
     const router = Router();
+    // リフレッシュトークンのCookie。付けるときと消すときで設定をそろえないと、消えない
+    const refreshCookie = {
+        httpOnly: true,
+        secure: config.nodeEnv === 'production',
+        sameSite: 'strict',
+        path: '/',
+    } as const
     const auth = new AuthService(deps.users, deps.auth, deps.mailer, deps.roster)
 
     router.post('/request-verification', route({ body: requestVerificationSchema }, async ({ body, res }) => {
