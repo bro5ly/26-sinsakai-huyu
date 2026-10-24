@@ -17,7 +17,8 @@ APIの一覧と認証の流れは`docs/architecture.md`。
 
 ## 気をつけること
 
-- `tabletMiddleware`は失敗を`next(err)`で渡しているが、エラーハンドラが無いのでJSONではなくExpress既定の応答になる。直すなら`handleError(res, ...)`に揃える
+- 新しい`code`が要るときは、`lib/error-codes.ts`の表と`docs/api.md`6章の両方に足す。`code`ごとに文言は1つ。違う文言を出したいなら、別の`code`にする(2026-10-24 H5)
+- ミドルウェアでも`throw new DomainError(...)`でよい(`next(err)`は要らない)。想定外のエラーのログに、リクエストの中身(学籍番号・パスワードなど)を出さない
 - アクセストークンとタブレット用トークンは同じ秘密鍵で署名され、ミドルウェアは`role`を見ていない(互いに通ってしまう)。権限で分けるならここを直す
 - 登録用トークンはリフレッシュトークンの秘密鍵で署名されている(`lib/jwt.ts`の`REGISTRATION_SECRET`)
 - 名前・メール・カードの番号は名簿(今は`ExternalUser`)にだけある。本番の名簿は学校のDBかAPIになるので、**名簿を読むJOIN(`externalUser`)を新しく増やさない**。名簿の窓口(`Roster`)ができたらそこを通す(`docs/backlog.md`の0.6)

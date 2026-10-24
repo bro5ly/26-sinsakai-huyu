@@ -127,7 +127,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '認証コード送信に失敗しました',
+        data.detail || data.message || '認証コード送信に失敗しました',
         response.status,
         data.code
       );
@@ -150,7 +150,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '認証コード検証に失敗しました',
+        data.detail || data.message || '認証コード検証に失敗しました',
         response.status,
         data.code
       );
@@ -174,7 +174,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || 'サインアップに失敗しました',
+        data.detail || data.message || 'サインアップに失敗しました',
         response.status,
         data.code
       );
@@ -198,7 +198,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || 'ログインに失敗しました',
+        data.detail || data.message || 'ログインに失敗しました',
         response.status,
         data.code
       );
@@ -241,7 +241,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '情報の取得に失敗しました',
+        data.detail || data.message || '情報の取得に失敗しました',
         response.status,
         data.code
       );
@@ -263,7 +263,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || 'アイテムの取得に失敗しました',
+        data.detail || data.message || 'アイテムの取得に失敗しました',
         response.status,
         data.code
       );
@@ -286,7 +286,7 @@ class AuthApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || 'セッションの更新に失敗しました',
+        data.detail || data.message || 'セッションの更新に失敗しました',
         response.status,
         data.code
       );

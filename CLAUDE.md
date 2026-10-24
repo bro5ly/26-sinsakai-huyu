@@ -1,6 +1,9 @@
 # 生徒カード貸し出し管理システム
 
-学校の生徒カードをタブレットにかざして本人確認し、機材や本のバーコードを読み取って貸し出し・返却を記録するWebシステム。学生向けのWebサイトでは、登録・借りている物の確認・機材カタログの閲覧ができる。チーム開発(小川・青木ほか)。
+学校の生徒カードをタブレットにかざして本人確認し、機材や本のバーコードを読み取って貸し出し・返却を記録するWebシステム。学生向けのWebサイトでは、登録・借りている物の確認・機材カタログの閲覧ができる。
+
+- **成り立ち**: 2025年度の学校の課題(学校の困りごとをWebアプリで解決する)で、2人で作った(2026年2月)。全校生徒が持っているのに使われていない生徒カードと、紙で管理している本や物品の貸し出しに目をつけた、開発者の発案。**今は開発者が1人で作り直している**(学んだことでより良くするため。学校に実際に使ってもらうことも目指している)。判断は開発者だけで決めてよく、ほかの人の了承は要らない
+- **READMEは採用担当の人が読む**。作り直しの意図と今の状態が伝わるように保つ
 
 - **規模の前提**: 1校の中で使う想定の試作。本番環境はまだ無く、Docker Composeで手元で動かす
 - **ICチップは想定**: 今の生徒カードには実際にはICチップが無い。将来付く想定で、今はカードの番号をバーコードか手入力で読む。APIはカードの番号を受け取るだけにして、読み方に依存させない
@@ -19,9 +22,9 @@
 
 ## 全体で守ること
 
-- **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない)。失敗は`{ message, code }`。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
+- **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
-- エラーはserviceで`throw new AppError(日本語メッセージ, HTTPステータス, 'UPPER_SNAKE_CODE')`、controllerは`try/catch`で`handleError(res, err)`に渡す。Zod・Prismaのエラーも`handleError`が変換する
+- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。controllerに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
@@ -43,7 +46,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 ## コーディング規約
 
-- バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { AppError } from "@/lib/error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
+- バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
 - 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存はrouteファイルで`new`して渡す(DIコンテナは使わない)
 - 入力の検証は`*.schema.ts`のZodで、controllerの先頭で`parse`する
@@ -69,6 +72,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 - 手順は`docs/backlog.md`の「進め方」。判断は副作用の無い関数に出し、テストはその関数に書く
 - **実装を優先する(2026-10-23から)。テストもClaudeが書き、TDD(赤 → 緑 → 整える)で進める**。大体の機能ができたら、**最後のほうの機能だけ開発者が練習としてテストを書く**(どれにするかはそのとき決める。そこではClaudeは例の表・`it.todo`・穴埋めの形を用意し、書かれたテストを確かめる)
 - 緑になるたびに1コミット。整理(`refactor:`)は動きを変える修正と別のコミットにする
+- テストは、関数ごとの`describe`の中を`describe("正常系")`・`describe("異常系")`・`describe("境界値")`で分ける(当てはまるテストが無い区分は書かない)。テストの名前には仕様の番号を入れる(2026-10-24、開発者の希望)
 - 作業のまとまりごとにブランチを切る(`fix/…`・`refactor/…`・`feat/…`・`docs/…`)。PRを出す・マージする前に開発者に声をかける
 
 ## 開発者との進め方(2026-10-24、開発者が「このやり方がよい」と確かめた)
@@ -81,6 +85,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 4. **作業の前に予定を見せる**: 触るファイル・変えること・理由。マイグレーションのSQLのように取り消しにくいものは、適用する前に中身を見せて止まる
 5. **作業の後に結果を見せる**: テストの赤・緑、型チェック、`curl`の結果、確かめていないこと。ここで止まり、次に進むかを聞く
 6. 途中で予定と違うことが起きたら(テストは緑なのにAPIが違う、など)、先に進まず報告する
+7. **聞いた質問に答えが無かったら、実装に入る前に聞き直す**。「おすすめどおりだろう」と決めつけない(2026-10-24、開発者の希望。H2・H3・H8を答えなしで進めてしまったため)。「基本的に叩き台どおり」と言われたときも、条件付きの叩き台(「〜なら B」など)や、開発者にしか分からないことは聞き直す。**ただし、返事から読み取れることは聞き直さない**(1つの返事が複数の質問の答えになっていることもある。しつこくしない)
 
 ## ドキュメント
 

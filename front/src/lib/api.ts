@@ -82,7 +82,7 @@ class TabletApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '認証に失敗しました',
+        data.detail || data.message || '認証に失敗しました',
         response.status,
         data.code
       );
@@ -110,7 +110,7 @@ class TabletApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '貸出に失敗しました',
+        data.detail || data.message || '貸出に失敗しました',
         response.status,
         data.code
       );
@@ -138,7 +138,7 @@ class TabletApi {
 
     if (!response.ok) {
       throw new ApiError(
-        data.message || '返却に失敗しました',
+        data.detail || data.message || '返却に失敗しました',
         response.status,
         data.code
       );

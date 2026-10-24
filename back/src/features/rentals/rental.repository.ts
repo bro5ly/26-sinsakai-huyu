@@ -1,4 +1,5 @@
-import { AppError } from "@/lib/error.js";
+import { DomainError } from "@/lib/domain-error.js";
+import { Prisma } from "@/generated/prisma/client.js";
 import { prisma } from "@/lib/prisma.js";
 
 
@@ -49,7 +50,7 @@ export class RentalRepository {
                 id: true
             }
         })
-        if(!activeRental) throw new AppError('この物品の貸し出しデータが見つかりません',404,'ACTIVE_RENTAL_NOT_FOUND')
+        if(!activeRental) throw new DomainError('ACTIVE_RENTAL_NOT_FOUND')
 
         return await this.db.rental.update({
             where: {id: activeRental.id},
@@ -78,32 +79,39 @@ export class RentalRepository {
                 }
             })
             if(!item) {
-                throw new AppError('貸し出し不可能な物品です',400,'ITEM_NOT_AVAILABLE')
+                throw new DomainError('ITEM_NOT_FOUND')
             }
 
             if (item.rentals.length > 0) {
-                throw new AppError('貸し出し中の物品です',409,'ITEM_NOT_AVAILABLE')
+                throw new DomainError('ITEM_ALREADY_RENTED')
             }
 
             if (item.status !== "AVAILABLE")  {
-                throw new AppError('貸し出し不可能な物品です',400,'ITEM_NOT_AVAILABLE')
+                throw new DomainError('ITEM_UNAVAILABLE')
             }
 
             // 同時に借りられたときは、部分インデックス(返却されていない貸し出しは物1つにつき1件)でここが失敗する
-            return await tx.rental.create({
-                data: {
-                    itemId: item.id,
-                    userId,
-                    dueDate,
-                },
-                include: {
-                    item: {
-                        include: {
-                            itemType: true
+            try {
+                return await tx.rental.create({
+                    data: {
+                        itemId: item.id,
+                        userId,
+                        dueDate,
+                    },
+                    include: {
+                        item: {
+                            include: {
+                                itemType: true
+                            }
                         }
                     }
+                })
+            } catch (err) {
+                if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+                    throw new DomainError('ITEM_ALREADY_RENTED')
                 }
-            })
+                throw err
+            }
         })
     }
 

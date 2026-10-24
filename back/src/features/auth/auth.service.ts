@@ -4,7 +4,7 @@ import type { UserRepository } from "../user/UserRepository.js"
 import type { Roster, RosterEntry } from "../roster/roster.js"
 import type { AuthRepository } from "./auth.repository.js"
 import type { MailService } from "@/lib/mail.js"
-import { AppError } from "@/lib/error.js"
+import { DomainError } from "@/lib/domain-error.js"
 import type { AuthResponse, VerificationResponse, VerifyCodeResponse } from "./auth.types.js"
 
 // テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
@@ -18,12 +18,12 @@ export class AuthService {
 
     requestVerification = async (studentId: string): Promise<VerificationResponse> => {
         //1. 受け取った学籍番号が別dbにあるか確認
+        // 名簿にいない・登録済みでも、成功と同じ応答を返し、何も送らない(学籍番号があるか・登録済みかを知られないため。R-16・auth.md 4.6)
         const student = await this.roster.findByStudentId(studentId);
-        if(!student) throw new AppError('ユーザーが見つかりません',404,'SUTUDENT_ID_NOT_FOUND')
+        if(!student) return {message: 'CODE_SENT'}
 
-        
         const existsUser = await this.users.findByStudentId(studentId)
-        if(existsUser) throw new AppError('すでに登録されています',409,'ALREADY_EXISTS_USER')
+        if(existsUser) return {message: 'CODE_SENT'}
         //2. 存在する場合、dbからemailを取得
         //3. コードを作成してemailに送信
         // 6桁のランダムな数字を文字列として生成
@@ -40,18 +40,18 @@ export class AuthService {
     verifyCode = async (studentId: string, code: string): Promise<VerifyCodeResponse> => {
         //4. コードを検証し成功時にトークンを発行し返却
         const record = await this.authRepository.checkTmpCode(studentId)
-        if(!record) throw new AppError('コードを再送してください',400,'TMPCODE_NOT_FOUND')
+        if(!record) throw new DomainError('INVALID_CODE')
 
         //コードの存在を確認
-        if(!record.code) throw new AppError('コードがありません',404,'TMP_CODE_NOT_FOUND')
+        if(!record.code) throw new DomainError('INVALID_CODE')
         
         //有効期限の確認
         if(new Date() > record.expiresAt){
-            throw new AppError('期限切れのコードです',410,'VERIFICATION_NOT_STARTED')
+            throw new DomainError('INVALID_CODE')
         }
 
         if(record.code !== code){
-            throw new AppError('不正なコードです',400,'INVALID_CODE')
+            throw new DomainError('INVALID_CODE')
         }
         
         await this.authRepository.deleteTmpCode(studentId)
@@ -69,14 +69,14 @@ export class AuthService {
         try {
             ({studentId} = jwtLib.verifyRegistrationToken(registerToken) as {studentId: string})
         } catch {
-            throw new AppError('登録の手続きをやり直してください',401,'INVALID_TOKEN')
+            throw new DomainError('INVALID_TOKEN')
         }
 
         const existsUser = await this.users.findByStudentId(studentId)
-        if(existsUser) throw new AppError('すでに登録されています',409,'ALREADY_EXISTS_USER')
+        if(existsUser) throw new DomainError('ALREADY_REGISTERED')
 
         const entry = await this.roster.findByStudentId(studentId)
-        if(!entry) throw new AppError('ユーザーの作成に失敗しました',400,'CREATE_USER_FAILED')
+        if(!entry) throw new DomainError('INVALID_TOKEN')
 
         const passwordHash = await bcrypt.hash(plainPassword,10)
         const user = await this.users.create({studentId, passwordHash})
@@ -86,11 +86,12 @@ export class AuthService {
 
     login = async (studentId: string, plainPassword: string) => {
         const existsUser = await this.users.findByStudentId(studentId)
-        if(!existsUser) throw new AppError('ユーザーが見つかりません。',404,'USER_NOT_FOUND')
+        // 学籍番号が無い・パスワード違い・名簿から消えた、のどれかは言わない(R-16・R-A14)
+        if(!existsUser) throw new DomainError('INVALID_CREDENTIALS')
         const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
-        if(!isMatch) throw new AppError('パスワードが間違っています',400,'INVALID_PASSWORD')
+        if(!isMatch) throw new DomainError('INVALID_CREDENTIALS')
 
-        return this.generateSession(existsUser, await this.rosterEntryOf(existsUser))
+        return this.generateSession(existsUser, await this.rosterEntryOf(existsUser, 'INVALID_CREDENTIALS'))
     }
 
 
@@ -98,12 +99,12 @@ export class AuthService {
 
     refreshSession = async (refreshToken: string): Promise<AuthResponse> => {
         // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック。Cookieが無い・壊れているときも401にする(500にしない)
-        if (!refreshToken) throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+        if (!refreshToken) throw new DomainError('INVALID_SESSION');
         let payload: { sub: string };
         try {
             payload = jwtLib.verifyRefreshToken(refreshToken) as { sub: string };
         } catch {
-            throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+            throw new DomainError('INVALID_SESSION');
         }
 
         // 2. 次に、DBにそのトークンが記録されているかチェック（★ここで作成したメソッドを使う）
@@ -111,25 +112,25 @@ export class AuthService {
 
         // DBにない ＝ すでにログアウト済み、あるいは不正なトークン
         if (!savedToken) {
-            throw new AppError('セッションが無効です', 401, 'INVALID_SESSION');
+            throw new DomainError('INVALID_SESSION');
         }
 
         // DB側の期限も一応チェック
         if (new Date() > savedToken.expiresAt) {
-            throw new AppError('セッションの期限が切れました', 401, 'SESSION_EXPIRED');
+            throw new DomainError('INVALID_SESSION');
         }
 
         // 3. 全てOKなら新しいセッションを発行
         const user = await this.users.findById(payload.sub);
-        if (!user) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
+        if (!user) throw new DomainError('INVALID_SESSION');
 
-        return this.generateSession(user, await this.rosterEntryOf(user));
+        return this.generateSession(user, await this.rosterEntryOf(user, 'INVALID_SESSION'));
     }
 
     // 名簿から消えた人(卒業など)は、登録が残っていても通さない(docs/spec.md Q13)
-    private async rosterEntryOf(user: User): Promise<RosterEntry> {
+    private async rosterEntryOf(user: User, whenMissing: 'INVALID_CREDENTIALS' | 'INVALID_SESSION'): Promise<RosterEntry> {
         const entry = await this.roster.findByStudentId(user.studentId)
-        if (!entry) throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND')
+        if (!entry) throw new DomainError(whenMissing)
         return entry
     }
 
