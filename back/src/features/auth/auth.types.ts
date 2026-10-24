@@ -1,11 +1,11 @@
 // features/auth/auth.types.ts
-import type { UserType } from "@/generated/prisma/enums.js";
+import type { RosterUserType } from "../roster/roster.js";
 
-// 画面に返す利用者。名前などは名簿(ExternalUser)から組み立てる
+// 画面に返す利用者。名前などは名簿から組み立てる
 export interface SessionUser {
     id: string;
     name: string;
-    userType: UserType;
+    userType: RosterUserType;
     grade: string | null;
     major: string | null;
     studentId: string;

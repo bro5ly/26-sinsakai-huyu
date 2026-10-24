@@ -37,16 +37,6 @@ export class ItemRepository {
                 maxItems: true,
                 suspendedUntil: true,
                 suspensionReason: true,
-                externalUser: {
-                    select: {
-                        name: true,
-                        email: true,
-                        serialNumber: true,
-                        userType: true,
-                        grade: true,
-                        major: true,
-                    }
-                },
                 rentals: {
                     where: {
                         returnedAt: null

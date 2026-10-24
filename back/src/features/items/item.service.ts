@@ -1,9 +1,12 @@
 import type { ItemRepository } from "./item.repository.js";
+import type { Roster } from "../roster/roster.js";
 import { AppError } from "@/lib/error.js";
 import { itemAvailability, rentalStatus } from "../rentals/rental.status.js";
 
+export type ItemStore = Pick<ItemRepository, "findAll" | "getMyInfo">
+
 export class ItemService {
-    constructor(private itemRepository: ItemRepository) { }
+    constructor(private itemRepository: ItemStore, private roster: Roster) { }
 
     async findAll() {
         const items = await this.itemRepository.findAll();
@@ -20,12 +23,17 @@ export class ItemService {
         if (!user) {
             throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
         }
+        // 名簿から消えた人(卒業など)は、登録が残っていても通さない(docs/spec.md Q13)
+        const entry = await this.roster.findByStudentId(user.studentId);
+        if (!entry) {
+            throw new AppError('ユーザーが見つかりません', 404, 'USER_NOT_FOUND');
+        }
 
-        const { externalUser, rentals, canBorrow, maxItems, suspendedUntil, suspensionReason, ...rest } = user;
+        const { rentals, canBorrow, maxItems, suspendedUntil, suspensionReason, ...rest } = user;
         const now = new Date();
         return {
             ...rest,
-            ...externalUser,
+            ...entry,
             rentalSetting: { canBorrow, maxItems, suspendedUntil, suspensionReason },
             rentals: rentals.map((rental) => ({
                 ...rental,

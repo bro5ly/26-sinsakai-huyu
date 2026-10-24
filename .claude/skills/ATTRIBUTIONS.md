@@ -26,6 +26,7 @@
 | Docker | `docker-patterns` | affaan-m/everything-claude-code `skills/docker-patterns` | MIT, Copyright (c) 2026 Affaan Mustafa | あり: 関係の無い節(Hardened CLI Installer Harnesses)を削除、`description`を合わせて変更、冒頭に使い方 |
 | Git | `git-advanced-workflows` | wshobson/agents `plugins/developer-essentials/skills/git-advanced-workflows` | MIT, Copyright (c) 2024 Seth Hobson | なし |
 | コミット | `conventional-commit-review` | affaan-m/everything-claude-code `skills/conventional-commit-review` | MIT, Copyright (c) 2026 Affaan Mustafa | あり: 冒頭に使い方(CLAUDE.mdの日本語の書き方を優先) |
+| API設計(エラー・ページ分け・バージョン・OpenAPI) | `api-designer` | [jeffallan/claude-skills](https://github.com/jeffallan/claude-skills) `skills/api-designer` (02b0502、2026-10-23に追加) | MIT, Copyright (c) 2025 | あり: 冒頭に使い方(契約はZod、固定しない`npx`は確認なしに動かさない、RFC 9457を見る、小さなアプリでのMUSTの扱い) |
 | 要件定義・仕様 | `requirements` | 開発者自身のauto-passの`.claude/skills/requirements`を元に書き換え | (開発者のもの) | 観点リストをこのプロジェクト向けに書き換え |
 
 改変したファイルには、冒頭の「このプロジェクトでの使い方」の節に、出典・ライセンス・何を変えたかを書いている。
@@ -51,6 +52,8 @@
 | wshobson `dependency-upgrade` | 固定していない遠くのスクリプトを`npx`で実行する例(`jscodeshift -t https://...`)や、`npm install --force`を含む。内容もReact 17の頃のもの |
 | obra `brainstorming` | 「どんな作業の前にも必ず使え」と強く自動で動く設定で、毎回の作業を止める |
 | affaan-m `git-workflow`・`api-design`(名前のまま) | 開発者の個人スキル(`~/.claude/skills`)と同じ名前で、個人のほうが優先されて使われない |
+| secondsky/claude-skills `rest-api-design` | 102行と短く、取り込み済みの`rest-api-design`(ECC)と中身が重なる |
+| wshobson `api-design-principles` | GraphQLとPython(FastAPI)の雛形が中心で、Expressのこのプロジェクトには`api-designer`の方が合う |
 | リンター専用のスキル | 信頼できる出典のものが見つからなかった。リンターの手順は`verification-loop`で扱う |
 
 ## 注意

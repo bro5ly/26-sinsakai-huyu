@@ -1,12 +1,18 @@
 import { AppError } from "@/lib/error.js";
 import type { RentalRepository } from "./rental.repository.js";
+import type { Roster } from "../roster/roster.js";
 import { signTabletToken } from "@/lib/jwt.js";
 import { rentalStatus } from "./rental.status.js";
 
+// テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
+export type RentalStore = Pick<RentalRepository, "findUserWithActiveRentals" | "findByBarcode" | "saveCheckout" | "saveReturned">
+
 export class RentalService {
-    constructor(private rentalRepository: RentalRepository){}
+    constructor(private rentalRepository: RentalStore, private roster: Roster){}
     signInWithIc = async (serialNumber: string) => {
-        const data = await this.rentalRepository.findBySerialNumber(serialNumber)
+        const entry = await this.roster.findBySerialNumber(serialNumber)
+        if(!entry) throw new AppError('認証に失敗しました', 401, 'AUTH_FAILED')
+        const data = await this.rentalRepository.findUserWithActiveRentals(entry.studentId)
         if(!data) throw new AppError('認証に失敗しました', 401, 'AUTH_FAILED')
         const now = new Date()
         return {
@@ -15,9 +21,9 @@ export class RentalService {
             user: {
                 id: data.id,
                 studentId: data.studentId,
-                name: data.externalUser.name,
-                grade: data.externalUser.grade,
-                major: data.externalUser.major
+                name: entry.name,
+                grade: entry.grade,
+                major: entry.major
             },
             data: data.rentals.map((rental) => ({...rental, status: rentalStatus(rental, now)}))
         }
