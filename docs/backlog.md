@@ -78,7 +78,8 @@
     - `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を使い、`shared/`ができたら移す(C7)
     - テストは`vitest.config.ts`の`setupFiles: ["dotenv/config"]`で`.env`を自分で読む。Dockerの無い環境でも`npx vitest run`だけで動かすため(D1)
     - 名簿の切り替え`ROSTER_SOURCE`は、学校の名簿の実装ができるまで足さない。今は`buildDeps()`の1か所で`PrismaRoster`を作るだけ(D2)
-    - ①は済み(2026-10-24)
+    - ①は済み(2026-10-24)。あわせて、repositoryと名簿の窓口のPrismaを省略できないようにし(K1)、`lib/mail.ts`で`.env`を読み直すのをやめた(K2)。設定(`FRONTEND_URL`など)を1か所で読むかは④で決める(K3)
+    - ②は済み(2026-10-24)。`src/app.test.ts`のH1〜H20(`supertest` 7.3.1)
 - [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
