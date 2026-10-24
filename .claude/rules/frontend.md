@@ -12,7 +12,7 @@ paths:
 - `hooks/`: `useAuth`・`useAuthForm`・`useItems`・`useTablet`・`useTabletOperations`
 - `contexts/`: `AuthContext`(Webのログイン状態)、`TabletContext`(タブレットのセッション)
 - `services/`: API呼び出し。`ApiService`を継承して`get`/`post`を使う。`lib/api.ts`・`lib/auth-api.ts`は古い重複なので新しく使わない
-- `types/`: APIの型。**バックエンドの`sendSuccess`の形(`{ success, ...data }`)に合わせる**
+- `types/`: APIの型。**バックエンドの`sendSuccess`の形(`{ success, ...data }`)に合わせる**。`shared/`(`@sinsakai/shared`)にある形はそちらを使い、手で書き直さない(今はエラーの`code`とRFC 9457の形。`ApiService`はエラーの応答を`problemSchema`で確かめてから読む)
 
 ## 認証
 

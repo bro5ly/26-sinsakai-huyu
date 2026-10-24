@@ -16,7 +16,7 @@
 - [x] テストの置き場所を決める(`src/`の中で元のファイルの隣に`*.test.ts`)
 - [x] CLAUDE.mdのコマンドの表に足す
 - [x] `rental.status.test.ts`(S1〜S6・I1〜I4)を書いた。期限の比べ方を`<=`に変えるとS4が赤になることも確かめた
-- [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める
+- [x] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める(2026-10-24、`node:24-bookworm-slim`に上げた。0.7のP4)
 - [ ] GitHub Actions(CI)で、pushとPRのたびにAPIのテストと型チェック・画面のビルドとリントを動かす(2026-10-24、開発者の希望で「いずれ」。Macでの同じ確認を繰り返したくなったらやる)
 - [ ] APIのイメージ(`node:24-bookworm-slim`)にOpenSSLが無く、Prismaの道具(マイグレーション)が「OpenSSLの版が分からない」と警告する。今は動いているが、TLSで外部のDBにつなぐときに動かなくなるおそれがある。Dockerfileで`openssl`を入れる(2026-10-24、後回しに決定。ブランチ`fix/api-image-openssl`を`main`から切ってある)
 
@@ -54,9 +54,17 @@
 
 型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
 
+- 0.7の残りの順番(2026-10-24決定 S1-A): ①npm workspacesと`shared/`(両方のコンテナから`shared/`が見えるようにするDockerの作り直しも一緒に) → ②APIを1本ずつ新しいURLに移す(そのたびに、その機能の中の型T1〜T7もそろえる)。先に移すと、新しい形の型を`back`と`front`に別々に書いてから`shared/`へ移すことになり、同じ所を2回直すため
 - [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
+  - 決めたこと(2026-10-24 P1〜P5):
+    - `shared/`はTypeScriptのまま使い、ビルドしない。サーバーの`tsx`もNext.jsもTypeScriptをそのまま読めるので、ビルドの手順と「ビルドし忘れ」を無くす(P1)
+    - パッケージの名前は`@sinsakai/shared`(P2)
+    - Dockerはビルドの起点をリポジトリ直下にし、コンテナにリポジトリ全体をつなぐ。各コンテナで要るものだけを入れる(`npm ci -w back`など)。ロックファイルが直下に1つなので、直下が見えないと入れられないため(P3)
+    - 画面のイメージを`node:20-alpine`から`node:24-bookworm-slim`にそろえる。同じ版のnpmでロックファイルを作るため。Node 20はサポートが切れている(P4)
+    - 最初のPRは仕組みだけにし、`shared/`にはエラーの`code`の一覧とRFC 9457の形だけを移す。`back`と`front`の両方がそれを使う。APIの形は次から移す(P5)
+    - `shared/`の中のファイルどうしは`@sinsakai/shared/x`で読み、`shared/package.json`の`exports`にファイルごとの入口を書く。`./x.js`と書くと、Next.jsのTurbopackが`x.ts`に読み替えず画面のビルドが落ちたため。`.ts`を付けて読む案(B)は、back・front・sharedの3つのtsconfigを変えるので選ばなかった(P6-A)
 - [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
-- [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
+- [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す(2026-10-24、`shared/src/error-codes.ts`に移した)。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
   - 判断の関数(判断表C・T)は、Resultを返す(`{ ok: true }`か`{ ok: false, reason }`)。HTTPを知らない(E1)
   - serviceは、断るときに`throw new DomainError(code)`。持つのは`code`だけで、`code`は`docs/api.md`6章の一覧の型で縛る(一覧に無い値は型チェックで落ちる)
   - `code` → ステータスと画面の文言(`detail`)の対応表を、サーバーの1か所(`errors.ts`)に持つ(E2)
@@ -97,7 +105,7 @@
   - 使われていない型(`ItemWithDetail`・`RentalWithDetails`・`RentalBasic`・`SignupInput`・`loginInput`、画面の`TabletContext`など)はそのとき消す(T7)
 - [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
 - [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
-- [ ] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる
+- [x] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる(2026-10-24。各コンテナは`npm ci -w back -w shared`のように要るワークスペースだけを入れる。P3)
 - [ ] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(`npm test`・`npm run typecheck`・`npm run check`など。中で`docker compose exec ...`を呼ぶ)。CLAUDE.mdのコマンドの表も直す
 - [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
 
@@ -143,12 +151,14 @@
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
 - [ ] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11)
+- [ ] 画面のリントのエラー7件を直す(2026-10-24に見つけた。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`dashboard/page.tsx`・`contexts/AuthContext.tsx`の`any`、`items/page.tsx`・`components/BarcodeScanner.tsx`の宣言より前に使っている変数。警告も11件ある
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
 
 ## 4. フロントの認証
 
 - [ ] `AuthContext`に読み込み中の状態を持たせ、`dashboard`の2秒待ちをやめる
 - [ ] アクセストークンのCookieの期限をサーバーと揃える(ずれ10)
+- [ ] 画面の崩れを直す(2026-10-24、開発者がブラウザで見つけた。文字が重なっている所、ボタンのアイコンが正しく出ない所がある。どの画面のどこかは、直すときに開発者に聞く。workspacesとDockerの作り直し(0.7)の前からあったかは分からない)
 
 ## 5. 在庫管理(新機能)
 

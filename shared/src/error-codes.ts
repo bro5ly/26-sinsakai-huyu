@@ -1,6 +1,6 @@
 // エラーのcodeと、HTTPのステータス・画面に出す文言の対応(docs/api.md 6章)。
 // codeが画面との約束で、文言は変えてよい。serviceはcodeだけを知り、ステータスと文言はここだけで決める。
-// shared/(docs/backlog.md 0.7)ができたら、そちらへ移す(このファイルは他に依存しない)
+// サーバー(back)と画面(front)の両方がこの表を使う。画面はcodeで分岐し、文言は応答のdetailを出す(2026-10-24 P5)
 export const errorCatalog = {
     VALIDATION_ERROR: { status: 400, detail: "入力内容が正しくありません" },
     INVALID_CREDENTIALS: { status: 401, detail: "学籍番号かパスワードが違います" },

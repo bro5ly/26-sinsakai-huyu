@@ -1,0 +1,17 @@
+{
+  "name": "@sinsakai/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./error-codes": "./src/error-codes.ts",
+    "./problem": "./src/problem.ts"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

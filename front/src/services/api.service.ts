@@ -1,3 +1,4 @@
+import { problemSchema } from "@sinsakai/shared";
 import { ApiError } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5454";
@@ -29,10 +30,12 @@ export class ApiService {
     const data = await response.json();
 
     if (!response.ok) {
+      // サーバーの失敗は shared/ の形(RFC 9457)で来る。形が違うとき(サーバーの外のエラーなど)は、codeを付けない
+      const problem = problemSchema.safeParse(data);
       throw new ApiError(
-        data.detail || data.message || "リクエストに失敗しました",
+        problem.success ? problem.data.detail : data.message || "リクエストに失敗しました",
         response.status,
-        data.code
+        problem.success ? problem.data.code : undefined
       );
     }
 

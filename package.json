@@ -1,0 +1,9 @@
+{
+  "name": "sinsakai-huyu",
+  "private": true,
+  "workspaces": [
+    "back",
+    "front",
+    "shared"
+  ]
+}

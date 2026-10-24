@@ -17,6 +17,7 @@
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
+| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)とRFC 9457の形(`problem.ts`の`problemSchema`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
 | `docs/` | 要件定義・仕組み(下の「ドキュメント」) |
 | `photo/` | READMEの画面写真 |
 
@@ -24,7 +25,7 @@
 
 - **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
-- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
+- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`shared/src/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
@@ -42,7 +43,7 @@
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
 
-APIのコンテナはNode 24。依存を足した人がいたら`docker compose up -d --build -V api`で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。**`curl`で確かめる前に、`docker compose logs api`に変えたファイルの「change in … Restarting」が出たことを見る**(Macでは変更の通知が落ち、古いコードのまま動いていたことがある。今はpolling(`CHOKIDAR_USEPOLLING`)で見張っている)。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
+APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所はリポジトリ直下(workspacesのため)。依存を足すときは`docker compose exec api npm install <名前> -w back`(画面は`web`と`-w front`)で直下のロックファイルを書き換える。依存を足した人がいたら`docker compose up -d --build -V api`(画面なら`web`)で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。**`curl`で確かめる前に、`docker compose logs api`に変えたファイルの「change in … Restarting」が出たことを見る**(Macでは変更の通知が落ち、古いコードのまま動いていたことがある。今はpolling(`CHOKIDAR_USEPOLLING`)で見張っている)。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
 
 ## コーディング規約
 
@@ -50,6 +51,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
 - 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール)を`new`するのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
 - 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
+- `shared/`の中のファイルどうしは、相対パス(`./x.js`)ではなく`@sinsakai/shared/x`で読み、ファイルを足したら`shared/package.json`の`exports`にも足す(Next.jsのTurbopackが`./x.js`を`x.ts`に読み替えず、画面のビルドが落ちるため。2026-10-24 P6-A)
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
@@ -86,7 +88,8 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 5. **作業の後に結果を見せる**: テストの赤・緑、型チェック、`curl`の結果、確かめていないこと。ここで止まり、次に進むかを聞く
 6. 途中で予定と違うことが起きたら(テストは緑なのにAPIが違う、など)、先に進まず報告する
 7. **聞いた質問に答えが無かったら、実装に入る前に聞き直す**。「おすすめどおりだろう」と決めつけない(2026-10-24、開発者の希望。H2・H3・H8を答えなしで進めてしまったため)。「基本的に叩き台どおり」と言われたときも、条件付きの叩き台(「〜なら B」など)や、開発者にしか分からないことは聞き直す。**ただし、返事から読み取れることは聞き直さない**(1つの返事が複数の質問の答えになっていることもある。しつこくしない)
-8. **確認なしで進めてよいと自分で判断したこと(文書・決まりの直しなど)も、後で「確認せずに直したもの」としてまとめて見せる**(2026-10-24、開発者の希望。CLAUDE.mdと`.claude/rules/`を確認なしで直したため。直したこと自体はよかった)
+8. **仕様書・決まり(`docs/`・`CLAUDE.md`・`.claude/rules/`・README)を更新するときは、古い記述と食い違いが残らないように、同じことを書いている所をすべて探して直す**(`grep`でファイルの名前・関数の名前・番号を探す。2026-10-24、開発者の希望)
+9. **確認なしで進めてよいと自分で判断したこと(文書・決まりの直しなど)も、後で「確認せずに直したもの」としてまとめて見せる**(2026-10-24、開発者の希望。CLAUDE.mdと`.claude/rules/`を確認なしで直したため。直したこと自体はよかった)
 
 ## ドキュメント
 

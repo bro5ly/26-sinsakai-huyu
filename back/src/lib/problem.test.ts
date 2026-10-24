@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client.js";
 import { DomainError } from "./domain-error.js";
-import { errorCatalog, type ErrorCode } from "./error-codes.js";
+import { errorCatalog, problemSchema, type ErrorCode } from "@sinsakai/shared";
 import { toProblem } from "./problem.js";
 
 // エラー → RFC 9457 の Problem Details(docs/api.md 3.4・6章)
@@ -59,6 +59,15 @@ describe("toProblem(エラーを応答の形に変える)", () => {
             const err = Object.assign(new Error("request entity too large"), { type: "entity.too.large", status: 413 });
 
             expect(toProblem(err)).toMatchObject({ status: 413, title: "Content Too Large", code: "PAYLOAD_TOO_LARGE" });
+        });
+
+        it("P9 どのcodeの応答も、画面と共有する形(shared/ の problemSchema)に合う(サーバーと画面の形がずれない)", () => {
+            for (const code of Object.keys(errorCatalog) as ErrorCode[]) {
+                expect(problemSchema.safeParse(toProblem(new DomainError(code))).success).toBe(true);
+            }
+            const validation = toProblem(z.object({ barcode: z.string() }).safeParse({}).error);
+
+            expect(problemSchema.parse(validation).errors).toEqual([{ path: "barcode", message: expect.any(String) }]);
         });
 
         it("P7 表のcodeは、どれも4xxか5xxのステータスと、空でない文言を持つ", () => {
