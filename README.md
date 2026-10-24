@@ -1,289 +1,155 @@
-# 生徒カードを活用した貸し出し管理システム
+# 生徒カードで使う、機材・本の貸し出し管理システム
 
-## 1. 作ったもの
-
-**使われていない生徒カードに焦点を当てた、機材貸し出し管理システム**
-
-学校で配布されているものの、ほとんど活用されていない生徒カード（学生証）。
-このカードにICチップが組み込まれていることを想定し、機材の貸し出し・返却をスムーズに行えるシステムを開発しました。
-
-> **ICチップについて**: 現在の生徒カードには、実際にはICチップは付いていません。本システムは将来カードにICチップが付くことを想定しています。それまではカードの番号をバーコードで読み取るか手入力することで、ICの読み取りの代わりにしています。
-
-生徒カードをタブレットにかざすだけで認証し、バーコードスキャンで機材の貸し出し・返却を完結できる、直感的な操作を実現しています。
+学校の生徒カードをタブレットで読み取って本人確認し、機材や本のバーコードを読むだけで貸し出し・返却を記録するWebシステムです。学生は自分のスマホから、借りている物と返却期限を確かめられます。
 
 <div align="center">
-  <img src="./photo/tablet-01.png" alt="システム概要 - タブレット画面" width="600">
+  <img src="./photo/tablet-01.png" alt="タブレットの受付画面" width="600">
 </div>
 
----
+## このリポジトリの今の状態
 
-## 2. 主な機能
+- **2025年度の学校の課題**(学校の困りごとをWebアプリで解決する)として、2026年2月に2人で作った試作です
+- **今は ogawa が1人で作り直しています。** 作ってから1年で学んだことを使って、設計と品質を上げるためです。学校に実際に使ってもらうことも目指しています
+- 作り直しでは、**AIと一緒に仕様を詰めて文書に残し、テストで確かめながら進める**やり方を試しています([AIと一緒に開発するための取り組み](#aiと一緒に開発するための取り組み))
+- 進み具合と残りの作業は [docs/backlog.md](docs/backlog.md) にあります。これまでに、DBの二重管理の解消、学校の名簿を読む窓口の切り出し、エラーの形の統一、テストの整備(49件)が済んでいます。次は、APIの作り直しと、公共の場に置くタブレット向けの認証の作り直しです
 
-### 📱 タブレット機能（貸し出し受付端末）
-- **ICカード認証**: 生徒カードをかざすだけでユーザー認証
-- **バーコードスキャン**: カメラまたはバーコードリーダーで機材を識別
-- **貸し出し/返却処理**: ワンタッチで貸し出し・返却を記録
-- **リアルタイム在庫確認**: 機材の状態を即座に確認
+## 何を解決するか
 
-<div align="center">
-  <img src="./photo/tablet-02.png" alt="タブレット - ユーザー認証画面" width="400">
-  <img src="./photo/tablet-03.png" alt="タブレット - バーコードスキャン" width="400">
-</div>
+| 困りごと | このシステムで |
+|---|---|
+| 全校生徒が生徒カードを持っているのに、身分証明にしか使われていない | 生徒カードを、貸し出しの本人確認に使う |
+| 本や機材の貸し出しを、紙の台帳で管理している。誰が何を借りているかがすぐに分からない | 貸し出し・返却をその場で記録し、貸出中・返却期限を画面で確かめられる |
 
-### 🌐 Webサイト機能（学生向けポータル）
-- **学籍番号で新規登録**: メールによる本人確認で安全に登録
-- **ダッシュボード**: 現在借りている機材の一覧表示
-- **バーコード表示**: 自分のシリアルナンバーをバーコードで表示
-- **機材カタログ**: 全ての機材の情報・貸出状況を確認
-- **アイテム詳細**: 機材のスペックや貸出期間などの詳細情報
+**生徒カードのICチップについて**: 今の生徒カードには、実際にはICチップは付いていません。このシステムは将来ICチップが付く想定で作っていて、それまではカードの番号をバーコードで読むか手で入力して、ICの読み取りの代わりにしています。
 
-<div align="center">
-  <img src="./photo/user-site-01.png" alt="ダッシュボード画面" width="400">
-  <img src="./photo/user-site-03.png" alt="機材カタログ画面" width="400">
-</div>
+## 主な機能
 
-### 🔐 認証・セキュリティ
-- **JWT認証**: アクセストークン + リフレッシュトークン
-- **HTTPOnly Cookie**: セキュアなトークン管理
-- **メール認証**: 登録時の本人確認
+**タブレット(貸し出しの受付)**
+- 生徒カードの番号を読んで本人確認する
+- 物品のバーコードをカメラかバーコードリーダーで読んで、貸し出す・返す
+- 貸出中・修理中の物は貸し出さない。2台で同時に同じ物を借りようとしても、記録は1件だけになる
 
----
+**Webサイト(学生向け)**
+- 学籍番号で登録する(学校の名簿のメールアドレスに届く認証コードで本人確認)
+- 借りている物と返却期限を見る
+- 機材カタログで、貸し出せる物があるかを見る
 
-## 3. ユーザーフロー
+## 画面
 
-### 📱 タブレットでの貸し出し・返却フロー
+| タブレット | Webサイト |
+|---|---|
+| <img src="./photo/tablet-02.png" alt="タブレット - 本人確認" width="360"> | <img src="./photo/user-site-01.png" alt="Webサイト - ダッシュボード" width="360"> |
+| <img src="./photo/tablet-03.png" alt="タブレット - バーコードの読み取り" width="360"> | <img src="./photo/user-site-03.png" alt="Webサイト - 機材カタログ" width="360"> |
+| <img src="./photo/tablet-06.png" alt="タブレット - 貸し出し" width="360"> | <img src="./photo/user-site-04.png" alt="Webサイト - 物品の詳細" width="360"> |
 
-```
-1. 生徒カードをタブレットにかざす
-   ↓
-2. カメラでQRコード/バーコードをスキャン（または手入力）
-   ↓
-3. 「貸し出し」または「返却」を選択
-   ↓
-4. 完了！
-```
+ほかの画面は [photo/](photo/) にあります。
 
-<div align="center">
-  <img src="./photo/tablet-04.png" alt="貸し出しフロー 1" width="280">
-  <img src="./photo/tablet-05.png" alt="貸し出しフロー 2" width="280">
-  <img src="./photo/tablet-06.png" alt="貸し出しフロー 3" width="280">
-</div>
+## 技術構成
 
-<div align="center">
-  <img src="./photo/tablet-07.png" alt="返却フロー 1" width="280">
-  <img src="./photo/tablet-08.png" alt="返却フロー 2" width="280">
-</div>
+| 分類 | 使っているもの |
+|---|---|
+| 画面 | Next.js 16(App Router)、React 19、TypeScript、HeroUI、Tailwind CSS 4 |
+| API | Node.js 24、Express 5、TypeScript、Zod |
+| DB | PostgreSQL 16、Prisma 7 |
+| テスト | Vitest |
+| 開発環境 | Docker Compose |
 
-**特徴:**
-- カードをかざすだけで学生情報を自動取得
-- 現在の貸出状況をリアルタイム表示
-- 迷わず操作できるシンプルなUI
-
----
-
-### 🌐 学生向けWebサイトのフロー
-
-#### 新規登録
-```
-1. 学籍番号を入力
-   ↓
-2. メールアドレスに認証コードが送信される
-   ↓
-3. 認証コードを入力
-   ↓
-4. パスワードを設定
-   ↓
-5. 登録完了！
+```mermaid
+flowchart LR
+  tablet[タブレット] --> web[Next.js<br>画面]
+  phone[学生のスマホ・PC] --> web
+  web -->|fetch| api[Express<br>API]
+  api --> db[(PostgreSQL)]
+  api --> roster[名簿の窓口]
+  roster -.->|今はモックの表| db
+  roster -.->|本番では| school[学校の名簿<br>DB・API]
+  api --> mail[メール<br>認証コード]
 ```
 
-<div align="center">
-  <img src="./photo/signup-1.png" alt="新規登録 - 学籍番号入力" width="250">
-  <img src="./photo/signup-2.png" alt="新規登録 - メール送信確認" width="250">
-  <img src="./photo/signup-3.png" alt="新規登録 - 認証コード入力" width="250">
-</div>
+## 設計で考えたこと
 
-<div align="center">
-  <img src="./photo/signup-4.png" alt="新規登録 - パスワード設定" width="250">
-  <img src="./photo/signup-5.png" alt="新規登録 - 完了" width="250">
-</div>
+- **学校の名簿は「名簿の窓口」からだけ読む**: 本番の名簿は学校のDBかAPIになる前提です。名簿の読み方をインターフェース(`Roster`)1つにまとめ、今はモックの表を読む実装を使っています。名前やメールをこのシステムのDBに写さず、外部キーも張りません。本物の名簿に替えるときは、実装を1つ足すだけで済みます([back/src/features/roster](back/src/features/roster))
+- **同じ事実を2か所に持たない**: 最初の作りでは、名簿の内容を利用者の表に写していたり、「貸出中」を物品と貸し出しの両方に持っていたりして、片方だけ古くなる不具合が出ていました。貸出中・延滞は返却日時と返却期限から決め、同時の貸し出しはDBの制約(部分インデックス)で防いでいます
+- **エラーの形をそろえる**: どのエラーも RFC 9457(Problem Details)の形で、画面が分岐に使う`code`を付けて返します。`code`とステータス・文言の対応は1か所の表にあり、サービスの層はHTTPのことを知りません。次は、判断表(貸し出せるかなど)をそのまま関数にし、断る理由を戻り値で返す形にします
+- **APIの設計を決めてから直す**: URLが動作の名前になっている、応答の形がばらばら、といった問題を洗い出し、直した後の形を [docs/api.md](docs/api.md) に決めてから、1本ずつ移しています
+- **公共の場に置くタブレットを前提にした認証**(計画中): タブレットの端末の登録、カードの番号とPINの組み合わせ、短く取り消せるセッション、総当たりの対策を [docs/auth.md](docs/auth.md) に決めています
 
-#### ログイン後の機能
-```
-ダッシュボード
-├── 自分の情報（名前、学籍番号、学年、専攻）
-├── バーコード表示（シリアルナンバー）
-├── 現在借りている機材の一覧
-└── 返却期限の確認
+## AIと一緒に開発するための取り組み
 
-機材カタログ
-├── 全機材の一覧表示
-├── カテゴリ・ジャンル別フィルター
-├── 貸出可能/貸出中のステータス
-└── 機材詳細ページ
-    ├── スペック情報
-    ├── 貸出期間
-    ├── 在庫数
-    └── 現在の貸出状況
-```
+作り直しは、AIのコーディング(Claude Code)と一緒に進めています。最も大事にしているのは、**自分とAIの認識の食い違いを小さくすること**と、**どこまで確かめられていて、どこが抜けているかを見えるようにすること**です。
 
-<div align="center">
-  <img src="./photo/user-site-01.png" alt="ダッシュボード - ユーザー情報" width="400">
-  <img src="./photo/user-site-02.png" alt="ダッシュボード - バーコード表示" width="400">
-</div>
+- **仕様をAIと一緒に詰めて、`docs/`に置く**: 要件定義([docs/spec.md](docs/spec.md))、API設計([docs/api.md](docs/api.md))、認証の方針([docs/auth.md](docs/auth.md))。AIが問題と修正案を論点ごとの表で出し、自分が選び、決めたことを番号と日付付きで文書に残してから作業します
+- **テストを、仕様のドキュメントの代わりにする**: テストの名前に仕様の番号(`R-16`・`C2`など)を入れ、正常系・異常系・境界値に分けています。仕様とテストの対応表([docs/spec.md の 8.1](docs/spec.md))で、確かめていない仕様が一目で分かるようにしています
+- **AIの動き方を決めておく**: [CLAUDE.md](CLAUDE.md)(全体の決まりと進め方)、[.claude/rules/](.claude/rules/)(触る場所ごとの決まり)、[.claude/skills/](.claude/skills/)(観点ごとの知識。外から取り込んだものは、出典・ライセンス・中身の安全を確かめてから入れています。[ATTRIBUTIONS.md](.claude/skills/ATTRIBUTIONS.md))
 
-<div align="center">
-  <img src="./photo/user-site-03.png" alt="機材カタログ - 一覧表示" width="400">
-  <img src="./photo/user-site-04.png" alt="機材詳細ページ" width="400">
-</div>
+## 分かっている課題とこれから
 
-<div align="center">
-  <img src="./photo/user-site-05.png" alt="機材詳細 - 在庫状況" width="400">
-</div>
+| 課題 | どうするか |
+|---|---|
+| タブレットの端末を確かめておらず、カードの番号だけで借りられる | 端末の登録、PIN、短いセッション([docs/auth.md](docs/auth.md)。残タスク0.8) |
+| APIのURLと応答の形がばらばらで、画面の型を手で書いている(一部ずれている) | 新しい形([docs/api.md](docs/api.md))に移し、型を画面とAPIで共有する(残タスク0.7) |
+| 物品の追加・編集(在庫管理)の画面が無い | 要件を決めてから作る(残タスク5) |
+| 返却期限が近い・過ぎたことの通知が無い | Slackで知らせる(残タスク6) |
+| 画面のテストと、HTTPを通すテストが無い | APIを作り直すときに足す |
 
----
+## 動かし方
 
-## 4. まとめと展望
+Docker が必要です。
 
-### 📊 作ったもののまとめ
-
-このシステムでは、**使われていない生徒カード（ICカード）を活用**し、機材の貸し出し・返却を大幅に効率化しました。
-
-**主な成果:**
-- ✅ タブレット端末でのスムーズな貸し出し・返却オペレーション
-- ✅ 学生が自分で機材情報や貸出状況を確認できるWebサイト
-- ✅ セキュアな認証システム（JWT + メール認証）
-- ✅ リアルタイムな在庫管理
-- ✅ 直感的で使いやすいUI/UX
-
-**技術スタック:**
-- **フロントエンド**: Next.js 16, React 19, TypeScript, Tailwind CSS
-- **バックエンド**: Node.js, Express, Prisma ORM
-- **データベース**: PostgreSQL
-- **インフラ**: Docker, Docker Compose
-
-![システム構成図]()
-
----
-
-### 🚀 今後の展望
-
-#### 短期的な改善案
-1. **Slack通知機能**
-   - 返却期限が近づいたら自動リマインド
-   - 延滞時の警告通知
-   - 新着機材の通知
-
-2. **予約機能**
-   - 利用者が増えた際の予約システム
-   - 人気機材の予約待ちリスト
-   - 予約確認メール
-
-#### 中長期的な拡張案
-3. **管理者ダッシュボード**
-   - 貸出統計・分析
-   - 人気機材ランキング
-   - 延滞者の管理
-
-4. **モバイルアプリ化**
-   - スマホから自分のバーコードを表示
-   - プッシュ通知でリマインド
-
-5. **AI活用**
-   - 利用パターン分析
-   - 最適な機材購入提案
-   - 自動在庫最適化
-
----
-
-## 技術詳細
-
-### セットアップ
-
-#### 必要な環境
-- Docker
-- Docker Compose
-
-#### 起動手順
-
-1. リポジトリをクローン
 ```bash
-git clone <repository-url>
-cd 2-13-sinsakai
+git clone https://github.com/bro5ly/26-sinsakai-huyu.git
+cd 26-sinsakai-huyu
+
+# 環境変数(見本を写して、秘密の値を自分で入れる)
+cp .env.example .env
+cp back/.env.example back/.env
+cp front/.env.example front/.env
+
+docker compose up -d
+docker compose exec api npx prisma migrate deploy   # DBの表を作る
+docker compose exec api npm run db:seed             # テスト用のデータを入れる
 ```
 
-2. Dockerコンテナを起動
+| 開くもの | URL |
+|---|---|
+| Webサイト | http://localhost:4545 |
+| タブレットの画面 | http://localhost:4545/tablet |
+| テスト用のバーコードの印刷 | http://localhost:4545/barcodes |
+| API | http://localhost:5454 |
+| DBを見る(Prisma Studio) | http://localhost:5555 |
+
+**テスト用のデータ**(`back/prisma/seed.ts`)
+- ログイン: 学籍番号`20240001`、パスワード`password123`(管理者は`90240001`)
+- タブレットのカード: `IC-CARD-001`〜`IC-CARD-003`
+- 物品のバーコード: `MAC-002`など(`MAC-001`は貸出中、`IPAD-005`は修理中)
+- 新規登録を試すときの学籍番号: `20260001`。認証コードのメールを送るにはSMTPの設定(`back/.env`の`MAIL_*`)が要ります。設定しないときは、Prisma Studioで`verification_codes`の表を見るとコードが分かります
+
+**テスト**
+
 ```bash
-docker-compose up -d
+docker compose exec api npm test           # APIのテスト
+docker compose exec api npx tsc --noEmit   # 型チェック
+docker compose exec web npm run build      # 画面のビルド
 ```
 
-このコマンドで以下のサービスが起動します：
-- **web**: フロントエンド (http://localhost:4545)
-- **api**: バックエンドAPI (http://localhost:5454)
-- **db**: PostgreSQLデータベース (localhost:1919)
-- **studio**: Prisma Studio (http://localhost:5555)
+## ドキュメント
 
-3. データベースのマイグレーション（初回のみ）
-```bash
-docker-compose exec api npm run db:migrate
-```
+| ファイル | 内容 |
+|---|---|
+| [docs/spec.md](docs/spec.md) | 要件定義(ユースケース、要件、判断表、受け入れ基準、仕様とテストの対応、現状とのずれ、要確認) |
+| [docs/api.md](docs/api.md) | API設計(全体の決まり、APIの一覧、資源の形、エラーの`code`) |
+| [docs/auth.md](docs/auth.md) | 認証の作り直しの方針 |
+| [docs/architecture.md](docs/architecture.md) | 今の仕組み(レイヤ、トークン、データモデル) |
+| [docs/backlog.md](docs/backlog.md) | 残りの作業と順番、進め方 |
+| [CLAUDE.md](CLAUDE.md) | AIと開発するときの決まりと進め方 |
 
-4. ブラウザでアクセス
-- フロントエンド: http://localhost:4545
-- Prisma Studio: http://localhost:5555
+## チーム
 
----
-
-### プロジェクト構成
-
-```
-.
-├── docker-compose.yml    # Docker構成ファイル
-├── .env                  # 環境変数
-├── front/                # Next.jsフロントエンド
-│   ├── src/
-│   │   ├── app/          # Next.js App Router
-│   │   ├── components/   # UIコンポーネント
-│   │   ├── contexts/     # React Context
-│   │   ├── hooks/        # カスタムフック
-│   │   ├── services/     # APIサービス
-│   │   └── types/        # TypeScript型定義
-│   ├── public/
-│   ├── Dockerfile
-│   └── package.json
-└── back/                 # Express + Prismaバックエンド
-    ├── src/
-    │   ├── features/     # 機能別モジュール
-    │   ├── middleware/   # 認証ミドルウェア
-    │   └── lib/          # ユーティリティ
-    ├── prisma/
-    │   └── schema.prisma # データベーススキーマ
-    ├── Dockerfile
-    └── package.json
-```
-
----
-
-### ポート番号
-
-| サービス | ポート | 説明 |
-|---------|--------|------|
-| web (フロントエンド) | 4545 | Next.jsアプリケーション |
-| api (バックエンド) | 5454 | Express APIサーバー |
-| db (データベース) | 1919 | PostgreSQLデータベース |
-| studio | 5555 | Prisma Studio |
-
----
+| | 担当 |
+|---|---|
+| ogawa | 発案、設計、実装の大部分、今の作り直し |
+| もう1人のメンバー | 作成時に一部の機能を担当 |
 
 ## ライセンス
 
-MIT
-
----
-
-## 開発チーム
-
-Sinsakai Huyu Project Team
-
----
-
-**生徒カードを、ただの身分証明書から、便利なツールへ。**
+[MIT](LICENSE)
