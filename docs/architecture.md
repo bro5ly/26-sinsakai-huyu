@@ -25,14 +25,15 @@
 
 | ファイル | 役目 |
 |---|---|
-| `*.route.ts` | URLとミドルウェアの対応。repository → service → controllerを`new`してつなぐ |
-| `*.controller.ts` | Zodで入力を`parse`し、serviceを呼び、`sendSuccess`で返す。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
+| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → `sendSuccess`で返す」を書く。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
 | `*.service.ts` | 決まりごと(期限・重複・状態)。断るときは`DomainError(code)`を投げる。HTTPのステータスと文言は持たない |
 | `*.repository.ts` | Prismaでの読み書き。複数のテーブルにまたがる書き込みは`$transaction` |
 | `*.schema.ts` | Zodのスキーマ |
 | `*.types.ts` | 返す形の型(Prismaの`GetPayload`など) |
 
-共通の部品は`src/lib/`: `error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`response-handler.ts`(成功は`{ success: true, ...data }`)、`jwt.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
+組み立ては`src/deps.ts`の`buildDeps()`(本物の部品を作るのはここだけ)と`src/app.ts`の`createApp(deps)`(CORS・JSON・Cookie・各ルーティング・404・エラー用のミドルウェア)。`server.ts`が`createApp(buildDeps()).listen(PORT)`し、テストは偽の部品を渡す。
+
+共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`response-handler.ts`(成功は`{ success: true, ...data }`)、`jwt.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
 
 `user/`だけは`UserRepository.ts`・`UserService.ts`という古い名前で、routeを持たず`auth`から使われる。
 

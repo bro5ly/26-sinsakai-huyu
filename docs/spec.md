@@ -306,7 +306,7 @@
 | R-8 5回間違えたら無効 | なし(未実装) | 0.8 |
 | R-9・R-10 名簿から利用者を作る、ハッシュだけ保存 | A4・A5 | — |
 | R-11 ログインでトークンを出す | A6 | — |
-| R-12 リフレッシュトークンはHttpOnly Cookie | なし(controllerの中) | HTTPを通すテスト。0.7 |
+| R-12 リフレッシュトークンはHttpOnly Cookie | `src/app.test.ts`のH1・H6・H7(2026-10-24) | 済み |
 | R-13・R-14 リフレッシュと入れ替え | F1・F2・F3 | — |
 | R-15 ログアウトでDBのトークンも消す | なし(未実装) | 0.8 |
 | R-16 ログインの失敗の文言を区別しない | A7・A8・A11 | — |
@@ -344,7 +344,7 @@
 | 5 | 利用者の情報を出す`console.log`が残っている | `UserRepository.ts`、`auth.service.ts`、`item.repository.ts`、`front/src/contexts/AuthContext.tsx` | 非機能「個人情報」 |
 | 6 | `user`の`canBorrow`・`suspendedUntil`・`maxItems`と延滞を、貸し出しで見ていない | `back/src/features/rentals/` | 6章 C4〜C7 |
 | 7 | 延滞をダッシュボードで目立たせていない(APIは`status: "OVERDUE"`を返す) | `front/src/components/dashboard/` | R-30 |
-| 8 | ログアウトでDBのリフレッシュトークンを消していない | `auth.controller.ts`の`logout` | R-15 |
+| 8 | ログアウトでDBのリフレッシュトークンを消していない | `auth.routes.ts`の`/logout` | R-15 |
 | 9 | リフレッシュトークンは利用者1人1件なので、別の端末でログインすると前の端末のセッションが切れる | `refresh_tokens.userId`が一意 | 要確認Q9 |
 | 10 | 画面のアクセストークンのCookieは1時間、サーバーの期限は15分 | `front/src/contexts/AuthContext.tsx` | R-13 |
 | 11 | `/api/items/:title`を呼ぶ関数があるが、APIが無い | `front/src/services/item.service.ts` | — |

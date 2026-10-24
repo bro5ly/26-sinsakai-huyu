@@ -13,7 +13,7 @@
 
 | ディレクトリ | 中身 |
 |---|---|
-| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に route・controller・service・repository・schema・types |
+| `back/` | API(Express 5 + Prisma 7 + PostgreSQL 16、TypeScript、ESM)。`src/features/<機能>/`に routes・service・repository・schema・types。本物の部品は`src/deps.ts`の`buildDeps()`で作り、`src/app.ts`の`createApp(deps)`で組み立てる |
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
@@ -24,7 +24,7 @@
 
 - **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
-- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。controllerに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
+- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
@@ -48,8 +48,8 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 - バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
-- 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存は今はrouteファイルで`new`して渡す(DIコンテナは使わない)。`buildDeps()`と`createApp(deps)`の1か所にまとめる作り直しの途中(`docs/backlog.md` 0.7 R1〜R5、`docs/handoff.md`)
-- 入力の検証は`*.schema.ts`のZodで、controllerの先頭で`parse`する
+- 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール)を`new`するのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
+- 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
