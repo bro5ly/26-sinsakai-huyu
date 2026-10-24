@@ -58,7 +58,7 @@ C7: `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を�
 
 **クラウドとMacの分担**: クラウドではテスト・型チェック・画面のビルドまでを確かめてコミットとpushをする。PRを`main`に入れる前に、開発者のMacで`git pull`・`docker compose up -d --build -V api`・`npm test`・`docker compose logs api --tail 5`(「server is running」)・`curl`(ログイン・カード認証・貸し出し・返却)を確かめる。PRを出す前に開発者に声をかける。
 
-**今の段**: ①`buildDeps`・`createApp`の予定を見せたところ(まだコードは変えていない)。D1(テストが`.env`を読む)は済み。D2(名簿の切り替え`ROSTER_SOURCE`を今足すか)の答え待ち。
+**今の段**: ①`buildDeps`・`createApp`は済み(2026-10-24。D1: テストが`.env`を読む、D2: `ROSTER_SOURCE`は今は足さず`buildDeps()`の1か所で`PrismaRoster`を作る)。結果を見せて、②に進むかの答え待ち。Macでの`curl`はまだ
 
 ## 4. このあとの順番
 
