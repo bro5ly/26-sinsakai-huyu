@@ -1,3 +1,4 @@
+import type { ErrorCode } from "@sinsakai/shared";
 import { User, RentalSetting } from "./user.types";
 import { Item } from "./item.types";
 import { Rental } from "./rental.types";
@@ -6,7 +7,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public code?: string
+    // サーバーのcode(shared/ の表)。NO_CONTENTは画面だけで使う
+    public code?: ErrorCode | "NO_CONTENT"
   ) {
     super(message);
     this.name = "ApiError";
