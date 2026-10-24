@@ -1,14 +1,18 @@
 services:
   web: 
+    # ビルドの起点とつなぐ場所はリポジトリ直下。workspacesのロックファイルとshared/が直下にあるため(2026-10-24 P3)
     build: 
-      context: ./front
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: front/Dockerfile
     container_name: sinsakai-huyu-front
+    working_dir: /app/front
     ports: 
       - "4545:4545"
     volumes: 
-      - ./front:/app
+      - .:/app
+      # node_modulesはコンテナの中の名前の無いボリュームに置き、Macの側と混ぜない
       - /app/node_modules
+      - /app/front/node_modules
     env_file:
       - .env
     environment:
@@ -19,14 +23,16 @@ services:
 
   api:
     build:
-      context: ./back
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: back/Dockerfile
     container_name: sinsakai-huyu-api
+    working_dir: /app/back
     ports:
       - "5454:5454"
     volumes:
-      - ./back:/app
+      - .:/app
       - /app/node_modules
+      - /app/back/node_modules
     env_file:
       - .env
     environment:
@@ -41,14 +47,16 @@ services:
 
   studio:
       build:
-        context: ./back
-        dockerfile: Dockerfile
+        context: .
+        dockerfile: back/Dockerfile
       container_name: sinsakai-huyu-studio
+      working_dir: /app/back
       ports:
         - "5555:5555"
       volumes:
-        - ./back:/app
+        - .:/app
         - /app/node_modules
+        - /app/back/node_modules
       env_file:
         - .env
       # アプリ（api）と同じDBを見るように設定
