@@ -54,6 +54,7 @@
 
 型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
 
+- 0.7の残りの順番(2026-10-24決定 S1-A): ①npm workspacesと`shared/`(両方のコンテナから`shared/`が見えるようにするDockerの作り直しも一緒に) → ②APIを1本ずつ新しいURLに移す(そのたびに、その機能の中の型T1〜T7もそろえる)。先に移すと、新しい形の型を`back`と`front`に別々に書いてから`shared/`へ移すことになり、同じ所を2回直すため
 - [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
 - [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
 - [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
