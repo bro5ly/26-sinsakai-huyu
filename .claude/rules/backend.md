@@ -13,6 +13,7 @@ APIの一覧と認証の流れは`docs/architecture.md`。
 - 1本のAPIは`router.post('/x', route({ body: schema }, async ({ body, res }) => ...))`と書き、「入力 → service → 返す」だけにする。判断はserviceと判断の関数に置く
 - 認証が要るものは`authMiddleware`(Web)か`tabletMiddleware`(タブレット)を付け、`route({ auth: true, ... })`で`user`を受け取る。利用者のIDは`user.id`から取り、ボディのIDは信じない
 - HTTPを通した形(URL・ステータス・応答・Cookie)は`src/app.test.ts`で、偽の部品を渡した`createApp`を`supertest`で叩いて確かめる
+- 環境変数を足すときは、`src/config.ts`の`envSchema`と`Config`、`back/.env.example`に足し、使う所へは`buildDeps(config)`・`createApp(deps, config)`から渡す。`process.env`を直接読まない(2026-10-24 G1〜G3。`lib/jwt.ts`だけは0.8まで`getConfig()`)
 - 複数のテーブルを書き換える処理(貸し出し・返却など)はrepositoryで`this.db.$transaction(async (tx) => ...)`にまとめ、中の確認と書き込みはすべて`tx`で行う
 - Prismaの型は`@/generated/prisma/client.js`から取る。返す形は`Prisma.XxxGetPayload<{ include: ... }>`で`*.types.ts`に書く
 
