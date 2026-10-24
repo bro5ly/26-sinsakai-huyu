@@ -76,6 +76,7 @@
     - 回数の制限は今はログインだけに、接続元ごと15分で20回(C5)
     - `supertest`・`helmet`・`express-rate-limit`は版を固定し、公開から2週間以上たった版にする。入れる前に版を開発者に見せる(C6)
     - `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を使い、`shared/`ができたら移す(C7)
+    - テストは`vitest.config.ts`の`setupFiles: ["dotenv/config"]`で`.env`を自分で読む。Dockerの無い環境でも`npx vitest run`だけで動かすため(D1)
 - [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)

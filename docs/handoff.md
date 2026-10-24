@@ -58,7 +58,7 @@ C7: `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を�
 
 **クラウドとMacの分担**: クラウドではテスト・型チェック・画面のビルドまでを確かめてコミットとpushをする。PRを`main`に入れる前に、開発者のMacで`git pull`・`docker compose up -d --build -V api`・`npm test`・`docker compose logs api --tail 5`(「server is running」)・`curl`(ログイン・カード認証・貸し出し・返却)を確かめる。PRを出す前に開発者に声をかける。
 
-**今の段**: ①`buildDeps`・`createApp`の予定を見せたところ(まだコードは変えていない)。
+**今の段**: ①`buildDeps`・`createApp`の予定を見せたところ(まだコードは変えていない)。D1(テストが`.env`を読む)は済み。D2(名簿の切り替え`ROSTER_SOURCE`を今足すか)の答え待ち。
 
 ## 4. このあとの順番
 
@@ -71,7 +71,7 @@ C7: `shared/`はまだ無いので、R3のスキーマは今の`*.schema.ts`を�
 **Dockerが使えないとき(クラウドなど)**:
 - `back/`で`npm ci`のあと、`npx vitest run`と`npx tsc --noEmit`はDB無しで動く(テストは偽の部品を使う)。Node 22以上が要る(Vitest 5)
 - **テストはJWTの鍵を環境変数から読む**。`back/.env`が無いと、トークンを作るテストが落ちる。`cp back/.env.example back/.env`のあと、`JWT_ACCESS_SECRET`と`JWT_REFRESH_SECRET`に適当な長い文字列(別々の値)を入れる(`.env`はコミットしない)
-- **`.env`を置くだけでは足りない**: `lib/jwt.ts`は読み込まれた瞬間に鍵を読み、Vitestは`.env`を読まないので、11件落ちる。`cd back && (set -a; . ./.env; set +a; npx vitest run)`のように環境変数に入れてから動かす(Dockerではcomposeが渡すので起きない。2026-10-24に確かめた)
+- テストは`vitest.config.ts`の`setupFiles`で`back/.env`を読む(2026-10-24 D1)。`cd back && npx vitest run`だけで動く
 - `src/generated/prisma/`はコミットしてあるので、`prisma generate`は要らない(スキーマを変えたら要る)
 - DBとAPIのサーバーは動かせないので、`curl`・ブラウザでの確認・マイグレーションの適用はできない。できなかったことは、報告とこのファイルに書き、開発者のMacで確かめてもらう
 
