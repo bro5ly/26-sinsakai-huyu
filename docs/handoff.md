@@ -33,6 +33,8 @@
 
 PR #9 のマージまでで区切りがついた。0.7の残りは、先にnpm workspacesと`shared/`を作り(Dockerの作り直しも一緒に)、そのあとAPIを1本ずつ新しいURLに移す(2026-10-24 S1-A。ブランチ`refactor/shared-workspaces`)。
 
+**今の段**: ブランチ`refactor/shared-workspaces`で、npm workspaces・`shared/`(エラーの`code`とRFC 9457の形)・Dockerの作り直しが済んだ(P1〜P6)。開発者のMacで、コンテナの起動・テスト・Webのログインとログアウト(間違ったパスワードと学籍番号も)・タブレットの貸し出しと返却を確かめた(2026-10-24)。PRを出す前。
+
 **残してあること(PR #9 で見つけて、後に回したもの)**
 
 | # | 中身 | いつ |
