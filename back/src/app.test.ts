@@ -388,3 +388,15 @@ describe("ログインの回数の制限(接続元ごとに15分で20回。docs/
         });
     });
 });
+
+describe("JSONの大きさの上限(100kb。L1)", () => {
+    describe("境界値", () => {
+        it("H26 100kbを超えるJSONは、読まずに413 PAYLOAD_TOO_LARGEをRFC 9457の形で返す(500にしない。K8)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "x".repeat(101 * 1024) });
+
+            expectProblem(res, 413, "PAYLOAD_TOO_LARGE");
+        });
+    });
+});
