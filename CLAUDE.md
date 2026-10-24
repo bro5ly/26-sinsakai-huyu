@@ -19,9 +19,9 @@
 
 ## 全体で守ること
 
-- **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない)。失敗は`{ message, code }`。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
+- **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
-- エラーはserviceで`throw new AppError(日本語メッセージ, HTTPステータス, 'UPPER_SNAKE_CODE')`、controllerは`try/catch`で`handleError(res, err)`に渡す。Zod・Prismaのエラーも`handleError`が変換する
+- **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`lib/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。controllerに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
@@ -43,7 +43,7 @@ APIのコンテナはNode 24。依存を足した人がいたら`docker compose 
 
 ## コーディング規約
 
-- バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { AppError } from "@/lib/error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
+- バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
 - 1つの機能の中は route → controller → service → repository の向きにだけ依存する。依存はrouteファイルで`new`して渡す(DIコンテナは使わない)
 - 入力の検証は`*.schema.ts`のZodで、controllerの先頭で`parse`する
