@@ -1,14 +1,15 @@
 import {Router} from 'express'
-import authRoutes from '@/features/auth/auth.route.js'
-import itemRoutes from '@/features/items/item.route.js'
-import tabletRoutes from '@/features/rentals/rental.route.js'
+import { createAuthRoutes } from '@/features/auth/auth.route.js'
+import { createItemRoutes } from '@/features/items/item.route.js'
+import { createTabletRoutes } from '@/features/rentals/rental.route.js'
+import type { Deps } from '@/deps.js'
 
+export const createApiRoutes = (deps: Deps) => {
+    const router = Router();
 
-const router = Router();
+    router.use('/auth', createAuthRoutes(deps))
+    router.use('/items', createItemRoutes(deps))
+    router.use('/tablet', createTabletRoutes(deps))
 
-router.use('/auth',authRoutes)
-router.use('/items',itemRoutes)
-router.use('/tablet',tabletRoutes)
-
-
-export default router
+    return router
+}
