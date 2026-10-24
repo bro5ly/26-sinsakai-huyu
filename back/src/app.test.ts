@@ -353,7 +353,7 @@ describe("すべての応答に付くヘッダ", () => {
     });
 });
 
-describe("ログインの回数の制限(接続元ごとに15分で20回。docs/auth.md 4.6・C5)", () => {
+describe("ログインの回数の制限(接続元ごとに、失敗を15分で20回まで。docs/auth.md 4.6・C5・K9-B)", () => {
     const login = (app: ReturnType<typeof fakeDeps>["app"]) =>
         request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "wrong-password" });
 
@@ -365,6 +365,17 @@ describe("ログインの回数の制限(接続元ごとに15分で20回。docs/
             const res = await login(app);
 
             expectProblem(res, 401, "INVALID_CREDENTIALS");
+        });
+
+        it("H27 成功したログインは数えない。同じWi-Fiの大勢が続けてログインしても止めない(2026-10-24 K9-B)", async () => {
+            const { app } = fakeDeps();
+            const success = () => request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "password123" });
+            for (let i = 0; i < 25; i++) await success();
+            for (let i = 0; i < 19; i++) await login(app);
+
+            const res = await success();
+
+            expect(res.status).toBe(200);
         });
 
         it("H24 ログインのほかのAPI(登録の申請など)は、制限しない", async () => {
