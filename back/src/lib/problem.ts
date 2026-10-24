@@ -1,0 +1,52 @@
+import { ZodError } from "zod";
+import { Prisma } from "@/generated/prisma/client.js";
+import { DomainError } from "./domain-error.js";
+import { errorCatalog, type ErrorCode } from "./error-codes.js";
+
+// RFC 9457 Problem Details に、画面が分岐に使うcodeと、入力の検証の項目ごとのerrorsを足した形(docs/api.md 3.4)
+export interface Problem {
+    type: "about:blank";
+    title: string;
+    status: number;
+    code: ErrorCode;
+    detail: string;
+    errors?: { path: string; message: string }[];
+}
+
+const titles: Record<number, string> = {
+    400: "Bad Request",
+    401: "Unauthorized",
+    403: "Forbidden",
+    404: "Not Found",
+    409: "Conflict",
+    423: "Locked",
+    429: "Too Many Requests",
+    500: "Internal Server Error",
+};
+
+const fromCode = (code: ErrorCode, errors?: Problem["errors"]): Problem => {
+    const { status, detail } = errorCatalog[code];
+    return { type: "about:blank", title: titles[status] ?? "Error", status, code, detail, ...(errors ? { errors } : {}) };
+};
+
+// express.json() が壊れたJSONを読んだときのエラー(body-parserの形)
+const isBodyParseError = (err: unknown) =>
+    err instanceof SyntaxError && (err as SyntaxError & { type?: string }).type === "entity.parse.failed";
+
+// 想定外のエラーの中身(DBの接続先・列名など)は、応答に出さない。ログに出すのはエラー用のミドルウェアの仕事
+export const toProblem = (err: unknown): Problem => {
+    if (err instanceof DomainError) return fromCode(err.code);
+    if (err instanceof ZodError) {
+        return fromCode(
+            "VALIDATION_ERROR",
+            err.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+        );
+    }
+    if (isBodyParseError(err)) return fromCode("VALIDATION_ERROR");
+    // Prismaの型をrepositoryの外で使う唯一の場所(エラーの境目なので。docs/backlog.md 0.7 T3の例外)
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2002") return fromCode("CONFLICT");
+        if (err.code === "P2025") return fromCode("NOT_FOUND");
+    }
+    return fromCode("INTERNAL_ERROR");
+};

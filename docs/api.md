@@ -208,6 +208,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `BORROWING_SUSPENDED` | 409 | 貸し出しが止められている・停止期間中(C4・C5) |
 | `HAS_OVERDUE` | 409 | 延滞中の物がある(C6) |
 | `LIMIT_REACHED` | 409 | 借りられる数の上限(C7) |
+| `CONFLICT` | 409 | ほかの操作と同時になり、ぶつかった(DBの一意制約違反。2026-10-24に追加。貸し出しのぶつかりは`ITEM_ALREADY_RENTED`にする) |
 | `RATE_LIMITED` | 429 | 回数の制限(`Retry-After`付き) |
 | `INTERNAL_ERROR` | 500 | サーバーの不具合 |
 
