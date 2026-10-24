@@ -16,7 +16,7 @@
 - [x] テストの置き場所を決める(`src/`の中で元のファイルの隣に`*.test.ts`)
 - [x] CLAUDE.mdのコマンドの表に足す
 - [x] `rental.status.test.ts`(S1〜S6・I1〜I4)を書いた。期限の比べ方を`<=`に変えるとS4が赤になることも確かめた
-- [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める
+- [ ] 画面(`front/`)のイメージもNode 20のまま。上げるかを決める(2026-10-24、`node:24-bookworm-slim`に上げると決めた。0.7のP4)
 - [ ] GitHub Actions(CI)で、pushとPRのたびにAPIのテストと型チェック・画面のビルドとリントを動かす(2026-10-24、開発者の希望で「いずれ」。Macでの同じ確認を繰り返したくなったらやる)
 - [ ] APIのイメージ(`node:24-bookworm-slim`)にOpenSSLが無く、Prismaの道具(マイグレーション)が「OpenSSLの版が分からない」と警告する。今は動いているが、TLSで外部のDBにつなぐときに動かなくなるおそれがある。Dockerfileで`openssl`を入れる(2026-10-24、後回しに決定。ブランチ`fix/api-image-openssl`を`main`から切ってある)
 
@@ -56,6 +56,12 @@
 
 - 0.7の残りの順番(2026-10-24決定 S1-A): ①npm workspacesと`shared/`(両方のコンテナから`shared/`が見えるようにするDockerの作り直しも一緒に) → ②APIを1本ずつ新しいURLに移す(そのたびに、その機能の中の型T1〜T7もそろえる)。先に移すと、新しい形の型を`back`と`front`に別々に書いてから`shared/`へ移すことになり、同じ所を2回直すため
 - [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
+  - 決めたこと(2026-10-24 P1〜P5):
+    - `shared/`はTypeScriptのまま使い、ビルドしない。サーバーの`tsx`もNext.jsもTypeScriptをそのまま読めるので、ビルドの手順と「ビルドし忘れ」を無くす(P1)
+    - パッケージの名前は`@sinsakai/shared`(P2)
+    - Dockerはビルドの起点をリポジトリ直下にし、コンテナにリポジトリ全体をつなぐ。各コンテナで要るものだけを入れる(`npm ci -w back`など)。ロックファイルが直下に1つなので、直下が見えないと入れられないため(P3)
+    - 画面のイメージを`node:20-alpine`から`node:24-bookworm-slim`にそろえる。同じ版のnpmでロックファイルを作るため。Node 20はサポートが切れている(P4)
+    - 最初のPRは仕組みだけにし、`shared/`にはエラーの`code`の一覧とRFC 9457の形だけを移す。`back`と`front`の両方がそれを使う。APIの形は次から移す(P5)
 - [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す
 - [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
   - 判断の関数(判断表C・T)は、Resultを返す(`{ ok: true }`か`{ ok: false, reason }`)。HTTPを知らない(E1)
