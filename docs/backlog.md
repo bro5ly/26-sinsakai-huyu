@@ -63,7 +63,7 @@
   - エラー用のミドルウェアを1つにする: `DomainError`は表を引いてRFC 9457で返す、入力の検証の失敗は400 `VALIDATION_ERROR`、想定外は500 `INTERNAL_ERROR`、存在しないURLも同じ形の404。controllerの`try/catch`と`handleError`はなくす(Express 5はthrowをミドルウェアに渡す)
   - 想定外の例外は、エラーの種類とスタックだけをログに出す。リクエストの中身(学籍番号・パスワードなど)は出さない(E3)
   - 今の`AppError`・`tabletMiddleware`の`next(err)`・`response-handler.ts`を置き換える
-- [ ] **組み立てとrouteの書き方を作り直す(エラーの扱いの直後。2026-10-24決定 R1〜R5)**
+- [x] **組み立てとrouteの書き方を作り直す(2026-10-24済み、PR #9。エラーの扱いの直後。2026-10-24決定 R1〜R5)**
   - 組み立ては1か所: `src/deps.ts`の`buildDeps()`で本物の依存(Prisma・名簿の窓口・メール)を作り、`createApp(deps)`に渡す。`server.ts`は本物、テストは偽物を渡す(HTTPを通すテストをDB無しで書ける)。名簿の窓口の切り替え(`ROSTER_SOURCE`)もここだけ(R1)
   - controllerのクラスはなくし、`*.routes.ts`(`createAuthRoutes(deps)`など)に「入力 → service → 返す」を直接書く。判断はserviceと判断の関数に残す(R2)
   - 入力の検証は小さな関数(`route({ body: schema }, async ({ body, user }) => ...)`)で、検証してから型付きで渡す。`req.body as 型`の決めつけは使わない。スキーマは`shared/`から使う(R3)
