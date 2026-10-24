@@ -329,3 +329,26 @@ describe("存在しないURL", () => {
         });
     });
 });
+
+describe("すべての応答に付くヘッダ", () => {
+    describe("正常系", () => {
+        it("H21 helmetのセキュリティのヘッダを付け、Expressを使っていることを出さない(R4)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/items");
+
+            expect(res.headers["x-content-type-options"]).toBe("nosniff");
+            expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
+            expect(res.headers["x-powered-by"]).toBeUndefined();
+        });
+
+        it("H22 helmetを付けても、画面(FRONTEND_URL)からのCORSとCookieは今のまま通す", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/items").set("Origin", "http://localhost:4545");
+
+            expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:4545");
+            expect(res.headers["access-control-allow-credentials"]).toBe("true");
+        });
+    });
+});

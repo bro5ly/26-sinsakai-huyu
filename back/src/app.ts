@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from 'cookie-parser';
 import { createApiRoutes } from '@/routes/index.js'
 import { errorHandler, notFoundHandler } from '@/middleware/error.middleware.js';
@@ -10,6 +11,9 @@ import type { Config } from '@/config.js'
 export const createApp = (deps: Deps, config: Config) => {
   const app = express()
 
+  // セキュリティのヘッダ(nosniff・フレームの禁止など)を付け、X-Powered-Byを消す(R4)
+  app.use(helmet())
+
   // CORS設定
   app.use(cors({
     origin: config.frontendUrl,
@@ -18,7 +22,8 @@ export const createApp = (deps: Deps, config: Config) => {
     allowedHeaders: ['Content-Type', 'Authorization']
   }))
 
-  app.use(express.json())
+  // Expressの既定と同じ100kbをはっきり書く。今のAPIは学籍番号やバーコードなどの小さな入力だけ(L1)
+  app.use(express.json({ limit: '100kb' }))
   app.use(cookieParser())
   app.use('/api', createApiRoutes(deps, config))
 
