@@ -1,6 +1,5 @@
 // src/lib/mail.ts
 import nodemailer from "nodemailer";
-import 'dotenv/config'; // これを一番上に書く
 
 export class MailService {
   private transporter;
