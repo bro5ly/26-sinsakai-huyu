@@ -43,7 +43,7 @@
 - [x] 名簿を読むインターフェース`Roster`を作る(`findByStudentId`・`findBySerialNumber`・`findManyByStudentIds`)。名簿の種別の型はPrismaに依存させない(`RosterUserType`)
 - [x] 実装は今の`external_user`表を読む`PrismaRoster`だけ。学校の実装は名簿の形が分かってから足す
 - [x] 名簿を使うservice(登録・ログイン・リフレッシュ・`/items/me`・カード認証)に`Roster`を外から渡す。テストでは偽の名簿(`FakeRoster`)を渡す。中身が素通しの`UserService`はなくした
-- [ ] `user.student_id`の外部キーとPrismaのリレーションを消す(ずれ12。2026-10-24決定 F1)。モックの名簿の表`external_user`は今のDBのまま置き、本番の名簿に替えるときに消す(F2)
+- [x] `user.student_id`の外部キーとPrismaのリレーションを消す(ずれ12。2026-10-24決定 F1。マイグレーション`20261024000000_drop_roster_foreign_key`)。モックの名簿の表`external_user`は今のDBのまま置き、本番の名簿に替えるときに消す(F2)
 - (名簿の窓口の組み立てを1か所にまとめることと`ROSTER_SOURCE`での切り替えは、0.7の組み立ての作り直し(R1)でやる。2026-10-24決定)
 - (名簿に無い人・名簿が止まっているときの扱い(Q12・Q13)の判断表は、0.8の判断表Tと一緒に作る)
 
