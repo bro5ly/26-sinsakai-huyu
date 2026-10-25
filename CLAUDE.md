@@ -17,7 +17,7 @@
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
-| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)とRFC 9457の形(`problem.ts`の`problemSchema`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
+| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)、RFC 9457の形(`problem.ts`の`problemSchema`)、登録・ログインのリクエストと応答(`auth.ts`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
 | `docs/` | 要件定義・仕組み(下の「ドキュメント」) |
 | `photo/` | READMEの画面写真 |
 
