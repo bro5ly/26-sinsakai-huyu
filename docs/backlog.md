@@ -96,6 +96,7 @@
     - 環境変数は`src/config.ts`の`loadConfig(env)`でZodで1回だけ検証し、足りなければ起動のときに止める(K3を変更)。④の最初にやる(G1)。`server.ts`で読み、`buildDeps(config)`・`createApp(deps, config)`に引数で渡す。`lib/jwt.ts`は0.8で作り直すので、今は`config.ts`から読むだけ(G2)。必須にするのは今の既定値が無いものだけで、`PORT`・`FRONTEND_URL`は今の既定値を残す(G3)
 - [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
   - 順番は 登録・ログイン(6本) → 本人(`/api/me`) → カタログ(`/api/item-types`・`/api/categories`)。タブレットの3本は今は移さず、0.8で作り直すときに新しい形で作る(0.8で端末の登録・PIN・サーバーのセッションに変わり、今移すと2回直すため)。PRはまとまりごとに1つ(2026-10-25 M1-A・M2-A)
+  - 登録・ログインの6本(2026-10-25 A1〜A4): リクエストの項目名は`password`・`token`にする(A1)。認証コードの`purpose`は今は`"signup"`だけ受け付け、パスワードの再設定は0.8で足す(A2)。ログアウト(`DELETE /api/sessions/current`)ではDBのリフレッシュトークンも消す(A3。ずれ8・R-15)。6本のリクエストと応答は`shared/src/auth.ts`にZodで書き、backの検証とfrontの型の両方に使う。`back/src/features/auth/auth.schema.ts`は消す(A4。C7)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
