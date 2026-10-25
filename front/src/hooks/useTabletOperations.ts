@@ -173,14 +173,16 @@ export const useTabletOperations = () => {
           setStep("complete");
         }
       } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          handleReset();
-          setError("Session Expired. Please sign in again.");
-        } else {
-          setError(
-            err instanceof ApiError ? err.message : "エラーが発生しました"
-          );
+        if (!(err instanceof ApiError)) {
+          setError("エラーが発生しました");
+          return;
         }
+        // 401をすべてセッション切れにすると、カードの認証の失敗まで「時間切れ」と出てしまう。
+        // セッションが切れた・使えないときだけ最初の画面に戻し、文言はサーバーのdetailを出す(R-26。2026-10-24 V1-A)
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          handleReset();
+        }
+        setError(err.message);
       }
     },
     [
