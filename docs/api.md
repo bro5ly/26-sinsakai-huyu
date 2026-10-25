@@ -120,7 +120,7 @@
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
 | `GET /api/me` | Bearer | — | 200 `Me` | UC-5 |
-| `GET /api/me/rentals` | Bearer | `?state=active`(既定)`\|all` | 200 `{ items: Rental[] }` | UC-5・UC-11 |
+| `GET /api/me/rentals` | Bearer | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
 | `PUT /api/me/pin` | Bearer | `{ pin }`(数字4桁) | 204(ロックも解除) | UC-7 |
 | `POST /api/me/tablet-codes` | Bearer | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
 
@@ -174,14 +174,14 @@ ItemTypeDetail  ItemTypeSummary + { description | null, author | null, publisher
                   manufacturer | null, model | null,
                   items: { id, location | null, state: ItemState }[] }
 ItemState    "AVAILABLE" | "RENTED" | "MAINTENANCE" | "LOST" | "DISPOSED"   // 計算した値。DBの値はそのまま出さない
-Rental       { id, itemType: { id, title }, item: { id, barcode }, rentedAt, dueDate, returnedAt | null,
+Rental       { id, itemType: { id, title, genre: { id, name } }, item: { id, barcode }, rentedAt, dueDate, returnedAt | null,
                state: "RENTING" | "OVERDUE" | "RETURNED" }
 TabletDevice { id, name, createdAt, lastUsedAt | null }
 Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 ```
 
 今との違い:
-- `serialNumber`(カードの番号)はどの応答にも入れない(`docs/auth.md`の3章)。ダッシュボードのバーコードは`POST /api/me/tablet-codes`の使い捨てに変える
+- `serialNumber`(カードの番号)はどの応答にも入れない(`docs/auth.md`の3章)。ダッシュボードのバーコードは`POST /api/me/tablet-codes`の使い捨てに変える。**それまでは`Me.cardNumber`として返す**(2026-10-25 Me1。0.8で外す)
 - `status`という名前は、HTTPのステータスと紛らわしいので、物品と貸し出しの状態は`state`にする(API-Q7)
 - `rentalSetting`は`Me.borrowing`にし、借りている数と延滞の有無も入れる(画面で数えない)
 - タブレットの`user`は表示用の名前だけ(R-A13)

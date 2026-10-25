@@ -98,6 +98,7 @@
   - 順番は 登録・ログイン(6本) → 本人(`/api/me`) → カタログ(`/api/item-types`・`/api/categories`)。タブレットの3本は今は移さず、0.8で作り直すときに新しい形で作る(0.8で端末の登録・PIN・サーバーのセッションに変わり、今移すと2回直すため)。PRはまとまりごとに1つ(2026-10-25 M1-A・M2-A)
   - 登録・ログインの6本(2026-10-25 A1〜A4): リクエストの項目名は`password`・`token`にする(A1)。認証コードの`purpose`は今は`"signup"`だけ受け付け、パスワードの再設定は0.8で足す(A2)。ログアウト(`DELETE /api/sessions/current`)ではDBのリフレッシュトークンも消す(A3。ずれ8・R-15)。6本のリクエストと応答は`shared/src/auth.ts`にZodで書き、backの検証とfrontの型の両方に使う。`back/src/features/auth/auth.schema.ts`は消す(A4。C7)
   - ログインでは、パスワードの長さを確かめず、空でないことだけを確かめる。長さ(8文字以上)は登録のときだけ。短く打ち間違えた人だけ「入力内容が正しくありません」になり、文言が分かれていたため(2026-10-25 B1-A)
+  - 本人(2026-10-25 Me1〜Me4): `GET /api/items/me`を`GET /api/me`(プロフィールと貸し出しの決まり)と`GET /api/me/rentals`(借りている物)に分ける。カードの番号は、0.8で使い捨てのバーコード(`POST /api/me/tablet-codes`)ができるまで`Me.cardNumber`として返し、そのときに外す(Me1。今もダッシュボードのバーコードに使っているため)。画面の`AuthContext`は`Me`だけを持ち、借りている物はダッシュボードがその都度取る(Me2。貸し出すたびに変わるため)。`Rental.itemType`にジャンル`genre: { id, name }`を足す(Me3。ダッシュボードが出している)。返し終わった物の履歴(`?state=all`)は、履歴の画面を作るときに足す(Me4)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
