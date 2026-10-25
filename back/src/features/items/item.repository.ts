@@ -25,42 +25,4 @@ export class ItemRepository {
             }
         })
     }
-
-    async getMyInfo(userId: string) {
-        return await this.db.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                studentId: true,
-                isActive: true,
-                canBorrow: true,
-                maxItems: true,
-                suspendedUntil: true,
-                suspensionReason: true,
-                rentals: {
-                    where: {
-                        returnedAt: null
-                    },
-                    include: {
-                        item: {
-                            include: {
-                                itemType: {
-                                    include: {
-                                        genre: {
-                                            include: {
-                                                category: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    orderBy: {
-                        rentedAt: 'desc'
-                    }
-                }
-            }
-        });
-    }
 }

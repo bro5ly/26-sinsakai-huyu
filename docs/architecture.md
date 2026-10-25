@@ -45,7 +45,7 @@
 
 すべて`/api`の下。
 
-登録・ログインの6本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`。2026-10-25)。ほかはまだ今の形(`{ success: true, ...data }`)。
+登録・ログインの6本と本人の2本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`・`me.ts`。2026-10-25)。ほかはまだ今の形(`{ success: true, ...data }`)。
 
 | メソッドとパス | 認証 | 内容 | 返すもの |
 |---|---|---|---|
@@ -56,18 +56,19 @@
 | `POST /sessions/refresh` | Cookie | リフレッシュトークンを回して新しいトークンを出す | 200 `{ user, accessToken }`(+Cookie) |
 | `DELETE /sessions/current` | Cookie | Cookieを消し、DBのリフレッシュトークンも消す(ログアウト) | 204(本文なし) |
 | `GET /items` | なし | 全物品(種類・ジャンル・カテゴリ付き、新しい順) | `success`, `data: Item[]` |
-| `GET /items/me` | アクセストークン | 自分の情報、`rentalSetting`、貸出中の記録 | `success`, `data: User & {...}` |
+| `GET /me` | アクセストークン | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える) | 200 `Me` |
+| `GET /me/rentals` | アクセストークン | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
 | `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
 | `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
 | `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
 
-登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/items/me`で取る。
+登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/me`で取る(カードの番号は0.8で使い捨てのバーコードに替えるまで。Me1)。
 
 ## 認証とトークン
 
 | トークン | 期限 | 署名の鍵 | 置き場所 | 用途 |
 |---|---|---|---|---|
-| アクセストークン | 15分 | `JWT_ACCESS_SECRET` | 画面のCookie`accessToken`(JSから読める)→`Authorization: Bearer` | `/items/me` |
+| アクセストークン | 15分 | `JWT_ACCESS_SECRET` | 画面のCookie`accessToken`(JSから読める)→`Authorization: Bearer` | `/me`・`/me/rentals` |
 | リフレッシュトークン | 7日 | `JWT_REFRESH_SECRET` | HttpOnly Cookie`refreshToken`(`sameSite: strict`)+ DB`refresh_tokens`(利用者1人1件。ログアウトで消す) | `/sessions/refresh` |
 | 登録用トークン | 15分 | `JWT_REFRESH_SECRET`(同じ鍵) | 画面のメモリ | `/users` |
 | タブレット用トークン | 3分 | `JWT_ACCESS_SECRET`(同じ鍵) | `TabletContext`のメモリ | `/tablet/checkout`・`return` |
@@ -78,8 +79,8 @@
 
 ### 画面の起動時の流れ(`front/src/contexts/AuthContext.tsx`)
 
-1. Cookieにアクセストークンがあれば`GET /items/me`
-2. 401なら`POST /sessions/refresh` → 新しいトークンで`/items/me`をもう一度(リフレッシュの応答は`SessionUser`だけなので、画面の利用者は`/items/me`の結果を入れる)
+1. Cookieにアクセストークンがあれば`GET /me`
+2. 401なら`POST /sessions/refresh` → 新しいトークンで`/me`をもう一度(リフレッシュの応答は`SessionUser`だけなので、画面の利用者は`/me`の結果(`Me`)を入れる。借りている物はログインの状態に入れず、ダッシュボードが`/me/rentals`で取る)
 3. アクセストークンが無ければ、すぐに2のリフレッシュを試す
 4. どれも失敗したらログアウト状態。ページ側は`useAuth()`を見て`/auth`へ送る
 
@@ -113,7 +114,7 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 - `ItemStatus`は物そのものの状態だけ: `AVAILABLE`(使える) / `MAINTENANCE` / `LOST` / `DISPOSED`
 - 貸し出しの状態は列に持たず、`returnedAt`と`dueDate`から決める(`features/rentals/rental.status.ts`): 返却済み = `returnedAt`あり、延滞 = 未返却で期限切れ、それ以外は貸出中
 - 「返却されていない貸し出しは物1つにつき1件」を部分インデックス(`rental_active_item_key`、`WHERE returned_at IS NULL`)で守る。同時に借りられても2件目は一意制約違反(409)になる
-- APIは以前と同じ形で返す: 物品の`status`は貸出中なら`RENTED`、貸し出しの`status`は`RENTING`/`RETURNED`/`OVERDUE`、`/items/me`の`rentalSetting`は`user`の列から組み立てる
+- APIは以前と同じ形で返す: 物品の`status`は貸出中なら`RENTED`、貸し出しの`status`は`RENTING`/`RETURNED`/`OVERDUE`、(2026-10-23時点の)`/items/me`の`rentalSetting`は`user`の列から組み立てる
 
 ## フロントエンド
 

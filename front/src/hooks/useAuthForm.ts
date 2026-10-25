@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/services";
+import { authService, meService } from "@/services";
 import { ApiError } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,9 +29,8 @@ export const useAuthForm = () => {
         // 失敗は ApiError で来る(成功かどうかはHTTPのステータスで分かる)
         const response = await authService.login(studentId, password);
 
-        // Get full user info with rentals
-        const userInfo = await authService.getMyInfo(response.accessToken);
-        setAuth(userInfo.data, response.accessToken);
+        // ログインの応答はSessionUserだけなので、本人の全体(Me)を取ってから入れる
+        setAuth(await meService.getMe(response.accessToken), response.accessToken);
         setSuccess("Welcome back.");
         setTimeout(() => router.push("/dashboard"), 1000);
       } catch (err) {
@@ -87,9 +86,8 @@ export const useAuthForm = () => {
       try {
         const response = await authService.signup(password, registrationToken);
 
-        // Get full user info with rentals
-        const userInfo = await authService.getMyInfo(response.accessToken);
-        setAuth(userInfo.data, response.accessToken);
+        // ログインの応答はSessionUserだけなので、本人の全体(Me)を取ってから入れる
+        setAuth(await meService.getMe(response.accessToken), response.accessToken);
         setSuccess("Account created.");
         setTimeout(() => router.push("/dashboard"), 1000);
       } catch (err) {

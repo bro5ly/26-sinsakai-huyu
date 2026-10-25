@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Avatar, Button } from "@heroui/react";
 import Barcode from "react-barcode";
-import { User, RentalSetting } from "@/types";
+import type { Me } from "@sinsakai/shared";
 
 interface UserProfileProps {
-  user: User;
-  rentalSetting: RentalSetting | null;
-  rentalsCount: number;
+  user: Me;
   onLogout: () => void;
 }
 
@@ -31,8 +29,6 @@ const BarcodeIcon = () => (
 
 export const UserProfile = ({
   user,
-  rentalSetting,
-  rentalsCount,
 }: UserProfileProps) => {
   const [showBarcode, setShowBarcode] = useState(false);
 
@@ -78,11 +74,12 @@ export const UserProfile = ({
         </div>
 
         {/* バーコードエリア (条件付き表示) */}
-        {showBarcode && user.serialNumber && (
+        {/* カードの番号は0.8で使い捨てのバーコードに替える(2026-10-25 Me1) */}
+        {showBarcode && user.cardNumber && (
           <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
               <Barcode
-                value={user.serialNumber}
+                value={user.cardNumber}
                 width={1.2}
                 height={50}
                 displayValue={false}
@@ -96,8 +93,8 @@ export const UserProfile = ({
           </div>
         )}
 
-        {/* serialNumberがない場合の警告 */}
-        {showBarcode && !user.serialNumber && (
+        {/* カードの番号がない場合の警告 */}
+        {showBarcode && !user.cardNumber && (
           <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
               <p className="text-xs text-orange-600 font-medium">
@@ -115,7 +112,7 @@ export const UserProfile = ({
           {[
             { label: "Grade", value: user.grade || "---" },
             { label: "Major", value: user.major || "Design" },
-            { label: "Rentals", value: rentalsCount },
+            { label: "Rentals", value: user.borrowing.activeCount },
           ].map((stat) => (
             <div
               key={stat.label}

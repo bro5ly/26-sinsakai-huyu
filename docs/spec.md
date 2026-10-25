@@ -340,7 +340,7 @@
 |---|---|---|---|
 | 1 | 認証コードを`create`で保存するので、同じ学籍番号の2回目の申請が一意制約で失敗する(期限切れでも) | `back/src/features/auth/auth.repository.ts`の`saveTmpCode` | R-5 |
 | 2 | 登録用トークンをリフレッシュトークンの秘密鍵で署名・検証している | `back/src/lib/jwt.ts` | 非機能「認証」 |
-| 3 | タブレット用トークンをアクセストークンと同じ秘密鍵で署名し、ミドルウェアは`role`を見ていない。Webのトークンでタブレットの貸し出しが、タブレットのトークンで`/items/me`が通る | `lib/jwt.ts`、`middleware/` | 非機能「認証」 |
+| 3 | タブレット用トークンをアクセストークンと同じ秘密鍵で署名し、ミドルウェアは`role`を見ていない。Webのトークンでタブレットの貸し出しが、タブレットのトークンで`/me`が通る | `lib/jwt.ts`、`middleware/` | 非機能「認証」 |
 | 5 | 利用者の情報を出す`console.log`が残っている | `UserRepository.ts`、`auth.service.ts`、`item.repository.ts`、`front/src/contexts/AuthContext.tsx` | 非機能「個人情報」 |
 | 6 | `user`の`canBorrow`・`suspendedUntil`・`maxItems`と延滞を、貸し出しで見ていない | `back/src/features/rentals/` | 6章 C4〜C7 |
 | 7 | 延滞をダッシュボードで目立たせていない(APIは`status: "OVERDUE"`を返す) | `front/src/components/dashboard/` | R-30 |

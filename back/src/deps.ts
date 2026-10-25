@@ -5,10 +5,12 @@ import { AuthRepository } from "@/features/auth/auth.repository.js";
 import { ItemRepository } from "@/features/items/item.repository.js";
 import { RentalRepository } from "@/features/rentals/rental.repository.js";
 import { PrismaRoster } from "@/features/roster/prisma-roster.js";
+import { MeRepository } from "@/features/me/me.repository.js";
 import type { AuthStore, Mailer, UserStore } from "@/features/auth/auth.service.js";
 import type { ItemStore } from "@/features/items/item.service.js";
 import type { RentalStore } from "@/features/rentals/rental.service.js";
 import type { Roster } from "@/features/roster/roster.js";
+import type { MeStore } from "@/features/me/me.types.js";
 import type { Config } from "@/config.js";
 
 // appが外の世界(DB・名簿・メール)に触る部品。テストはここに偽物を渡す
@@ -18,6 +20,7 @@ export type Deps = {
     mailer: Mailer;
     roster: Roster;
     items: ItemStore;
+    me: MeStore;
     rentals: RentalStore;
 };
 
@@ -30,6 +33,7 @@ export const buildDeps = (config: Config): Deps => {
     mailer: new MailService(config.mail),
     roster: new PrismaRoster(prisma),
     items: new ItemRepository(prisma),
+    me: new MeRepository(prisma),
     rentals: new RentalRepository(prisma),
     };
 };
