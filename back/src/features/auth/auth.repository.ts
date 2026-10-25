@@ -24,6 +24,13 @@ export class AuthRepository {
             where: {token: refreshToken}
         })
     }
+
+    // 無いトークン(ログアウト済みなど)でも失敗させない。何度ログアウトしてもよいように
+    async deleteRefreshToken(refreshToken: string){
+        await this.db.refreshToken.deleteMany({
+            where: {token: refreshToken}
+        })
+    }
     
 
     async saveTmpCode(data: {verificationCode: string, studentId: string,expiredAt: Date}){

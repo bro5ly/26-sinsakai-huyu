@@ -29,6 +29,7 @@ const testConfig = loadConfig({ DATABASE_URL: "unused", JWT_ACCESS_SECRET: proce
 const fakeDeps = (overrides: Partial<Deps> = {}) => {
     const sentMails: { to: string; code: string }[] = [];
     const savedRefreshTokens: string[] = [];
+    const deletedRefreshTokens: string[] = [];
     const deps: Deps = {
         users: {
             create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
@@ -44,6 +45,9 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             saveTmpCode: async () => undefined as never,
             checkTmpCode: async () => ({ code: "123456", expiresAt: new Date("2099-01-01") }) as never,
             deleteTmpCode: async () => undefined as never,
+            deleteRefreshToken: async (token) => {
+                deletedRefreshTokens.push(token);
+            },
         },
         mailer: {
             sendCode: async (to, code) => {
@@ -67,7 +71,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         ...overrides,
     };
-    return { app: createApp(deps, testConfig), sentMails, savedRefreshTokens };
+    return { app: createApp(deps, testConfig), sentMails, savedRefreshTokens, deletedRefreshTokens };
 };
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
@@ -92,7 +96,7 @@ describe("POST /api/auth/login(ログイン)", () => {
             expect(res.body).toEqual({
                 success: true,
                 accessToken: expect.any(String),
-                user: { id: "user-1", studentId: "20240001", name: "山田 太郎", userType: "STUDENT", grade: "2年", major: "情報工学科", serialNumber: "IC-CARD-001" },
+                user: { id: "user-1", studentId: "20240001", name: "山田 太郎", userType: "STUDENT", role: "MEMBER" },
             });
             const cookie = refreshCookieOf(res);
             expect(cookie).toMatch(/HttpOnly/);

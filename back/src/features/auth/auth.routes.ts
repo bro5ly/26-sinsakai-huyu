@@ -37,13 +37,13 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
     const auth = new AuthService(deps.users, deps.auth, deps.mailer, deps.roster)
 
     router.post('/request-verification', route({ body: requestVerificationSchema }, async ({ body, res }) => {
-        const data = await auth.requestVerification(body.studentId)
-        return sendSuccess(res, data, 200)
+        await auth.requestVerification(body.studentId)
+        return sendSuccess(res, { message: 'CODE_SENT' }, 200)
     }))
 
     router.post('/verify-code', route({ body: codeVerificationSchema }, async ({ body, res }) => {
         const data = await auth.verifyCode(body.studentId, body.code)
-        return sendSuccess(res, data, 200)
+        return sendSuccess(res, { message: 'VerificationSuccess', registrationToken: data.token }, 200)
     }))
 
     router.post('/signup', route({ body: signupSchema }, async ({ body, res }) => {
@@ -61,7 +61,8 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
         return sendSuccess(res, { user: data.user, accessToken: data.accessToken }, 200)
     }))
 
-    router.post('/logout', route({}, async ({ res }) => {
+    router.post('/logout', route({}, async ({ req, res }) => {
+        await auth.logout(req.cookies.refreshToken)
         res.clearCookie('refreshToken', refreshCookie)
         return sendSuccess(res, { message: "Logged out successfully" }, 200)
     }))

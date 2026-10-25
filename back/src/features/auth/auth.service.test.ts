@@ -29,6 +29,7 @@ const auth = (overrides: Partial<AuthStore> = {}): AuthStore => ({
     saveTmpCode: notUsed,
     checkTmpCode: notUsed,
     deleteTmpCode: notUsed,
+    deleteRefreshToken: notUsed,
     ...overrides,
 });
 
@@ -39,14 +40,13 @@ const mailer = (sent: { to: string; code: string }[] = []): Mailer => ({
     },
 });
 
+// ログインの応答の利用者。学年・専攻・カードの番号は入れない(/api/me で取る。docs/api.md 5章 SessionUser)
 const sessionUser = {
     id: "user-1",
     name: "山田 太郎",
-    userType: "STUDENT",
-    grade: "2年",
-    major: "情報工学科",
     studentId: "20240001",
-    serialNumber: "IC-CARD-001",
+    userType: "STUDENT",
+    role: "MEMBER",
 };
 
 describe("requestVerification(登録の認証コードを送る)", () => {
@@ -63,7 +63,7 @@ describe("requestVerification(登録の認証コードを送る)", () => {
 
             const result = await service.requestVerification("20260001");
 
-            expect(result).toEqual({ message: "CODE_SENT" });
+            expect(result).toBeUndefined();
             expect(saved[0]?.studentId).toBe("20260001");
             expect(saved[0]?.verificationCode).toMatch(/^\d{6}$/);
             expect(sent).toEqual([{ to: "taro@example.com", code: saved[0]?.verificationCode }]);
@@ -75,7 +75,7 @@ describe("requestVerification(登録の認証コードを送る)", () => {
             const sent: { to: string; code: string }[] = [];
             const service = new AuthService(users(), auth({ saveTmpCode: notUsed }), mailer(sent), new FakeRoster([yamada]));
 
-            expect(await service.requestVerification("99999999")).toEqual({ message: "CODE_SENT" });
+            expect(await service.requestVerification("99999999")).toBeUndefined();
             expect(sent).toEqual([]);
         });
 
@@ -83,7 +83,7 @@ describe("requestVerification(登録の認証コードを送る)", () => {
             const sent: { to: string; code: string }[] = [];
             const service = new AuthService(users(), auth({ saveTmpCode: notUsed }), mailer(sent), new FakeRoster([yamada]));
 
-            expect(await service.requestVerification("20240001")).toEqual({ message: "CODE_SENT" });
+            expect(await service.requestVerification("20240001")).toBeUndefined();
             expect(sent).toEqual([]);
         });
     });
@@ -99,7 +99,7 @@ describe("verifyCode(認証コードを確かめる)", () => {
     });
 
     describe("正常系", () => {
-        it("V1 コードが合い期限内なら、コードを消し、その学籍番号の登録用トークンを返す(R-6)", async () => {
+        it("V1 コードが合い期限内なら、コードを消し、その学籍番号の登録用トークンと、その期限(15分後)を返す(R-6)", async () => {
             const deleted: string[] = [];
             const service = new AuthService(
                 users(),
@@ -108,10 +108,13 @@ describe("verifyCode(認証コードを確かめる)", () => {
                 new FakeRoster([unregistered]),
             );
 
+            const before = Date.now();
             const result = await service.verifyCode("20260001", "123456");
 
             expect(deleted).toEqual(["20260001"]);
-            expect(jwtLib.verifyRegistrationToken(result.registrationToken)).toMatchObject({ studentId: "20260001" });
+            expect(jwtLib.verifyRegistrationToken(result.token)).toMatchObject({ studentId: "20260001" });
+            expect(result.expiresAt.getTime() - before).toBeGreaterThanOrEqual(15 * 60 * 1000 - 1000);
+            expect(result.expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
         });
     });
 
@@ -162,7 +165,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
             expect(created).toHaveLength(1);
             expect(created[0]?.studentId).toBe("20260001");
             expect(await bcrypt.compare("password123", created[0]?.passwordHash ?? "")).toBe(true);
-            expect(result.user).toMatchObject({ id: "user-9", name: "テスト 太郎", studentId: "20260001", serialNumber: "SN-001" });
+            expect(result.user).toEqual({ id: "user-9", name: "テスト 太郎", studentId: "20260001", userType: "STUDENT", role: "MEMBER" });
         });
     });
 
@@ -289,6 +292,32 @@ describe("refreshSession(リフレッシュトークンでセッションを続�
             );
 
             await expect(service.refreshSession(token)).rejects.toMatchObject({ code: "INVALID_SESSION" });
+        });
+    });
+});
+
+describe("logout(ログアウトする)", () => {
+    describe("正常系", () => {
+        it("L1 Cookieのリフレッシュトークンを、DBからも消す(盗まれたトークンを7日使えないように。R-15・ずれ8)", async () => {
+            const deleted: string[] = [];
+            const service = new AuthService(
+                users(),
+                auth({ deleteRefreshToken: async (token) => (deleted.push(token), undefined as never) }),
+                mailer(),
+                new FakeRoster([yamada]),
+            );
+
+            await service.logout("refresh-token-1");
+
+            expect(deleted).toEqual(["refresh-token-1"]);
+        });
+    });
+
+    describe("境界値", () => {
+        it("L2 トークンが無ければ(Cookieが無い・ログアウト済み)、DBに触らずに終える(何度ログアウトしてもよい)", async () => {
+            const service = new AuthService(users(), auth({ deleteRefreshToken: notUsed }), mailer(), new FakeRoster([yamada]));
+
+            await expect(service.logout(undefined)).resolves.toBeUndefined();
         });
     });
 });
