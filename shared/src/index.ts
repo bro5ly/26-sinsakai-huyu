@@ -17,3 +17,13 @@ export {
     type VerificationToken,
     type VerificationTokenRequest,
 } from "@sinsakai/shared/auth";
+export {
+    meSchema,
+    myRentalsSchema,
+    rentalSchema,
+    rentalStateSchema,
+    type Me,
+    type MyRentals,
+    type Rental,
+    type RentalState,
+} from "@sinsakai/shared/me";
