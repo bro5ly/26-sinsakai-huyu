@@ -5,7 +5,7 @@ import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
-import { sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
+import { meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -59,10 +59,20 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         roster: new FakeRoster([yamada, newcomer]),
         items: {
             findAll: async () => [{ ...item, rentals: [] }] as never,
-            getMyInfo: async (userId) =>
-                (userId === "user-1"
-                    ? { id: "user-1", studentId: "20240001", isActive: true, canBorrow: true, maxItems: 3, suspendedUntil: null, suspensionReason: null, rentals: [] }
-                    : null) as never,
+        },
+        me: {
+            findUser: async (userId) =>
+                userId === "user-1" ? { id: "user-1", studentId: "20240001", role: "MEMBER", canBorrow: true, maxItems: 3, suspendedUntil: null } : null,
+            findActiveRentals: async () => [
+                {
+                    id: "rental-1",
+                    rentedAt: rental.rentedAt,
+                    dueDate: rental.dueDate,
+                    returnedAt: null,
+                    item: { id: "item-2", barcode: "MAC-002" },
+                    itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
+                },
+            ],
         },
         rentals: {
             findUserWithActiveRentals: async (studentId) => (studentId === "20240001" ? ({ id: "user-1", studentId, rentals: [] } as never) : null),
@@ -251,36 +261,73 @@ describe("GET /api/items(物品の一覧)", () => {
     });
 });
 
-describe("GET /api/items/me(自分の情報)", () => {
+describe("GET /api/me・GET /api/me/rentals(本人)", () => {
     describe("正常系", () => {
-        it("現状: H11 アクセストークンがあれば、200で名簿の項目と貸し出しの決まりをdataに入れて返す", async () => {
+        it("H11 アクセストークンがあれば、GET /api/meは200でMeの形(名簿の項目・カードの番号・貸し出しの決まり)を返す(docs/api.md 4.2。Me1)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items/me").set(bearer(accessToken()));
+            const res = await request(app).get("/api/me").set(bearer(accessToken()));
 
             expect(res.status).toBe(200);
-            expect(res.body).toMatchObject({
-                success: true,
-                data: { id: "user-1", studentId: "20240001", name: "山田 太郎", serialNumber: "IC-CARD-001", rentalSetting: { canBorrow: true, maxItems: 3 }, rentals: [] },
+            expect(meSchema.parse(res.body)).toEqual({
+                id: "user-1",
+                name: "山田 太郎",
+                studentId: "20240001",
+                userType: "STUDENT",
+                role: "MEMBER",
+                email: "yamada@example.com",
+                grade: "2年",
+                major: "情報工学科",
+                cardNumber: "IC-CARD-001",
+                borrowing: { canBorrow: true, maxItems: 3, suspendedUntil: null, activeCount: 1, hasOverdue: false },
+            });
+            expect(res.body).not.toHaveProperty("success");
+        });
+
+        it("H32 GET /api/me/rentalsは200で、借りている物を{ items }に入れ、状態とジャンル付きで返す(Me3)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/me/rentals").set(bearer(accessToken()));
+
+            expect(res.status).toBe(200);
+            expect(myRentalsSchema.parse(res.body)).toEqual({
+                items: [
+                    {
+                        id: "rental-1",
+                        itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
+                        item: { id: "item-2", barcode: "MAC-002" },
+                        rentedAt: "2026-10-24T00:00:00.000Z",
+                        dueDate: "2099-01-01T00:00:00.000Z",
+                        returnedAt: null,
+                        state: "RENTING",
+                    },
+                ],
             });
         });
     });
 
     describe("異常系", () => {
-        it("H12 アクセストークンが無ければ、401 UNAUTHENTICATEDを返す", async () => {
+        it("H12 アクセストークンが無ければ、どちらも401 UNAUTHENTICATEDを返す", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items/me");
+            expectProblem(await request(app).get("/api/me"), 401, "UNAUTHENTICATED");
+            expectProblem(await request(app).get("/api/me/rentals"), 401, "UNAUTHENTICATED");
+        });
+
+        it("H13 壊れたトークンなら、401 UNAUTHENTICATEDを返す(500にしない)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/me").set(bearer("broken"));
 
             expectProblem(res, 401, "UNAUTHENTICATED");
         });
 
-        it("H13 タブレット用でもアクセストークンでもない壊れたトークンなら、401 UNAUTHENTICATEDを返す(500にしない)", async () => {
+        it("H33 古いURL(/api/items/me)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items/me").set(bearer("broken"));
+            const res = await request(app).get("/api/items/me").set(bearer(accessToken()));
 
-            expectProblem(res, 401, "UNAUTHENTICATED");
+            expectProblem(res, 404, "NOT_FOUND");
         });
     });
 });

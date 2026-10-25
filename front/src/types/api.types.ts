@@ -1,5 +1,5 @@
 import type { ErrorCode } from "@sinsakai/shared";
-import { User, RentalSetting } from "./user.types";
+import { User } from "./user.types";
 import { Item } from "./item.types";
 import { Rental } from "./rental.types";
 
@@ -24,13 +24,6 @@ export interface ApiResponse<T = unknown> {
 
 // 登録・ログインの応答の型は shared/(@sinsakai/shared)の Session・VerificationToken を使う
 
-export interface MyInfoResponse {
-  success: boolean;
-  data: User & {
-    rentalSetting: RentalSetting | null;
-    rentals: Rental[];
-  };
-}
 
 export interface ItemsResponse extends ApiResponse {
   data: Item[];

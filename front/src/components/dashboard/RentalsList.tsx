@@ -1,5 +1,5 @@
 import { Card, CardBody, Chip } from "@heroui/react";
-import { Rental } from "@/types";
+import type { Rental } from "@sinsakai/shared";
 
 interface RentalsListProps {
   rentals: Rental[];
@@ -51,10 +51,10 @@ export const RentalsList = ({ rentals, maxItems }: RentalsListProps) => {
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                    {rental.item.itemType.genre.name}
+                    {rental.itemType.genre.name}
                   </p>
                   <h3 className="font-bold text-[12px] text-slate-800 line-clamp-1 leading-none mb-2">
-                    {rental.item.itemType.title}
+                    {rental.itemType.title}
                   </h3>
                   <p className="text-[10px] text-blue-500 font-bold tabular-nums">
                     ID: {rental.item.barcode}

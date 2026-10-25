@@ -1,6 +1,5 @@
 import type { Session, VerificationToken } from "@sinsakai/shared";
 import { ApiService } from "./api.service";
-import { MyInfoResponse } from "@/types";
 
 // 登録・ログインのURLと形は docs/api.md 4.1・shared/src/auth.ts。リフレッシュトークンはHttpOnly Cookieなので credentials: "include" が要る
 class AuthService extends ApiService {
@@ -43,10 +42,6 @@ class AuthService extends ApiService {
     } catch (error) {
       console.warn("Logout request failed", error);
     }
-  }
-
-  async getMyInfo(accessToken: string): Promise<MyInfoResponse> {
-    return this.get<MyInfoResponse>("/api/items/me", accessToken);
   }
 
   async refreshSession(): Promise<Session> {
