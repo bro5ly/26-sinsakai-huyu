@@ -9,8 +9,9 @@ APIの一覧と認証の流れは`docs/architecture.md`。
 
 ## 新しいAPIを足すとき
 
-- `src/features/<機能>/`に`<機能>.routes.ts`・`.service.ts`・`.repository.ts`・`.schema.ts`・`.types.ts`を置く。`<機能>.routes.ts`は`create○○Routes(deps: Deps)`を書き、`src/routes/index.ts`にマウントする。新しい部品が要るなら`src/deps.ts`の`Deps`と`buildDeps()`に足す
+- `src/features/<機能>/`に`<機能>.routes.ts`・`.service.ts`・`.repository.ts`・`.schema.ts`・`.types.ts`を置く(新しい形に移したAPIの入力と応答のスキーマは`.schema.ts`ではなく`shared/`に置く。`.types.ts`は中の型だけ)。`<機能>.routes.ts`は`create○○Routes(deps: Deps)`を書き、`src/routes/index.ts`にマウントする。新しい部品が要るなら`src/deps.ts`の`Deps`と`buildDeps()`に足す
 - 1本のAPIは`router.post('/x', route({ body: schema }, async ({ body, res }) => ...))`と書き、「入力 → service → 返す」だけにする。判断はserviceと判断の関数に置く
+- 新しい形のAPI(`docs/api.md`)は、入力のスキーマも応答の型も`shared/`に書き、`res.status(201).json({ ... } satisfies 型)`で包まずに返す。日付はAPIの境目でISOの文字列にする(T5)。本文の無い成功は`res.status(204).end()`
 - 認証が要るものは`authMiddleware`(Web)か`tabletMiddleware`(タブレット)を付け、`route({ auth: true, ... })`で`user`を受け取る。利用者のIDは`user.id`から取り、ボディのIDは信じない
 - HTTPを通した形(URL・ステータス・応答・Cookie)は`src/app.test.ts`で、偽の部品を渡した`createApp`を`supertest`で叩いて確かめる
 - 環境変数を足すときは、`src/config.ts`の`envSchema`と`Config`、`back/.env.example`に足し、使う所へは`buildDeps(config)`・`createApp(deps, config)`から渡す。`process.env`を直接読まない(2026-10-24 G1〜G3。`lib/jwt.ts`だけは0.8まで`getConfig()`)
