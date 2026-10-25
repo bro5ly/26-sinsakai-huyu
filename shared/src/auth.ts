@@ -37,9 +37,11 @@ export const createUserRequestSchema = z.object({
 });
 
 // POST /api/sessions → 201 Session
+// パスワードの長さは登録のときだけ確かめる。ログインで確かめると、短く打ち間違えた人だけ
+// 「入力内容が正しくありません」になり、ほかの間違いと文言が分かれるため(2026-10-25 B1-A)
 export const createSessionRequestSchema = z.object({
     studentId: studentIdSchema,
-    password: passwordSchema,
+    password: z.string().min(1, "パスワードを入力してください"),
 });
 
 // ログイン中の利用者。学年・専攻・カードの番号は入れない(本人の情報は /api/me で取る)

@@ -117,6 +117,14 @@ describe("POST /api/sessions(ログイン)", () => {
             expect(refreshCookieOf(res)).toBeUndefined();
         });
 
+        it("H31 7文字以下の違うパスワードでも、8文字以上のときと同じく401 INVALID_CREDENTIALSを返す(長さは登録のときだけ確かめる。2026-10-25 B1-A)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).post("/api/sessions").send({ studentId: "20240001", password: "wrong" });
+
+            expectProblem(res, 401, "INVALID_CREDENTIALS");
+        });
+
         it("H3 入力が足りなければ、400 VALIDATION_ERRORで、足りない項目をerrorsに入れる", async () => {
             const { app } = fakeDeps();
 
