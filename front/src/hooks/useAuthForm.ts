@@ -26,10 +26,8 @@ export const useAuthForm = () => {
       setLoading(true);
       setError("");
       try {
+        // 失敗は ApiError で来る(成功かどうかはHTTPのステータスで分かる)
         const response = await authService.login(studentId, password);
-        if (!response.success) {
-          throw new Error("Login failed");
-        }
 
         // Get full user info with rentals
         const userInfo = await authService.getMyInfo(response.accessToken);
@@ -70,10 +68,7 @@ export const useAuthForm = () => {
       setError("");
       try {
         const response = await authService.verifyCode(studentId, code);
-        if (!response.success) {
-          throw new Error("Invalid code");
-        }
-        setRegistrationToken(response.registrationToken);
+        setRegistrationToken(response.token);
         setMode("signup-password");
       } catch (err) {
         setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Invalid code");
@@ -91,9 +86,6 @@ export const useAuthForm = () => {
       setError("");
       try {
         const response = await authService.signup(password, registrationToken);
-        if (!response.success) {
-          throw new Error("Signup failed");
-        }
 
         // Get full user info with rentals
         const userInfo = await authService.getMyInfo(response.accessToken);

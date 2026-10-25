@@ -5,6 +5,7 @@ import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
+import { sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -85,19 +86,20 @@ const expectProblem = (res: request.Response, status: number, code: string) => {
     expect(res.body).toMatchObject({ status, code });
 };
 
-describe("POST /api/auth/login(ログイン)", () => {
+describe("POST /api/sessions(ログイン)", () => {
     describe("正常系", () => {
-        it("現状: H1 学籍番号とパスワードが合えば、200で利用者とアクセストークンを返し、リフレッシュトークンはHttpOnlyのCookieにだけ入れる(R-11)", async () => {
+        it("H1 学籍番号とパスワードが合えば、201でSessionの形(利用者とアクセストークン)を返し、リフレッシュトークンはHttpOnlyのCookieにだけ入れる(R-11。docs/api.md 4.1)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "password123" });
+            const res = await request(app).post("/api/sessions").send({ studentId: "20240001", password: "password123" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({
-                success: true,
+            expect(res.status).toBe(201);
+            expect(sessionSchema.parse(res.body)).toEqual({
                 accessToken: expect.any(String),
                 user: { id: "user-1", studentId: "20240001", name: "山田 太郎", userType: "STUDENT", role: "MEMBER" },
             });
+            expect(res.body).not.toHaveProperty("success");
+            expect(res.body).not.toHaveProperty("refreshToken");
             const cookie = refreshCookieOf(res);
             expect(cookie).toMatch(/HttpOnly/);
             expect(cookie).toMatch(/SameSite=Strict/);
@@ -109,7 +111,7 @@ describe("POST /api/auth/login(ログイン)", () => {
         it("H2 パスワードが違えば、401 INVALID_CREDENTIALSをRFC 9457の形で返す(R-16)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "wrong-password" });
+            const res = await request(app).post("/api/sessions").send({ studentId: "20240001", password: "wrong-password" });
 
             expectProblem(res, 401, "INVALID_CREDENTIALS");
             expect(refreshCookieOf(res)).toBeUndefined();
@@ -118,81 +120,112 @@ describe("POST /api/auth/login(ログイン)", () => {
         it("H3 入力が足りなければ、400 VALIDATION_ERRORで、足りない項目をerrorsに入れる", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/login").send({});
+            const res = await request(app).post("/api/sessions").send({});
 
             expectProblem(res, 400, "VALIDATION_ERROR");
-            expect(res.body.errors.map((e: { path: string }) => e.path).sort()).toEqual(["plainPassword", "studentId"]);
+            expect(res.body.errors.map((e: { path: string }) => e.path).sort()).toEqual(["password", "studentId"]);
         });
     });
 });
 
 describe("登録(認証コードの申請 → 確認 → パスワードを決める)", () => {
     describe("正常系", () => {
-        it("現状: H4 名簿にいて未登録なら、200 CODE_SENTを返し、名簿のメールに6桁のコードを送る(R-4)", async () => {
+        it("H4 名簿にいて未登録なら、202を本文なしで返し、名簿のメールに6桁のコードを送る(R-4。docs/api.md 4.1)", async () => {
             const { app, sentMails } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/request-verification").send({ studentId: "20260001" });
+            const res = await request(app).post("/api/verification-codes").send({ studentId: "20260001", purpose: "signup" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({ success: true, message: "CODE_SENT" });
+            expect(res.status).toBe(202);
+            expect(res.text).toBe("");
             expect(sentMails).toEqual([{ to: "taro@example.com", code: expect.stringMatching(/^\d{6}$/) }]);
         });
 
-        it("現状: H5 認証コードが合えば、200で登録用トークンを返す(R-6)", async () => {
+        it("H5 認証コードが合えば、201で登録用トークンと期限を返す(R-6。docs/api.md 4.1)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/verify-code").send({ studentId: "20260001", code: "123456" });
+            const res = await request(app).post("/api/verification-tokens").send({ studentId: "20260001", purpose: "signup", code: "123456" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({ success: true, message: "VerificationSuccess", registrationToken: expect.any(String) });
+            expect(res.status).toBe(201);
+            expect(verificationTokenSchema.parse(res.body)).toEqual({ token: expect.any(String), expiresAt: expect.any(String) });
         });
 
-        it("現状: H6 登録用トークンでパスワードを決めれば、200で利用者を返し、リフレッシュトークンをCookieに入れる(R-9)", async () => {
+        it("H6 登録用トークンでパスワードを決めれば、201でSessionの形を返し、リフレッシュトークンをCookieに入れる(R-9)", async () => {
             const { app } = fakeDeps();
-            const registrationToken = jwtLib.signRegistrationToken({ studentId: "20260001" });
+            const token = jwtLib.signRegistrationToken({ studentId: "20260001" });
 
-            const res = await request(app).post("/api/auth/signup").send({ plainPassword: "password123", registrationToken });
+            const res = await request(app).post("/api/users").send({ token, password: "password123" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toMatchObject({ success: true, accessToken: expect.any(String), user: { id: "user-new", studentId: "20260001", name: "テスト 太郎" } });
-            expect(res.body.refreshToken).toBeUndefined();
+            expect(res.status).toBe(201);
+            expect(sessionSchema.parse(res.body).user).toMatchObject({ id: "user-new", studentId: "20260001", name: "テスト 太郎" });
+            expect(res.body).not.toHaveProperty("refreshToken");
             expect(refreshCookieOf(res)).toMatch(/HttpOnly/);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H28 名簿に無い学籍番号でも、名簿にいるときと同じく202を本文なしで返し、メールは送らない(R-16。列挙の対策)", async () => {
+            const { app, sentMails } = fakeDeps();
+
+            const res = await request(app).post("/api/verification-codes").send({ studentId: "99999999", purpose: "signup" });
+
+            expect(res.status).toBe(202);
+            expect(res.text).toBe("");
+            expect(sentMails).toEqual([]);
+        });
+
+        it("H29 purposeが\"signup\"でなければ、400 VALIDATION_ERROR(パスワードの再設定はまだ無い。A2)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).post("/api/verification-codes").send({ studentId: "20260001", purpose: "password-reset" });
+
+            expectProblem(res, 400, "VALIDATION_ERROR");
         });
     });
 });
 
 describe("セッション(リフレッシュ・ログアウト)", () => {
     describe("正常系", () => {
-        it("現状: H7 ログインのCookieでリフレッシュすれば、200で新しいアクセストークンを返し、Cookieを入れ替える(R-13・R-14)", async () => {
+        it("H7 ログインのCookieでリフレッシュすれば、200でSessionの形を返し、Cookieを入れ替える(R-13・R-14)", async () => {
             const { app } = fakeDeps();
             const agent = request.agent(app);
-            await agent.post("/api/auth/login").send({ studentId: "20240001", plainPassword: "password123" });
+            await agent.post("/api/sessions").send({ studentId: "20240001", password: "password123" });
 
-            const res = await agent.post("/api/auth/refreshSession");
+            const res = await agent.post("/api/sessions/refresh");
 
             expect(res.status).toBe(200);
-            expect(res.body).toMatchObject({ success: true, accessToken: expect.any(String), user: { id: "user-1" } });
+            expect(sessionSchema.parse(res.body).user).toMatchObject({ id: "user-1" });
             expect(refreshCookieOf(res)).toMatch(/HttpOnly/);
         });
 
-        it("現状: H8 ログアウトすれば、200を返し、リフレッシュトークンのCookieを消す", async () => {
-            const { app } = fakeDeps();
+        it("H8 ログアウトすれば、204を本文なしで返し、リフレッシュトークンのCookieとDBのトークンを消す(R-15。A3)", async () => {
+            const { app, savedRefreshTokens, deletedRefreshTokens } = fakeDeps();
+            const agent = request.agent(app);
+            await agent.post("/api/sessions").send({ studentId: "20240001", password: "password123" });
 
-            const res = await request(app).post("/api/auth/logout");
+            const res = await agent.delete("/api/sessions/current");
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({ success: true, message: "Logged out successfully" });
+            expect(res.status).toBe(204);
+            expect(res.text).toBe("");
             expect(refreshCookieOf(res)).toMatch(/Expires=Thu, 01 Jan 1970/);
+            expect(deletedRefreshTokens).toEqual(savedRefreshTokens);
         });
     });
 
     describe("異常系", () => {
-        it("H9 Cookieが無ければ、401 INVALID_SESSIONを返す(500にしない)", async () => {
+        it("H9 Cookieが無ければ、リフレッシュは401 INVALID_SESSIONを返す(500にしない)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/refreshSession");
+            const res = await request(app).post("/api/sessions/refresh");
 
             expectProblem(res, 401, "INVALID_SESSION");
+        });
+
+        it("H30 古いURL(/api/auth/...)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
+            const { app } = fakeDeps();
+
+            for (const url of ["/api/auth/login", "/api/auth/signup", "/api/auth/request-verification", "/api/auth/verify-code", "/api/auth/refreshSession", "/api/auth/logout"]) {
+                expectProblem(await request(app).post(url).send({}), 404, "NOT_FOUND");
+            }
         });
     });
 });
@@ -359,7 +392,7 @@ describe("すべての応答に付くヘッダ", () => {
 
 describe("ログインの回数の制限(接続元ごとに、失敗を15分で20回まで。docs/auth.md 4.6・C5・K9-B)", () => {
     const login = (app: ReturnType<typeof fakeDeps>["app"]) =>
-        request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "wrong-password" });
+        request(app).post("/api/sessions").send({ studentId: "20240001", password: "wrong-password" });
 
     describe("正常系", () => {
         it("H23 20回目までは、制限せずにいつもどおり答える", async () => {
@@ -373,22 +406,22 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で2
 
         it("H27 成功したログインは数えない。同じWi-Fiの大勢が続けてログインしても止めない(2026-10-24 K9-B)", async () => {
             const { app } = fakeDeps();
-            const success = () => request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "password123" });
+            const success = () => request(app).post("/api/sessions").send({ studentId: "20240001", password: "password123" });
             for (let i = 0; i < 25; i++) await success();
             for (let i = 0; i < 19; i++) await login(app);
 
             const res = await success();
 
-            expect(res.status).toBe(200);
+            expect(res.status).toBe(201);
         });
 
         it("H24 ログインのほかのAPI(登録の申請など)は、制限しない", async () => {
             const { app } = fakeDeps();
             for (let i = 0; i < 20; i++) await login(app);
 
-            const res = await request(app).post("/api/auth/request-verification").send({ studentId: "20260001" });
+            const res = await request(app).post("/api/verification-codes").send({ studentId: "20260001", purpose: "signup" });
 
-            expect(res.status).toBe(200);
+            expect(res.status).toBe(202);
         });
     });
 
@@ -397,7 +430,7 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で2
             const { app } = fakeDeps();
             for (let i = 0; i < 20; i++) await login(app);
 
-            const res = await request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "password123" });
+            const res = await request(app).post("/api/sessions").send({ studentId: "20240001", password: "password123" });
 
             expectProblem(res, 429, "RATE_LIMITED");
         });
@@ -409,7 +442,7 @@ describe("JSONの大きさの上限(100kb。L1)", () => {
         it("H26 100kbを超えるJSONは、読まずに413 PAYLOAD_TOO_LARGEをRFC 9457の形で返す(500にしない。K8)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).post("/api/auth/login").send({ studentId: "20240001", plainPassword: "x".repeat(101 * 1024) });
+            const res = await request(app).post("/api/sessions").send({ studentId: "20240001", password: "x".repeat(101 * 1024) });
 
             expectProblem(res, 413, "PAYLOAD_TOO_LARGE");
         });

@@ -94,26 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("AT expired (401), trying refresh...");
             try {
               const refreshRes = await authService.refreshSession();
-              if (refreshRes.success && refreshRes.user) {
-                const userData = {
-                  ...refreshRes.user,
-                  rentalSetting: null,
-                  rentals: []
-                };
-                setAuth(userData, refreshRes.accessToken);
-
-                // 完全なユーザー情報を取得
-                const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
-                if (retryInfo.success && retryInfo.data) {
-                  console.log("✅ User info after refresh:", {
-                    studentId: retryInfo.data.studentId,
-                    serialNumber: retryInfo.data.serialNumber,
-                    name: retryInfo.data.name
-                  });
-                  setUser(retryInfo.data);
-                }
-                return; // 成功したら終了
-              }
+              // リフレッシュの応答はSessionUserだけなので、画面が使う利用者の全体(学年・貸し出しなど)を取ってから入れる
+              const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
+              setAuth(retryInfo.data, refreshRes.accessToken);
+              return; // 成功したら終了
             } catch (refreshError) {
               console.log("RefreshSession failed, clearing auth");
               setAuth(null, null);
@@ -128,20 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ATがない場合はリフレッシュを試みる
         try {
           const refreshRes = await authService.refreshSession();
-          if (refreshRes.success && refreshRes.user) {
-            const userData = {
-              ...refreshRes.user,
-              rentalSetting: null,
-              rentals: []
-            };
-            setAuth(userData, refreshRes.accessToken);
-
-            // 完全なユーザー情報を取得
-            const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
-            if (retryInfo.success && retryInfo.data) {
-              setUser(retryInfo.data);
-            }
-          }
+          // リフレッシュの応答はSessionUserだけなので、画面が使う利用者の全体(学年・貸し出しなど)を取ってから入れる
+          const retryInfo = await authService.getMyInfo(refreshRes.accessToken);
+          setAuth(retryInfo.data, refreshRes.accessToken);
         } catch (error) {
           console.log("No AT and refresh failed");
           // リフレッシュも失敗したら何もしない（未認証状態）
