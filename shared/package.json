@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./error-codes": "./src/error-codes.ts",
-    "./problem": "./src/problem.ts"
+    "./problem": "./src/problem.ts",
+    "./auth": "./src/auth.ts"
   },
   "dependencies": {
     "zod": "^4.3.6"
