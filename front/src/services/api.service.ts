@@ -22,9 +22,9 @@ export class ApiService {
       },
     });
 
-    // Handle 204 No Content
-    if (response.status === 204) {
-      throw new ApiError("レスポンスが空です", 204, "NO_CONTENT");
+    // 本文の無い成功(202: 認証コードの送信、204: ログアウト)は、値を返さない(docs/api.md 3.2)
+    if (response.status === 202 || response.status === 204) {
+      return undefined as T;
     }
 
     const data = await response.json();
@@ -49,6 +49,19 @@ export class ApiService {
     return this.request<T>(endpoint, {
       method: "GET",
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
+  }
+
+  public async delete<T>(
+    endpoint: string,
+    options: { accessToken?: string; credentials?: RequestCredentials } = {}
+  ): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "DELETE",
+      headers: options.accessToken
+        ? { Authorization: `Bearer ${options.accessToken}` }
+        : {},
+      credentials: options.credentials,
     });
   }
 

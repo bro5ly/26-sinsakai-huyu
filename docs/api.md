@@ -19,18 +19,18 @@
 
 | # | 問題 | 例 | 直したか |
 |---|---|---|---|
-| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | |
-| P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | |
+| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 一部(登録・ログインは2026-10-25) |
+| P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | 一部(登録・ログインは2026-10-25) |
 | P3 | 置き場所がずれている | 自分の情報が`/items/me`。`/tablet/*`は資源でなく端末でまとめている | |
 | P4 | 物品の種類のAPIが無い | カタログの詳細は、全件を取って画面でタイトルで絞り込んでいる | |
-| P5 | 作ったときも200 | 登録・貸し出し | |
+| P5 | 作ったときも200 | 登録・貸し出し | 一部(登録・ログインは2026-10-25) |
 | P6 | ステータスの意味のずれ | ログインでパスワード違いは400、利用者がいないと404(どちらも401で、違いから登録済みかが分かる)。期限切れの認証コードは410で`VERIFICATION_NOT_STARTED` | 済み(2026-10-24) |
 | P7 | 同じ`code`を別の意味に使う | `ITEM_NOT_AVAILABLE`が400と409の両方 | 済み(2026-10-24) |
 | P8 | 不正な入力で500になる(不具合) | Cookie無しのリフレッシュ、壊れた登録用トークンでの登録 | 済み(2026-10-24) |
-| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | |
+| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | 一部(登録・ログインは2026-10-25) |
 | P10 | DBの列がそのまま出る | 物品に`itemTypeId`・`genreId`・`notes`・`createdAt`・`updatedAt` | |
 | P11 | 同じ名前で意味が違う | 物品の`status`は計算した値(RENTEDを含む)、貸し出しの応答の中の`item.status`はDBの値 | |
-| P12 | 画面の文言が応答に入る | 「認証に成功しました」など | |
+| P12 | 画面の文言が応答に入る | 「認証に成功しました」など | 一部(登録・ログインは2026-10-25) |
 | P13 | JSONで返らないエラーがある | 存在しないURLの404、タブレットの認証の失敗(Express既定のHTML) | 済み(2026-10-24) |
 | P14 | DBの中身がエラーに漏れる | 一意制約の違反で、制約の列名を`target`として返す | 済み(2026-10-24) |
 | P15 | `code`の一覧が無い・綴りの誤り | `SUTUDENT_ID_NOT_FOUND` | 済み(2026-10-24) |
@@ -102,6 +102,8 @@
 ## 4. APIの一覧(案)
 
 ### 4.1 登録・ログイン(Web)
+
+**2026-10-25に移した**(パスワードの再設定は0.8。認証コードの`purpose`は今は`"signup"`だけ。形は`shared/src/auth.ts`)。
 
 | メソッドとURL | 認証 | リクエスト | 成功 | おもなエラー | ユースケース |
 |---|---|---|---|---|---|
@@ -217,12 +219,12 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 
 | 今 | 作り直し後 |
 |---|---|
-| `POST /api/auth/request-verification` | `POST /api/verification-codes`(`purpose: "signup"`) |
-| `POST /api/auth/verify-code` | `POST /api/verification-tokens` |
-| `POST /api/auth/signup` | `POST /api/users` |
-| `POST /api/auth/login` | `POST /api/sessions` |
-| `POST /api/auth/refreshSession` | `POST /api/sessions/refresh` |
-| `POST /api/auth/logout` | `DELETE /api/sessions/current` |
+| `POST /api/auth/request-verification` | `POST /api/verification-codes`(`purpose: "signup"`) (2026-10-25 移した) |
+| `POST /api/auth/verify-code` | `POST /api/verification-tokens` (2026-10-25 移した) |
+| `POST /api/auth/signup` | `POST /api/users` (2026-10-25 移した) |
+| `POST /api/auth/login` | `POST /api/sessions` (2026-10-25 移した) |
+| `POST /api/auth/refreshSession` | `POST /api/sessions/refresh` (2026-10-25 移した) |
+| `POST /api/auth/logout` | `DELETE /api/sessions/current` (2026-10-25 移した) |
 | `GET /api/items` | `GET /api/item-types`(と`GET /api/categories`) |
 | `GET /api/items/me` | `GET /api/me`・`GET /api/me/rentals` |
 | `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き) |

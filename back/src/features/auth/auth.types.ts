@@ -1,28 +1,13 @@
 // features/auth/auth.types.ts
-import type { RosterUserType } from "../roster/roster.js";
+import type { SessionUser } from "@sinsakai/shared";
 
-// 画面に返す利用者。名前などは名簿から組み立てる
-export interface SessionUser {
-    id: string;
-    name: string;
-    userType: RosterUserType;
-    grade: string | null;
-    major: string | null;
-    studentId: string;
-    serialNumber: string | null;
-}
-
-export interface AuthResponse {
+export interface AuthResult {
     accessToken: string;
-    refreshToken: string; // Cookie用
+    refreshToken: string; // Cookie用。応答の本文には入れない
     user: SessionUser
 }
 
-export interface VerificationResponse {
-    message: string;
-}
-
-export interface VerifyCodeResponse {
-    message: string;
-    registrationToken: string;
+export interface VerifyCodeResult {
+    token: string;
+    expiresAt: Date;
 }

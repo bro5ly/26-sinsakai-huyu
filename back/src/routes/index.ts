@@ -8,7 +8,8 @@ import type { Config } from '@/config.js'
 export const createApiRoutes = (deps: Deps, config: Config) => {
     const router = Router();
 
-    router.use('/auth', createAuthRoutes(deps, config))
+    // 登録・ログインは資源ごとのURL(/verification-codes・/users・/sessions)を直下に持つ(docs/api.md 4.1)
+    router.use(createAuthRoutes(deps, config))
     router.use('/items', createItemRoutes(deps))
     router.use('/tablet', createTabletRoutes(deps))
 

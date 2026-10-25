@@ -5,25 +5,25 @@ import type { Roster, RosterEntry } from "../roster/roster.js"
 import type { AuthRepository } from "./auth.repository.js"
 import type { MailService } from "@/lib/mail.js"
 import { DomainError } from "@/lib/domain-error.js"
-import type { AuthResponse, VerificationResponse, VerifyCodeResponse } from "./auth.types.js"
+import type { AuthResult, VerifyCodeResult } from "./auth.types.js"
 
 // テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
 export type UserStore = Pick<UserRepository, "create" | "findById" | "findByStudentId">
-export type AuthStore = Pick<AuthRepository, "saveRefreshToken" | "findRefreshToken" | "saveTmpCode" | "checkTmpCode" | "deleteTmpCode">
+export type AuthStore = Pick<AuthRepository, "saveRefreshToken" | "findRefreshToken" | "deleteRefreshToken" | "saveTmpCode" | "checkTmpCode" | "deleteTmpCode">
 export type Mailer = Pick<MailService, "sendCode">
 type User = NonNullable<Awaited<ReturnType<UserStore["findById"]>>>
 
 export class AuthService {
     constructor(private users: UserStore, private authRepository: AuthStore, private mailService: Mailer, private roster: Roster){}
 
-    requestVerification = async (studentId: string): Promise<VerificationResponse> => {
+    requestVerification = async (studentId: string): Promise<void> => {
         //1. 受け取った学籍番号が別dbにあるか確認
         // 名簿にいない・登録済みでも、成功と同じ応答を返し、何も送らない(学籍番号があるか・登録済みかを知られないため。R-16・auth.md 4.6)
         const student = await this.roster.findByStudentId(studentId);
-        if(!student) return {message: 'CODE_SENT'}
+        if(!student) return
 
         const existsUser = await this.users.findByStudentId(studentId)
-        if(existsUser) return {message: 'CODE_SENT'}
+        if(existsUser) return
         //2. 存在する場合、dbからemailを取得
         //3. コードを作成してemailに送信
         // 6桁のランダムな数字を文字列として生成
@@ -32,12 +32,10 @@ export class AuthService {
         expiredAt.setMinutes(expiredAt.getMinutes() + 15)
         await this.authRepository.saveTmpCode({verificationCode,studentId: student.studentId,expiredAt});
         await this.mailService.sendCode(student.email,verificationCode)
-
-        return {message: 'CODE_SENT'}
        
     }
 
-    verifyCode = async (studentId: string, code: string): Promise<VerifyCodeResponse> => {
+    verifyCode = async (studentId: string, code: string): Promise<VerifyCodeResult> => {
         //4. コードを検証し成功時にトークンを発行し返却
         const record = await this.authRepository.checkTmpCode(studentId)
         if(!record) throw new DomainError('INVALID_CODE')
@@ -56,13 +54,14 @@ export class AuthService {
         
         await this.authRepository.deleteTmpCode(studentId)
 
-        const registrationToken = jwtLib.signRegistrationToken({studentId})
-        return {message: 'VerificationSuccess',registrationToken}
+        const token = jwtLib.signRegistrationToken({studentId})
+        // 画面が「あと何分で手続きが切れるか」を出せるように、期限も返す(docs/api.md 4.1)
+        return {token, expiresAt: new Date(Date.now() + jwtLib.REGISTRATION_TOKEN_MINUTES * 60 * 1000)}
         //5. トークンとこのアプリの登録情報（nameとpassword）を受け取り、ユーザーの作成
         
     }
 
-    signUp = async (plainPassword: string, registerToken: string): Promise<AuthResponse> => {
+    signUp = async (plainPassword: string, registerToken: string): Promise<AuthResult> => {
 
         // 壊れている・期限切れのトークンはJWTのライブラリの例外になるので、401に変える(500にしない。docs/api.md 3.2)
         let studentId: string
@@ -97,7 +96,7 @@ export class AuthService {
 
     // auth.service.ts
 
-    refreshSession = async (refreshToken: string): Promise<AuthResponse> => {
+    refreshSession = async (refreshToken: string): Promise<AuthResult> => {
         // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック。Cookieが無い・壊れているときも401にする(500にしない)
         if (!refreshToken) throw new DomainError('INVALID_SESSION');
         let payload: { sub: string };
@@ -134,7 +133,13 @@ export class AuthService {
         return entry
     }
 
-    private async generateSession(user: User, profile: RosterEntry): Promise<AuthResponse> {
+    // Cookieを消すだけでは、盗まれたトークンが期限(7日)まで使えるので、DBからも消す(R-15)。無ければ何もしない
+    logout = async (refreshToken: string | undefined): Promise<void> => {
+        if (!refreshToken) return
+        await this.authRepository.deleteRefreshToken(refreshToken)
+    }
+
+    private async generateSession(user: User, profile: RosterEntry): Promise<AuthResult> {
         const accessToken = jwtLib.signAccessToken({
             sub: user.id,
             role: user.role
@@ -153,14 +158,13 @@ export class AuthService {
         return {
             accessToken,
             refreshToken,
+            // 学年・専攻・カードの番号は入れない(画面は /api/items/me で取る。docs/api.md 5章 SessionUser)
             user: {
                 id: user.id,
                 name: profile.name,
-                userType: profile.userType,
-                grade: profile.grade,
-                major: profile.major,
                 studentId: user.studentId,
-                serialNumber: profile.serialNumber
+                userType: profile.userType,
+                role: user.role,
             }
         };
     }

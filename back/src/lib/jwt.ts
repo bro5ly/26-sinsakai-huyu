@@ -24,8 +24,11 @@ export const verifyRefreshToken = (token: string) => {
   return jwt.verify(token, REFRESH_SECRET());
 };
 
+// 登録用トークンの期限。応答の expiresAt もこれから作る
+export const REGISTRATION_TOKEN_MINUTES = 15;
+
 export const signRegistrationToken = (payload: {studentId: string}) => {
-    return jwt.sign(payload,REGISTRATION_SECRET(),{expiresIn: "15m"})
+    return jwt.sign(payload,REGISTRATION_SECRET(),{expiresIn: `${REGISTRATION_TOKEN_MINUTES}m`})
 }
 
 export const verifyRegistrationToken = (token: string) => {

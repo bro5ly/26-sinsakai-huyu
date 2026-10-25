@@ -19,7 +19,7 @@
 - 4つともDocker Composeで起動する。設定はリポジトリ直下の`.env`(全サービス共通)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
 - CORSは`FRONTEND_URL`(既定`http://localhost:4545`)だけを許し、Cookieを通す(`credentials: true`)
 - すべての応答に`helmet`のセキュリティのヘッダを付ける。JSONは100kbまで
-- `POST /api/auth/login`は接続元ごとに失敗を15分で20回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。超えたら429 `RATE_LIMITED`
+- `POST /api/sessions`(ログイン)は接続元ごとに失敗を15分で20回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。超えたら429 `RATE_LIMITED`
 
 ## バックエンドのレイヤ
 
@@ -27,7 +27,7 @@
 
 | ファイル | 役目 |
 |---|---|
-| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → `sendSuccess`で返す」を書く。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
+| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → 返す」を書く(新しい形のAPIは`shared/`の形で包まずに、まだのAPIは`sendSuccess`で)。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
 | `*.service.ts` | 決まりごと(期限・重複・状態)。断るときは`DomainError(code)`を投げる。HTTPのステータスと文言は持たない |
 | `*.repository.ts` | Prismaでの読み書き。複数のテーブルにまたがる書き込みは`$transaction` |
 | `*.schema.ts` | Zodのスキーマ |
@@ -45,29 +45,31 @@
 
 すべて`/api`の下。
 
-| メソッドとパス | 認証 | 内容 | 返すもの(`success: true`に加えて) |
-|---|---|---|---|
-| `POST /auth/request-verification` | なし | `{ studentId }`。名簿を確かめ、認証コードをメールで送る | `message: 'CODE_SENT'` |
-| `POST /auth/verify-code` | なし | `{ studentId, code }` | `message`, `registrationToken` |
-| `POST /auth/signup` | なし | `{ plainPassword, registrationToken }`。名簿から利用者を作る | `user`, `accessToken`(+Cookie`refreshToken`) |
-| `POST /auth/login` | なし | `{ studentId, plainPassword }` | `user`, `accessToken`(+Cookie) |
-| `POST /auth/refreshSession` | Cookie | リフレッシュトークンを回して新しいトークンを出す | `user`, `accessToken`(+Cookie) |
-| `POST /auth/logout` | なし | Cookieを消す | `message` |
-| `GET /items` | なし | 全物品(種類・ジャンル・カテゴリ付き、新しい順) | `data: Item[]` |
-| `GET /items/me` | アクセストークン | 自分の情報、`rentalSetting`、貸出中の記録 | `data: User & {...}` |
-| `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
-| `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `message`, `data: Rental` |
-| `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `message`, `data: Rental` |
+登録・ログインの6本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`。2026-10-25)。ほかはまだ今の形(`{ success: true, ...data }`)。
 
-`user`は`id, name, userType, grade, major, studentId, serialNumber`。
+| メソッドとパス | 認証 | 内容 | 返すもの |
+|---|---|---|---|
+| `POST /verification-codes` | なし | `{ studentId, purpose: "signup" }`。名簿を確かめ、認証コードをメールで送る | 202(本文なし。名簿にいてもいなくても同じ) |
+| `POST /verification-tokens` | なし | `{ studentId, purpose, code }` | 201 `{ token, expiresAt }`(登録用トークン) |
+| `POST /users` | なし | `{ token, password }`。名簿にいる人の利用者を作る | 201 `{ user, accessToken }`(+Cookie`refreshToken`) |
+| `POST /sessions` | なし | `{ studentId, password }`(ログイン) | 201 `{ user, accessToken }`(+Cookie) |
+| `POST /sessions/refresh` | Cookie | リフレッシュトークンを回して新しいトークンを出す | 200 `{ user, accessToken }`(+Cookie) |
+| `DELETE /sessions/current` | Cookie | Cookieを消し、DBのリフレッシュトークンも消す(ログアウト) | 204(本文なし) |
+| `GET /items` | なし | 全物品(種類・ジャンル・カテゴリ付き、新しい順) | `success`, `data: Item[]` |
+| `GET /items/me` | アクセストークン | 自分の情報、`rentalSetting`、貸出中の記録 | `success`, `data: User & {...}` |
+| `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
+| `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
+| `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
+
+登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/items/me`で取る。
 
 ## 認証とトークン
 
 | トークン | 期限 | 署名の鍵 | 置き場所 | 用途 |
 |---|---|---|---|---|
 | アクセストークン | 15分 | `JWT_ACCESS_SECRET` | 画面のCookie`accessToken`(JSから読める)→`Authorization: Bearer` | `/items/me` |
-| リフレッシュトークン | 7日 | `JWT_REFRESH_SECRET` | HttpOnly Cookie`refreshToken`(`sameSite: strict`)+ DB`refresh_tokens`(利用者1人1件) | `/auth/refreshSession` |
-| 登録用トークン | 15分 | `JWT_REFRESH_SECRET`(同じ鍵) | 画面のメモリ | `/auth/signup` |
+| リフレッシュトークン | 7日 | `JWT_REFRESH_SECRET` | HttpOnly Cookie`refreshToken`(`sameSite: strict`)+ DB`refresh_tokens`(利用者1人1件。ログアウトで消す) | `/sessions/refresh` |
+| 登録用トークン | 15分 | `JWT_REFRESH_SECRET`(同じ鍵) | 画面のメモリ | `/users` |
 | タブレット用トークン | 3分 | `JWT_ACCESS_SECRET`(同じ鍵) | `TabletContext`のメモリ | `/tablet/checkout`・`return` |
 
 - アクセストークンの中身は`{ sub: 利用者ID, role: 'MEMBER' | 'ADMIN' }`、タブレット用は`{ sub, role: 'TABLET_USER' }`
@@ -77,7 +79,7 @@
 ### 画面の起動時の流れ(`front/src/contexts/AuthContext.tsx`)
 
 1. Cookieにアクセストークンがあれば`GET /items/me`
-2. 401なら`POST /auth/refreshSession` → 新しいトークンで`/items/me`をもう一度
+2. 401なら`POST /sessions/refresh` → 新しいトークンで`/items/me`をもう一度(リフレッシュの応答は`SessionUser`だけなので、画面の利用者は`/items/me`の結果を入れる)
 3. アクセストークンが無ければ、すぐに2のリフレッシュを試す
 4. どれも失敗したらログアウト状態。ページ側は`useAuth()`を見て`/auth`へ送る
 

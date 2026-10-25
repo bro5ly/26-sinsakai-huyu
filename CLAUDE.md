@@ -17,13 +17,13 @@
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items`・`/items/[title]`・`/tablet`・`/barcodes` |
-| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)とRFC 9457の形(`problem.ts`の`problemSchema`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
+| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)、RFC 9457の形(`problem.ts`の`problemSchema`)、登録・ログインのリクエストと応答(`auth.ts`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
 | `docs/` | 要件定義・仕組み(下の「ドキュメント」) |
 | `photo/` | READMEの画面写真 |
 
 ## 全体で守ること
 
-- **APIの成功レスポンスは`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される**(`data`で包まれない。`docs/api.md`の形に移すときにやめる)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
+- **APIの成功レスポンスは、`docs/api.md`の新しい形に移す途中**。移したAPI(今は登録・ログインの6本)は包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。まだのAPI(`/api/items`・`/api/items/me`・`/api/tablet/*`)は`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される(`data`で包まれない)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
 - **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`shared/src/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
@@ -55,7 +55,7 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
-- ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)。`develop`は使わない(1人の開発で、本番の環境も無く、`main`のほかに分ける段が要らないため。2026-10-25)
+- ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)。今は`develop`を使わず`main`を主軸にする(1人の開発で、本番の環境も無いため)。`develop`のブランチは消さずに残し、サーバーとCI/CDを作るときに、`develop`を開発用・`main`を本番用に分けるかを決める(2026-10-25、開発者の希望)
 - コミットは内容ごとに分ける(DBの変更・不具合の修正・文書は別のコミット)。**文は日本語**で、1行目の頭に種類を付ける(2026-10-23から。それより前は`feature: <名前> <内容>`):
   | 種類 | 使うとき |
   |---|---|

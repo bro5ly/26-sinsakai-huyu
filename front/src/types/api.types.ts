@@ -22,23 +22,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
 }
 
-// Auth API Responses
-export interface RequestVerificationResponse {
-  success: boolean;
-  message: string;
-}
-
-export interface VerifyCodeResponse {
-  success: boolean;
-  message: string;
-  registrationToken: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  user: User;
-  accessToken: string;
-}
+// 登録・ログインの応答の型は shared/(@sinsakai/shared)の Session・VerificationToken を使う
 
 export interface MyInfoResponse {
   success: boolean;
