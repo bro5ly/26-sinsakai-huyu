@@ -51,15 +51,14 @@
 |---|---|---|---|
 | `POST /verification-codes` | なし | `{ studentId, purpose: "signup" }`。名簿を確かめ、認証コードをメールで送る | 202(本文なし。名簿にいてもいなくても同じ) |
 | `POST /verification-tokens` | なし | `{ studentId, purpose, code }` | 201 `{ token, expiresAt }`(登録用トークン) |
-| `POST /users` | なし | `{ token, password }`。名簿にいる人の利用者を作る | 201 `{ user, accessToken }`(+Cookie`refreshToken`) |
-| `POST /sessions` | なし | `{ studentId, password }`(ログイン) | 201 `{ user, accessToken }`(+Cookie) |
-| `POST /sessions/refresh` | Cookie | リフレッシュトークンを回して新しいトークンを出す | 200 `{ user, accessToken }`(+Cookie) |
-| `DELETE /sessions/current` | Cookie | Cookieを消し、DBのリフレッシュトークンも消す(ログアウト) | 204(本文なし) |
-| `GET /categories` | アクセストークン | カテゴリとその中のジャンル(絞り込みの選択肢) | 200 `{ items: Category[] }` |
-| `GET /item-types` | アクセストークン | 種類ごとの一覧(貸し出せる数と全数。全数に廃棄済みは入れない) | 200 `{ items: ItemTypeSummary[] }` |
-| `GET /item-types/{id}` | アクセストークン | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
-| `GET /me` | アクセストークン | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える) | 200 `Me` |
-| `GET /me/rentals` | アクセストークン | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
+| `POST /users` | なし | `{ token, password }`。名簿にいる人の利用者を作る | 201 `{ user }`(+Cookie`session`) |
+| `POST /sessions` | なし | `{ studentId, password }`(ログイン) | 201 `{ user }`(+Cookie`session`) |
+| `DELETE /sessions/current` | Cookie | Cookieを消し、DBのセッションも消す(ログアウト) | 204(本文なし) |
+| `GET /categories` | Webのセッション | カテゴリとその中のジャンル(絞り込みの選択肢) | 200 `{ items: Category[] }` |
+| `GET /item-types` | Webのセッション | 種類ごとの一覧(貸し出せる数と全数。全数に廃棄済みは入れない) | 200 `{ items: ItemTypeSummary[] }` |
+| `GET /item-types/{id}` | Webのセッション | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
+| `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える) | 200 `Me` |
+| `GET /me/rentals` | Webのセッション | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
 | `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
 | `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
 | `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
@@ -68,29 +67,30 @@
 
 ## 認証とトークン
 
-| トークン | 期限 | 署名の鍵 | 置き場所 | 用途 |
-|---|---|---|---|---|
-| アクセストークン | 15分 | `JWT_ACCESS_SECRET` | 画面のCookie`accessToken`(JSから読める)→`Authorization: Bearer` | `/me`・`/me/rentals` |
-| リフレッシュトークン | 7日 | `JWT_REFRESH_SECRET` | HttpOnly Cookie`refreshToken`(`sameSite: strict`)+ DB`refresh_tokens`(利用者1人1件。ログアウトで消す) | `/sessions/refresh` |
-| 登録用トークン | 15分 | `JWT_REFRESH_SECRET`(同じ鍵) | 画面のメモリ | `/users` |
-| タブレット用トークン | 3分 | `JWT_ACCESS_SECRET`(同じ鍵) | `TabletContext`のメモリ | `/tablet/checkout`・`return` |
+2026-10-28に、WebのログインをJWTからサーバーのセッションに変えた(`docs/backlog.md` 0.8 A8-3。理由は`docs/auth.md`の2章)。
 
-- アクセストークンの中身は`{ sub: 利用者ID, role: 'MEMBER' | 'ADMIN' }`、タブレット用は`{ sub, role: 'TABLET_USER' }`
-- リフレッシュはJWTの検証とDBの照合の両方を通ったときだけ。通るたびに新しいリフレッシュトークンを`upsert`する(古いものは使えなくなる)
-- 鍵の使い回しで起きる問題は`docs/spec.md`の「現状とのずれ」2・3
+| もの | 期限 | 作り方 | 置き場所 | 用途 |
+|---|---|---|---|---|
+| Webのセッション | 作ってから7日(延ばさない。A8-6) | `newToken()`(32バイトの乱数) | HttpOnly・`SameSite=Strict`のCookie`session`。DBの`session`には`hashToken()`(SHA-256)だけ | ログインが要るAPIすべて |
+| 登録用トークン | 15分・1回だけ | `newToken()` | 画面のメモリ。DBの`verification_codes.token_hash`にハッシュ | `/users` |
+| タブレット用トークン | 3分 | JWT(`JWT_ACCESS_SECRET`) | `TabletContext`のメモリ →`Authorization: Bearer` | `/tablet/checkout`・`return`(0.8のeでセッションにする) |
+
+- `createAuthMiddleware`がCookieの番号をハッシュにしてDBで探し、`checkSession`(期限・種類が`WEB`か・`is_active`)で確かめてから`req.user`に入れる。毎回DBを見るので、ログアウト・取り消し・無効にした人は次のリクエストから止まる。名簿はログインのときだけ見る(A8-10)
+- 1人が何件でもセッションを持てる(端末ごと。Q9)。ログアウトはそのセッションだけを消す
+- 書き換えのリクエスト(GET・HEAD・OPTIONS以外)は、`Origin`が`FRONTEND_URL`と同じでなければ403 `FORBIDDEN_ORIGIN`(`createOriginCheck`。A8-7・A8-11)
+- タブレットのトークンはWebのAPIでは通らない(WebはCookieのセッションしか見ない)。Webのセッションもタブレットでは通らない
 
 ### 画面の起動時の流れ(`front/src/contexts/AuthContext.tsx`)
 
-1. Cookieにアクセストークンがあれば`GET /me`
-2. 401なら`POST /sessions/refresh` → 新しいトークンで`/me`をもう一度(リフレッシュの応答は`SessionUser`だけなので、画面の利用者は`/me`の結果(`Me`)を入れる。借りている物はログインの状態に入れず、ダッシュボードが`/me/rentals`で取る)
-3. アクセストークンが無ければ、すぐに2のリフレッシュを試す
-4. どれも失敗したらログアウト状態。ページ側は`useAuth()`を見て`/auth`へ送る
+1. `status`は`"loading"`から始まる。開いたときに`GET /me`を1回呼ぶ(Cookieはブラウザが付ける)
+2. 通れば`"authenticated"`と本人の`Me`。401などで通らなければ`"unauthenticated"`
+3. ページは`"unauthenticated"`のときだけ`/auth`へ送る。`"loading"`の間は読み込み中を出す。借りている物はログインの状態に入れず、ダッシュボードが`/me/rentals`で取る
 
 ## データモデル
 
 ```
 Category 1─* Genre 1─* ItemType 1─* Item 1─* Rental *─1 User 1─1 ExternalUser(学籍番号でつながる)
-                  └──── ItemTypeGenre ───┘(多対多。今は未使用)  ├─* RefreshToken(実際は1件)
+                  └──── ItemTypeGenre ───┘(多対多。今は未使用)  ├─* Session(Web・タブレット。端末ごと)
                                                                └─* Notification(未使用)
 VerificationCode(学籍番号ごとに1件の認証コード)
 ```
@@ -99,8 +99,8 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 |---|---|
 | `external_user` | 学校の名簿の代わり。学籍番号・メール・シリアル番号(一意)・名前・学年・専攻・種別(学生/教職員/外部)。**名前などはここにだけ持つ** |
 | `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active` |
-| `verification_codes` | 登録の認証コード。主キーが学籍番号 |
-| `refresh_tokens` | リフレッシュトークン。`userId`が一意 |
+| `verification_codes` | 登録の認証コード。主キーが学籍番号。コードが合ったら登録用トークンのハッシュと期限も入れ、登録したら行ごと消す |
+| `session` | ログインのセッション。番号のハッシュ(一意)・利用者・種類(`WEB`・`TABLET`)・期限。利用者を消すと一緒に消える |
 | `category` / `genre` | 分類(例: 機材 > ノートパソコン) |
 | `item_type` | 物品の種類。書籍の項目(著者・出版社・ISBN)と機材の項目(メーカー・型番)を両方持つ。`rentalPeriodDays` |
 | `item` | 物品1つ。`barcode`(必須・一意)・`location`・`status`(物そのものの状態) |

@@ -95,7 +95,7 @@
 
 | 誰が | 渡し方 |
 |---|---|
-| Web(学生・管理者) | 今: アクセストークン(15分のJWT)を`Authorization: Bearer`。リフレッシュトークンはHttpOnly Cookie。**0.8で、セッションの番号をHttpOnly Cookieで渡す形に変える**(2026-10-28 A8-3。`accessToken`と`POST /api/sessions/refresh`は無くなる見込み。形は0.8のaで決めてこの表と4.1を直す) |
+| Web(学生・管理者) | セッションの番号をHttpOnly・`SameSite=Strict`のCookie`session`(7日)。本文にトークンは入れない。書き換えのリクエストは`Origin`が画面のURLであること(2026-10-28 A8-3・A8-7) |
 | タブレットの端末 | 端末の登録の番号をHttpOnly Cookie(`/api/tablet/...`のすべてで確かめる) |
 | タブレットで本人確認した人 | 本人確認のセッションの番号(サーバーに持つ乱数)を`Authorization: Bearer` |
 
@@ -103,16 +103,15 @@
 
 ### 4.1 登録・ログイン(Web)
 
-**2026-10-25に移した**(パスワードの再設定は0.8。認証コードの`purpose`は今は`"signup"`だけ。形は`shared/src/auth.ts`)。
+**2026-10-25に移した**(2026-10-28にCookieのセッションにし、`accessToken`とリフレッシュ(`POST /api/sessions/refresh`)を無くした。A8-3。パスワードの再設定は0.8。認証コードの`purpose`は今は`"signup"`だけ。形は`shared/src/auth.ts`)。
 
 | メソッドとURL | 認証 | リクエスト | 成功 | おもなエラー | ユースケース |
 |---|---|---|---|---|---|
 | `POST /api/verification-codes` | なし | `{ studentId, purpose: "signup" \| "password-reset" }` | **202**(本文なし。名簿にいてもいなくても同じ) | 400・429 | UC-1・UC-4 |
 | `POST /api/verification-tokens` | なし | `{ studentId, purpose, code }` | 201 `{ token, expiresAt }` | 400・401 `INVALID_CODE`・429 | UC-1・UC-4 |
-| `POST /api/users` | なし | `{ token, password }` | 201 `{ user: SessionUser, accessToken }` + Cookie | 400・401 `INVALID_TOKEN`・409 `ALREADY_REGISTERED` | UC-1 |
-| `POST /api/sessions` | なし | `{ studentId, password }` | 201 `{ user: SessionUser, accessToken }` + Cookie | 400・401 `INVALID_CREDENTIALS`・429 | UC-2 |
-| `POST /api/sessions/refresh` | Cookie | なし | 200 `{ user: SessionUser, accessToken }` + Cookie | 401 `INVALID_SESSION` | UC-2 |
-| `DELETE /api/sessions/current` | Cookie | なし | 204(Cookieを消し、DBのトークンも消す) | — | UC-3 |
+| `POST /api/users` | なし | `{ token, password }` | 201 `{ user: SessionUser }` + Cookie | 400・401 `INVALID_TOKEN`・409 `ALREADY_REGISTERED` | UC-1 |
+| `POST /api/sessions` | なし | `{ studentId, password }` | 201 `{ user: SessionUser }` + Cookie | 400・401 `INVALID_CREDENTIALS`・429 | UC-2 |
+| `DELETE /api/sessions/current` | Cookie | なし | 204(Cookieを消し、DBのセッションも消す) | — | UC-3 |
 | `POST /api/password-resets` | なし | `{ token, password }` | 204(その人のWebのセッションを全部消す) | 400・401 `INVALID_TOKEN` | UC-4 |
 
 ### 4.2 本人(Web)
@@ -121,10 +120,10 @@
 
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
-| `GET /api/me` | Bearer | — | 200 `Me` | UC-5 |
-| `GET /api/me/rentals` | Bearer | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
-| `PUT /api/me/pin` | Bearer | `{ pin }`(数字4桁) | 204(ロックも解除) | UC-7 |
-| `POST /api/me/tablet-codes` | Bearer | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
+| `GET /api/me` | Web | — | 200 `Me` | UC-5 |
+| `GET /api/me/rentals` | Web | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
+| `PUT /api/me/pin` | Web | `{ pin }`(数字4桁) | 204(ロックも解除) | UC-7 |
+| `POST /api/me/tablet-codes` | Web | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
 
 ### 4.3 カタログ(Web。**ログイン必須**。`docs/spec.md`のQ11、2026-10-23決定)
 
@@ -132,9 +131,9 @@
 
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
-| `GET /api/categories` | Bearer | — | 200 `{ items: Category[] }`(ジャンル付き。絞り込みの選択肢) | UC-6 |
-| `GET /api/item-types` | Bearer | `?categoryId=&genreId=&q=`(今は付けず、画面で絞り込む。種類が増えたら足す。2026-10-28 Ca3) | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
-| `GET /api/item-types/{id}` | Bearer | — | 200 `ItemTypeDetail`(物品1つ1つの状態付き) | UC-6 |
+| `GET /api/categories` | Web | — | 200 `{ items: Category[] }`(ジャンル付き。絞り込みの選択肢) | UC-6 |
+| `GET /api/item-types` | Web | `?categoryId=&genreId=&q=`(今は付けず、画面で絞り込む。種類が増えたら足す。2026-10-28 Ca3) | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
+| `GET /api/item-types/{id}` | Web | — | 200 `ItemTypeDetail`(物品1つ1つの状態付き) | UC-6 |
 
 ### 4.4 タブレット
 
@@ -151,10 +150,10 @@ PINのロックは423(Locked)にするか、409にするか(API-Q6)。
 
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
-| `POST /api/admin/tablet-devices` | Bearer(管理者) | `{ name }` | 201 `TabletDevice`(呼んだタブレットにCookieを入れる) | UC-20 |
-| `GET /api/admin/tablet-devices` | Bearer(管理者) | — | 200 `{ items: TabletDevice[] }` | UC-20 |
-| `DELETE /api/admin/tablet-devices/{id}` | Bearer(管理者) | — | 204 | UC-20 |
-| 在庫管理(`/api/admin/item-types`・`/api/admin/items`・`/api/admin/rentals`・`/api/admin/users/{id}`) | Bearer(管理者) | `docs/inventory.md`で決める | | UC-21〜UC-24 |
+| `POST /api/admin/tablet-devices` | Web(管理者) | `{ name }` | 201 `TabletDevice`(呼んだタブレットにCookieを入れる) | UC-20 |
+| `GET /api/admin/tablet-devices` | Web(管理者) | — | 200 `{ items: TabletDevice[] }` | UC-20 |
+| `DELETE /api/admin/tablet-devices/{id}` | Web(管理者) | — | 204 | UC-20 |
+| 在庫管理(`/api/admin/item-types`・`/api/admin/items`・`/api/admin/rentals`・`/api/admin/users/{id}`) | Web(管理者) | `docs/inventory.md`で決める | | UC-21〜UC-24 |
 
 ### 4.6 そのほか
 
@@ -199,12 +198,12 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `INVALID_CREDENTIALS` | 401 | 学籍番号かパスワードが違う(どちらかは言わない) |
 | `INVALID_CODE` | 401 | 認証コードが違う・期限切れ・使えなくなった |
 | `INVALID_TOKEN` | 401 | 登録用・再設定用のトークンが違う・期限切れ |
-| `UNAUTHENTICATED` | 401 | アクセストークンが無い・無効 |
-| `INVALID_SESSION` | 401 | リフレッシュトークンが無い・無効・期限切れ |
+| `UNAUTHENTICATED` | 401 | Webのセッションが無い・期限切れ・無効な人、タブレット用トークンが無い・壊れている |
 | `DEVICE_NOT_REGISTERED` | 401 | タブレットの端末が登録されていない・取り消された |
 | `INVALID_CARD_OR_PIN` | 401 | カードかPINが違う・PIN未登録・無効な人(どれかは言わない) |
 | `SESSION_EXPIRED` | 401 | タブレットの本人確認のセッションが切れた |
 | `PIN_LOCKED` | 423 | PINを5回間違えた(API-Q6) |
+| `FORBIDDEN_ORIGIN` | 403 | 書き換えのリクエストの`Origin`が画面のURLでない・無い(CSRFの対策。2026-10-28 A8-11) |
 | `FORBIDDEN` | 403 | 管理者でない |
 | `NOT_FOUND` | 404 | 無い資源・存在しないURL |
 | `ITEM_NOT_FOUND` | 404 | そのバーコードの物品が無い |
