@@ -2,12 +2,12 @@ import { createPrisma } from "@/lib/prisma.js";
 import { MailService } from "@/lib/mail.js";
 import { UserRepository } from "@/features/user/UserRepository.js";
 import { AuthRepository } from "@/features/auth/auth.repository.js";
-import { ItemRepository } from "@/features/items/item.repository.js";
+import { CatalogRepository } from "@/features/catalog/catalog.repository.js";
 import { RentalRepository } from "@/features/rentals/rental.repository.js";
 import { PrismaRoster } from "@/features/roster/prisma-roster.js";
 import { MeRepository } from "@/features/me/me.repository.js";
 import type { AuthStore, Mailer, UserStore } from "@/features/auth/auth.service.js";
-import type { ItemStore } from "@/features/items/item.service.js";
+import type { CatalogStore } from "@/features/catalog/catalog.types.js";
 import type { RentalStore } from "@/features/rentals/rental.service.js";
 import type { Roster } from "@/features/roster/roster.js";
 import type { MeStore } from "@/features/me/me.types.js";
@@ -19,7 +19,7 @@ export type Deps = {
     auth: AuthStore;
     mailer: Mailer;
     roster: Roster;
-    items: ItemStore;
+    catalog: CatalogStore;
     me: MeStore;
     rentals: RentalStore;
 };
@@ -32,7 +32,7 @@ export const buildDeps = (config: Config): Deps => {
     auth: new AuthRepository(prisma),
     mailer: new MailService(config.mail),
     roster: new PrismaRoster(prisma),
-    items: new ItemRepository(prisma),
+    catalog: new CatalogRepository(prisma),
     me: new MeRepository(prisma),
     rentals: new RentalRepository(prisma),
     };

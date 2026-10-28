@@ -5,7 +5,7 @@ import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
-import { meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
+import { categoriesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -21,6 +21,26 @@ const newcomer = rosterEntry({ studentId: "20260001", name: "テスト 太郎", 
 const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const });
 
 const item = { id: "item-2", barcode: "MAC-002", name: "MacBook 2", status: "AVAILABLE", itemType: { title: "MacBook", rentalPeriodDays: 7 } };
+// カタログの種類。使える物が1つ、貸出中が1つ、廃棄済みが1つ
+const macbookType = {
+    id: "type-1",
+    title: "MacBook",
+    genre: { id: "genre-1", name: "ノートパソコン" },
+    category: { id: "cat-1", name: "電子機器" },
+    imageUrl: null,
+    rentalPeriodDays: 7,
+    description: null,
+    author: null,
+    publisher: null,
+    isbn: null,
+    manufacturer: "Apple",
+    model: null,
+    items: [
+        { id: "item-2", location: "A棟-2F-101", status: "AVAILABLE" as const, hasActiveRental: false },
+        { id: "item-1", location: "A棟-2F-101", status: "AVAILABLE" as const, hasActiveRental: true },
+        { id: "item-9", location: null, status: "DISPOSED" as const, hasActiveRental: false },
+    ],
+};
 const rental = { id: "rental-1", itemId: "item-2", userId: "user-1", rentedAt: new Date("2026-10-24T00:00:00Z"), dueDate: new Date("2099-01-01T00:00:00Z"), returnedAt: null };
 
 // 設定はテストの中で決める。鍵は lib/jwt.ts が .env から読むものと同じにする(トークンを作って渡すテストがあるため)
@@ -57,8 +77,10 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             },
         },
         roster: new FakeRoster([yamada, newcomer]),
-        items: {
-            findAll: async () => [{ ...item, rentals: [] }] as never,
+        catalog: {
+            findCategories: async () => [{ id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] }],
+            findItemTypes: async () => [macbookType],
+            findItemType: async (id) => (id === macbookType.id ? macbookType : null),
         },
         me: {
             findUser: async (userId) =>
@@ -248,15 +270,73 @@ describe("セッション(リフレッシュ・ログアウト)", () => {
     });
 });
 
-describe("GET /api/items(物品の一覧)", () => {
+describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categories)", () => {
     describe("正常系", () => {
-        it("現状: H10 ログインしていなくても、200で状態付きの物品をdataに入れて返す", async () => {
+        it("H10 GET /api/item-typesは200で、種類ごとの貸し出せる数と全数(廃棄済みを除く)を{ items }で返す(docs/api.md 4.3。Ca4)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items");
+            const res = await request(app).get("/api/item-types").set(bearer(accessToken()));
 
             expect(res.status).toBe(200);
-            expect(res.body).toEqual({ success: true, data: [{ ...item, status: "AVAILABLE" }] });
+            expect(itemTypesSchema.parse(res.body).items).toEqual([
+                {
+                    id: "type-1",
+                    title: "MacBook",
+                    genre: { id: "genre-1", name: "ノートパソコン" },
+                    category: { id: "cat-1", name: "電子機器" },
+                    imageUrl: null,
+                    rentalPeriodDays: 7,
+                    availableCount: 1,
+                    totalCount: 2,
+                },
+            ]);
+        });
+
+        it("H34 GET /api/item-types/{id}は200で、物品1つ1つの状態付きの詳細を返す(廃棄済みは入れない)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/item-types/type-1").set(bearer(accessToken()));
+
+            expect(res.status).toBe(200);
+            expect(itemTypeDetailSchema.parse(res.body).items).toEqual([
+                { id: "item-2", location: "A棟-2F-101", state: "AVAILABLE" },
+                { id: "item-1", location: "A棟-2F-101", state: "RENTED" },
+            ]);
+        });
+
+        it("H35 GET /api/categoriesは200で、カテゴリをジャンル付きで{ items }で返す(絞り込みの選択肢)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/categories").set(bearer(accessToken()));
+
+            expect(res.status).toBe(200);
+            expect(categoriesSchema.parse(res.body)).toEqual({ items: [{ id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] }] });
+        });
+    });
+
+    describe("異常系", () => {
+        it("H36 無い種類のIDなら、404 NOT_FOUNDを返す", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/item-types/type-x").set(bearer(accessToken()));
+
+            expectProblem(res, 404, "NOT_FOUND");
+        });
+
+        it("H37 ログインしていなければ、3本とも401 UNAUTHENTICATEDを返す(カタログはログイン必須。Q11)", async () => {
+            const { app } = fakeDeps();
+
+            for (const url of ["/api/item-types", "/api/item-types/type-1", "/api/categories"]) {
+                expectProblem(await request(app).get(url), 401, "UNAUTHENTICATED");
+            }
+        });
+
+        it("H38 古いURL(GET /api/items)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/items").set(bearer(accessToken()));
+
+            expectProblem(res, 404, "NOT_FOUND");
         });
     });
 });
@@ -427,7 +507,7 @@ describe("すべての応答に付くヘッダ", () => {
         it("H21 helmetのセキュリティのヘッダを付け、Expressを使っていることを出さない(R4)", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items");
+            const res = await request(app).get("/api/item-types");
 
             expect(res.headers["x-content-type-options"]).toBe("nosniff");
             expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
@@ -437,7 +517,7 @@ describe("すべての応答に付くヘッダ", () => {
         it("H22 helmetを付けても、画面(FRONTEND_URL)からのCORSとCookieは今のまま通す", async () => {
             const { app } = fakeDeps();
 
-            const res = await request(app).get("/api/items").set("Origin", "http://localhost:4545");
+            const res = await request(app).get("/api/item-types").set("Origin", "http://localhost:4545");
 
             expect(res.headers["access-control-allow-origin"]).toBe("http://localhost:4545");
             expect(res.headers["access-control-allow-credentials"]).toBe("true");
