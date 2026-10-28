@@ -157,7 +157,7 @@
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
 - [x] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11。2026-10-28、カタログを新しいAPIに移すときに`item.service.ts`ごと消した)
-- [ ] 画面のリントのエラー7件を直す(2026-10-24に見つけた。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`dashboard/page.tsx`・`contexts/AuthContext.tsx`の`any`、`items/page.tsx`・`components/BarcodeScanner.tsx`の宣言より前に使っている変数。警告も11件ある
+- [ ] 画面のリントのエラーを直す(2026-10-24に7件見つけた。2026-10-28には5件。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`contexts/AuthContext.tsx`の`any`、`components/BarcodeScanner.tsx`の宣言より前に使っている変数(2件)。警告も6件ある。`items/page.tsx`と`dashboard/page.tsx`の`any`の分は、その所を作り直したときに消えた
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
 - [ ] `/barcodes`(テスト用に全部の物品とカードのバーコードを印刷する画面)は、誰でも開ける。実物を持たずに借りられてしまうので、本番の前に管理者だけにするか消す(2026-10-28、Ca5の話から)
 
