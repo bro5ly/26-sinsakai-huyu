@@ -29,6 +29,8 @@ export type VerificationCodeMinAggregateOutputType = {
   code: string | null
   expiresAt: Date | null
   createdAt: Date | null
+  tokenHash: string | null
+  tokenExpiresAt: Date | null
 }
 
 export type VerificationCodeMaxAggregateOutputType = {
@@ -36,6 +38,8 @@ export type VerificationCodeMaxAggregateOutputType = {
   code: string | null
   expiresAt: Date | null
   createdAt: Date | null
+  tokenHash: string | null
+  tokenExpiresAt: Date | null
 }
 
 export type VerificationCodeCountAggregateOutputType = {
@@ -43,6 +47,8 @@ export type VerificationCodeCountAggregateOutputType = {
   code: number
   expiresAt: number
   createdAt: number
+  tokenHash: number
+  tokenExpiresAt: number
   _all: number
 }
 
@@ -52,6 +58,8 @@ export type VerificationCodeMinAggregateInputType = {
   code?: true
   expiresAt?: true
   createdAt?: true
+  tokenHash?: true
+  tokenExpiresAt?: true
 }
 
 export type VerificationCodeMaxAggregateInputType = {
@@ -59,6 +67,8 @@ export type VerificationCodeMaxAggregateInputType = {
   code?: true
   expiresAt?: true
   createdAt?: true
+  tokenHash?: true
+  tokenExpiresAt?: true
 }
 
 export type VerificationCodeCountAggregateInputType = {
@@ -66,6 +76,8 @@ export type VerificationCodeCountAggregateInputType = {
   code?: true
   expiresAt?: true
   createdAt?: true
+  tokenHash?: true
+  tokenExpiresAt?: true
   _all?: true
 }
 
@@ -146,6 +158,8 @@ export type VerificationCodeGroupByOutputType = {
   code: string
   expiresAt: Date
   createdAt: Date
+  tokenHash: string | null
+  tokenExpiresAt: Date | null
   _count: VerificationCodeCountAggregateOutputType | null
   _min: VerificationCodeMinAggregateOutputType | null
   _max: VerificationCodeMaxAggregateOutputType | null
@@ -174,6 +188,8 @@ export type VerificationCodeWhereInput = {
   code?: Prisma.StringFilter<"VerificationCode"> | string
   expiresAt?: Prisma.DateTimeFilter<"VerificationCode"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"VerificationCode"> | Date | string
+  tokenHash?: Prisma.StringNullableFilter<"VerificationCode"> | string | null
+  tokenExpiresAt?: Prisma.DateTimeNullableFilter<"VerificationCode"> | Date | string | null
 }
 
 export type VerificationCodeOrderByWithRelationInput = {
@@ -181,23 +197,29 @@ export type VerificationCodeOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  tokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  tokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
 export type VerificationCodeWhereUniqueInput = Prisma.AtLeast<{
   studentId?: string
+  tokenHash?: string
   AND?: Prisma.VerificationCodeWhereInput | Prisma.VerificationCodeWhereInput[]
   OR?: Prisma.VerificationCodeWhereInput[]
   NOT?: Prisma.VerificationCodeWhereInput | Prisma.VerificationCodeWhereInput[]
   code?: Prisma.StringFilter<"VerificationCode"> | string
   expiresAt?: Prisma.DateTimeFilter<"VerificationCode"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"VerificationCode"> | Date | string
-}, "studentId">
+  tokenExpiresAt?: Prisma.DateTimeNullableFilter<"VerificationCode"> | Date | string | null
+}, "studentId" | "tokenHash">
 
 export type VerificationCodeOrderByWithAggregationInput = {
   studentId?: Prisma.SortOrder
   code?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  tokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  tokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.VerificationCodeCountOrderByAggregateInput
   _max?: Prisma.VerificationCodeMaxOrderByAggregateInput
   _min?: Prisma.VerificationCodeMinOrderByAggregateInput
@@ -211,6 +233,8 @@ export type VerificationCodeScalarWhereWithAggregatesInput = {
   code?: Prisma.StringWithAggregatesFilter<"VerificationCode"> | string
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"VerificationCode"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"VerificationCode"> | Date | string
+  tokenHash?: Prisma.StringNullableWithAggregatesFilter<"VerificationCode"> | string | null
+  tokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"VerificationCode"> | Date | string | null
 }
 
 export type VerificationCodeCreateInput = {
@@ -218,6 +242,8 @@ export type VerificationCodeCreateInput = {
   code: string
   expiresAt: Date | string
   createdAt?: Date | string
+  tokenHash?: string | null
+  tokenExpiresAt?: Date | string | null
 }
 
 export type VerificationCodeUncheckedCreateInput = {
@@ -225,6 +251,8 @@ export type VerificationCodeUncheckedCreateInput = {
   code: string
   expiresAt: Date | string
   createdAt?: Date | string
+  tokenHash?: string | null
+  tokenExpiresAt?: Date | string | null
 }
 
 export type VerificationCodeUpdateInput = {
@@ -232,6 +260,8 @@ export type VerificationCodeUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type VerificationCodeUncheckedUpdateInput = {
@@ -239,6 +269,8 @@ export type VerificationCodeUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type VerificationCodeCreateManyInput = {
@@ -246,6 +278,8 @@ export type VerificationCodeCreateManyInput = {
   code: string
   expiresAt: Date | string
   createdAt?: Date | string
+  tokenHash?: string | null
+  tokenExpiresAt?: Date | string | null
 }
 
 export type VerificationCodeUpdateManyMutationInput = {
@@ -253,6 +287,8 @@ export type VerificationCodeUpdateManyMutationInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type VerificationCodeUncheckedUpdateManyInput = {
@@ -260,6 +296,8 @@ export type VerificationCodeUncheckedUpdateManyInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type VerificationCodeCountOrderByAggregateInput = {
@@ -267,6 +305,8 @@ export type VerificationCodeCountOrderByAggregateInput = {
   code?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  tokenHash?: Prisma.SortOrder
+  tokenExpiresAt?: Prisma.SortOrder
 }
 
 export type VerificationCodeMaxOrderByAggregateInput = {
@@ -274,6 +314,8 @@ export type VerificationCodeMaxOrderByAggregateInput = {
   code?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  tokenHash?: Prisma.SortOrder
+  tokenExpiresAt?: Prisma.SortOrder
 }
 
 export type VerificationCodeMinOrderByAggregateInput = {
@@ -281,6 +323,8 @@ export type VerificationCodeMinOrderByAggregateInput = {
   code?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  tokenHash?: Prisma.SortOrder
+  tokenExpiresAt?: Prisma.SortOrder
 }
 
 
@@ -290,6 +334,8 @@ export type VerificationCodeSelect<ExtArgs extends runtime.Types.Extensions.Inte
   code?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  tokenHash?: boolean
+  tokenExpiresAt?: boolean
 }, ExtArgs["result"]["verificationCode"]>
 
 export type VerificationCodeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -297,6 +343,8 @@ export type VerificationCodeSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   code?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  tokenHash?: boolean
+  tokenExpiresAt?: boolean
 }, ExtArgs["result"]["verificationCode"]>
 
 export type VerificationCodeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -304,6 +352,8 @@ export type VerificationCodeSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   code?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  tokenHash?: boolean
+  tokenExpiresAt?: boolean
 }, ExtArgs["result"]["verificationCode"]>
 
 export type VerificationCodeSelectScalar = {
@@ -311,9 +361,11 @@ export type VerificationCodeSelectScalar = {
   code?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  tokenHash?: boolean
+  tokenExpiresAt?: boolean
 }
 
-export type VerificationCodeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"studentId" | "code" | "expiresAt" | "createdAt", ExtArgs["result"]["verificationCode"]>
+export type VerificationCodeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"studentId" | "code" | "expiresAt" | "createdAt" | "tokenHash" | "tokenExpiresAt", ExtArgs["result"]["verificationCode"]>
 
 export type $VerificationCodePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "VerificationCode"
@@ -323,6 +375,8 @@ export type $VerificationCodePayload<ExtArgs extends runtime.Types.Extensions.In
     code: string
     expiresAt: Date
     createdAt: Date
+    tokenHash: string | null
+    tokenExpiresAt: Date | null
   }, ExtArgs["result"]["verificationCode"]>
   composites: {}
 }
@@ -750,6 +804,8 @@ export interface VerificationCodeFieldRefs {
   readonly code: Prisma.FieldRef<"VerificationCode", 'String'>
   readonly expiresAt: Prisma.FieldRef<"VerificationCode", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"VerificationCode", 'DateTime'>
+  readonly tokenHash: Prisma.FieldRef<"VerificationCode", 'String'>
+  readonly tokenExpiresAt: Prisma.FieldRef<"VerificationCode", 'DateTime'>
 }
     
 

@@ -36,6 +36,14 @@ export const ItemStatus = {
 export type ItemStatus = (typeof ItemStatus)[keyof typeof ItemStatus]
 
 
+export const SessionKind = {
+  WEB: 'WEB',
+  TABLET: 'TABLET'
+} as const
+
+export type SessionKind = (typeof SessionKind)[keyof typeof SessionKind]
+
+
 export const NotificationType = {
   RENTAL_CONFIRMATION: 'RENTAL_CONFIRMATION',
   RETURN_REMINDER: 'RETURN_REMINDER',

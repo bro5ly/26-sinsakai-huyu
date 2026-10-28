@@ -11,7 +11,7 @@
 export type * from './models/User.js'
 export type * from './models/ExternalUser.js'
 export type * from './models/VerificationCode.js'
-export type * from './models/RefreshToken.js'
+export type * from './models/Session.js'
 export type * from './models/Category.js'
 export type * from './models/Genre.js'
 export type * from './models/ItemType.js'

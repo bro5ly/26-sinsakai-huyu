@@ -55,10 +55,10 @@ export type ExternalUser = Prisma.ExternalUserModel
  */
 export type VerificationCode = Prisma.VerificationCodeModel
 /**
- * Model RefreshToken
+ * Model Session
  * 
  */
-export type RefreshToken = Prisma.RefreshTokenModel
+export type Session = Prisma.SessionModel
 /**
  * Model Category
  * 

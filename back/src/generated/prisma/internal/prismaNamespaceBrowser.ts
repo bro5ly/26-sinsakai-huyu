@@ -54,7 +54,7 @@ export const ModelName = {
   User: 'User',
   ExternalUser: 'ExternalUser',
   VerificationCode: 'VerificationCode',
-  RefreshToken: 'RefreshToken',
+  Session: 'Session',
   Category: 'Category',
   Genre: 'Genre',
   ItemType: 'ItemType',
@@ -120,21 +120,24 @@ export const VerificationCodeScalarFieldEnum = {
   studentId: 'studentId',
   code: 'code',
   expiresAt: 'expiresAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  tokenHash: 'tokenHash',
+  tokenExpiresAt: 'tokenExpiresAt'
 } as const
 
 export type VerificationCodeScalarFieldEnum = (typeof VerificationCodeScalarFieldEnum)[keyof typeof VerificationCodeScalarFieldEnum]
 
 
-export const RefreshTokenScalarFieldEnum = {
+export const SessionScalarFieldEnum = {
   id: 'id',
-  token: 'token',
+  tokenHash: 'tokenHash',
   userId: 'userId',
+  kind: 'kind',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt'
 } as const
 
-export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {

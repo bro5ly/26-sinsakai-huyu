@@ -209,6 +209,23 @@ export type EnumUserTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumUserTypeFilter<$PrismaModel>
 }
 
+export type EnumSessionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionKind | Prisma.EnumSessionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionKindFilter<$PrismaModel> | $Enums.SessionKind
+}
+
+export type EnumSessionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionKind | Prisma.EnumSessionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionKindWithAggregatesFilter<$PrismaModel> | $Enums.SessionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSessionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSessionKindFilter<$PrismaModel>
+}
+
 export type EnumItemStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.ItemStatus | Prisma.EnumItemStatusFieldRefInput<$PrismaModel>
   in?: $Enums.ItemStatus[] | Prisma.ListEnumItemStatusFieldRefInput<$PrismaModel>
@@ -449,6 +466,23 @@ export type NestedEnumUserTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumUserTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumUserTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumSessionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionKind | Prisma.EnumSessionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionKindFilter<$PrismaModel> | $Enums.SessionKind
+}
+
+export type NestedEnumSessionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionKind | Prisma.EnumSessionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionKind[] | Prisma.ListEnumSessionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionKindWithAggregatesFilter<$PrismaModel> | $Enums.SessionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSessionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSessionKindFilter<$PrismaModel>
 }
 
 export type NestedEnumItemStatusFilter<$PrismaModel = never> = {
