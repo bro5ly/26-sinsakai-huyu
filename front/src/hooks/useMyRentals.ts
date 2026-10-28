@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import type { Rental } from "@sinsakai/shared";
 import { meService } from "@/services";
 
-// ダッシュボードを開くたびに、借りている物を取り直す(ログインの状態には入れない。2026-10-25 Me2)
-export const useMyRentals = (accessToken: string | null) => {
+// ダッシュボードを開くたびに、借りている物を取り直す(ログインの状態には入れない。2026-10-25 Me2)。
+// enabled はログインを確かめ終えたか。確かめる前に呼ぶと401になるだけなので待つ
+export const useMyRentals = (enabled: boolean) => {
   const [rentals, setRentals] = useState<Rental[]>([]);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!enabled) return;
     let cancelled = false;
     meService
-      .getMyRentals(accessToken)
+      .getMyRentals()
       .then((res) => {
         if (!cancelled) setRentals(res.items);
       })
@@ -20,7 +21,7 @@ export const useMyRentals = (accessToken: string | null) => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [enabled]);
 
   return rentals;
 };

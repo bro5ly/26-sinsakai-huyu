@@ -14,10 +14,10 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, logout, accessToken } = useAuth();
-  const { itemTypes, categories: categoryList, loading: itemsLoading } = useCatalog(accessToken);
-  const rentals = useMyRentals(accessToken);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const { status, user, logout } = useAuth();
+  const authenticated = status === "authenticated";
+  const { itemTypes, categories: categoryList, loading: itemsLoading } = useCatalog(authenticated);
+  const rentals = useMyRentals(authenticated);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState<string>("ALL");
@@ -33,29 +33,13 @@ export default function DashboardPage() {
   const categories = categoryList.map((category) => category.name);
   const genres = categoryList.flatMap((category) => category.genres.map((genre) => genre.name));
 
-  // 初期化フラグを管理
+  // 確かめ終えて、ログインしていないと分かったときだけ送る(確かめ中は送らない。Ca6〜Ca8)。
+  // 前は「2秒待ってから送る」で避けていた
   useEffect(() => {
-    // userまたはaccessTokenがセットされたら初期化完了
-    if (user || accessToken) {
-      setIsInitializing(false);
-    } else {
-      // 2秒待ってもセットされなければ初期化完了（リダイレクト可能に）
-      const timer = setTimeout(() => {
-        setIsInitializing(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, accessToken]);
+    if (status === "unauthenticated") router.push("/auth");
+  }, [status, router]);
 
-  // 初期化完了後、認証されていない場合のみリダイレクト
-  useEffect(() => {
-    if (!isInitializing && !accessToken && !user) {
-      router.push("/auth");
-    }
-  }, [isInitializing, accessToken, user, router]);
-
-  // Combined loading state
-  const loading = isInitializing || itemsLoading || !user;
+  const loading = !authenticated || itemsLoading || !user;
 
   if (loading) {
     return <LoadingSpinner />;

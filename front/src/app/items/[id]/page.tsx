@@ -33,18 +33,21 @@ const stateColor: Record<ItemState, "success" | "warning" | "default" | "danger"
 export default function ItemDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated, accessToken } = useAuth();
+  const { status } = useAuth();
   // URLは種類の名前ではなくID(同じ名前があり得て、日本語はURLで読みにくいため。2026-10-28 Ca1)
   const id = params.id as string;
 
-  const { itemType, loading: isLoading, error } = useItemType(id, accessToken);
+  const { itemType, loading: itemLoading, error } = useItemType(id, status === "authenticated");
+  // ログインを確かめている間も読み込み中として出す
+  const isLoading = status !== "authenticated" || itemLoading;
   const items = itemType?.items ?? [];
 
+  // 確かめ終えて、ログインしていないと分かったときだけ送る。確かめ中に送ると、再読み込みでログインの画面に戻される(Ca6〜Ca8)
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (status === "unauthenticated") {
       router.push("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [status, router]);
 
   if (isLoading) {
     return (

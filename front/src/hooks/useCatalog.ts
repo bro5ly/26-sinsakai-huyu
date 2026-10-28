@@ -6,18 +6,18 @@ import { ApiError } from "@/types";
 const messageOf = (err: unknown) =>
   err instanceof ApiError ? err.message : "読み込みに失敗しました";
 
-// 種類の一覧と、絞り込みの選択肢(カテゴリとジャンル)を取る
-export const useCatalog = (accessToken: string | null) => {
+// 種類の一覧と、絞り込みの選択肢(カテゴリとジャンル)を取る。enabled はログインを確かめ終えたか
+export const useCatalog = (enabled: boolean) => {
   const [itemTypes, setItemTypes] = useState<ItemTypeSummary[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!enabled) return;
     let cancelled = false;
     Promise.all([
-      catalogService.getItemTypes(accessToken),
-      catalogService.getCategories(accessToken),
+      catalogService.getItemTypes(),
+      catalogService.getCategories(),
     ])
       .then(([types, cats]) => {
         if (cancelled) return;
@@ -30,7 +30,7 @@ export const useCatalog = (accessToken: string | null) => {
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [enabled]);
 
   return { itemTypes, categories, loading: itemTypes === null && error === null, error };
 };
@@ -53,15 +53,15 @@ export const useFilteredItemTypes = (
   }, [itemTypes, searchQuery, genreFilter, categoryFilter]);
 
 // 種類の詳細(物品1つ1つの状態付き)を取る
-export const useItemType = (id: string, accessToken: string | null) => {
+export const useItemType = (id: string, enabled: boolean) => {
   const [itemType, setItemType] = useState<ItemTypeDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!enabled) return;
     let cancelled = false;
     catalogService
-      .getItemType(id, accessToken)
+      .getItemType(id)
       .then((detail) => {
         if (!cancelled) setItemType(detail);
       })
@@ -71,7 +71,7 @@ export const useItemType = (id: string, accessToken: string | null) => {
     return () => {
       cancelled = true;
     };
-  }, [id, accessToken]);
+  }, [id, enabled]);
 
   return { itemType, loading: itemType === null && error === null, error };
 };
