@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import type { ItemState } from "@sinsakai/shared";
 import { useAuth } from "@/contexts/AuthContext";
-import { useItems } from "@/hooks/useItems";
+import { useItemType } from "@/hooks";
 import {
   Card,
   CardBody,
@@ -13,21 +14,37 @@ import {
   Divider,
 } from "@heroui/react";
 
+// 紛失・廃棄も含め、状態ごとに分けて出す(前は使える・貸出中以外をすべて「Maintenance」と出していた)
+const stateLabel: Record<ItemState, string> = {
+  AVAILABLE: "Available",
+  RENTED: "On Loan",
+  MAINTENANCE: "Maintenance",
+  LOST: "Lost",
+  DISPOSED: "Disposed",
+};
+const stateColor: Record<ItemState, "success" | "warning" | "default" | "danger"> = {
+  AVAILABLE: "success",
+  RENTED: "warning",
+  MAINTENANCE: "default",
+  LOST: "danger",
+  DISPOSED: "default",
+};
+
 export default function ItemDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated } = useAuth();
-  const title = decodeURIComponent(params.title as string);
+  const { isAuthenticated, accessToken } = useAuth();
+  // URLは種類の名前ではなくID(同じ名前があり得て、日本語はURLで読みにくいため。2026-10-28 Ca1)
+  const id = params.id as string;
 
-  const { allItems, loading: isLoading, error } = useItems();
-  const items = (allItems || []).filter(item => item.itemType.title === title);
-  const itemType = items.length > 0 ? items[0].itemType : null;
+  const { itemType, loading: isLoading, error } = useItemType(id, accessToken);
+  const items = itemType?.items ?? [];
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/auth");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   if (isLoading) {
     return (
@@ -76,7 +93,7 @@ export default function ItemDetailPage() {
                   {itemType.imageUrl ? (
                     <img
                       src={itemType.imageUrl}
-                      alt={title}
+                      alt={itemType.title}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -92,10 +109,10 @@ export default function ItemDetailPage() {
             <div className="md:col-span-7 flex flex-col justify-center">
               <div className="space-y-2 mb-6">
                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-                  {itemType.genre.category.name} / {itemType.genre.name}
+                  {itemType.category.name} / {itemType.genre.name}
                 </p>
                 <h1 className="text-3xl font-black tracking-tighter leading-none">
-                  {title}
+                  {itemType.title}
                 </h1>
               </div>
 
@@ -162,13 +179,8 @@ export default function ItemDetailPage() {
                 shadow="sm"
               >
                 <CardBody className="p-4 flex flex-row items-center justify-between">
+                  {/* バーコードは出さない。画面のバーコードで、実物を持たずに借りられてしまうため(2026-10-28 Ca5-B) */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-default-400 font-bold uppercase tracking-tighter mb-1">
-                      Asset ID
-                    </span>
-                    <span className="text-md font-mono font-black">
-                      {item.barcode}
-                    </span>
                     {item.location && (
                       <span className="text-[10px] text-default-500 mt-1 uppercase">
                         Loc: {item.location}
@@ -178,22 +190,12 @@ export default function ItemDetailPage() {
 
                   <div className="text-right">
                     <Chip
-                      color={
-                        item.status === "AVAILABLE"
-                          ? "success"
-                          : item.status === "RENTED"
-                            ? "warning"
-                            : "default"
-                      }
+                      color={stateColor[item.state]}
                       variant="flat"
                       size="sm"
                       className="px-2 font-black text-[10px] uppercase h-7"
                     >
-                      {item.status === "AVAILABLE"
-                        ? "Available"
-                        : item.status === "RENTED"
-                          ? "On Loan"
-                          : "Maintenance"}
+                      {stateLabel[item.state]}
                     </Chip>
                   </div>
                 </CardBody>

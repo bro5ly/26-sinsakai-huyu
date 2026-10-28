@@ -45,7 +45,7 @@
 
 すべて`/api`の下。
 
-登録・ログインの6本と本人の2本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`・`me.ts`。2026-10-25)。ほかはまだ今の形(`{ success: true, ...data }`)。
+登録・ログインの6本・本人の2本・カタログの3本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`・`me.ts`・`catalog.ts`。2026-10-25〜28)。タブレットの3本はまだ今の形(`{ success: true, ...data }`)で、0.8で作り直す。
 
 | メソッドとパス | 認証 | 内容 | 返すもの |
 |---|---|---|---|
@@ -55,7 +55,9 @@
 | `POST /sessions` | なし | `{ studentId, password }`(ログイン) | 201 `{ user, accessToken }`(+Cookie) |
 | `POST /sessions/refresh` | Cookie | リフレッシュトークンを回して新しいトークンを出す | 200 `{ user, accessToken }`(+Cookie) |
 | `DELETE /sessions/current` | Cookie | Cookieを消し、DBのリフレッシュトークンも消す(ログアウト) | 204(本文なし) |
-| `GET /items` | なし | 全物品(種類・ジャンル・カテゴリ付き、新しい順) | `success`, `data: Item[]` |
+| `GET /categories` | アクセストークン | カテゴリとその中のジャンル(絞り込みの選択肢) | 200 `{ items: Category[] }` |
+| `GET /item-types` | アクセストークン | 種類ごとの一覧(貸し出せる数と全数。全数に廃棄済みは入れない) | 200 `{ items: ItemTypeSummary[] }` |
+| `GET /item-types/{id}` | アクセストークン | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
 | `GET /me` | アクセストークン | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える) | 200 `Me` |
 | `GET /me/rentals` | アクセストークン | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
 | `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
@@ -121,7 +123,7 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 | ページ | 内容 | 主に使うもの |
 |---|---|---|
 | `/auth` | ログインと、3段階の新規登録 | `useAuthForm`、`components/auth/` |
-| `/dashboard` | 自分の情報・バーコード・借りている物・カタログ | `useAuth`、`useItems`、`components/dashboard/` |
-| `/items`、`/items/[title]` | 機材カタログと、種類ごとの詳細(全件を取って画面で絞り込む) | `useItems` |
+| `/dashboard` | 自分の情報・バーコード・借りている物・カタログ(検索・ジャンル・カテゴリの絞り込みは画面でする) | `useAuth`、`useMyRentals`、`useCatalog`、`components/dashboard/` |
+| `/items/[id]` | 種類の詳細(物品1つ1つの置き場所と状態) | `useItemType` |
 | `/tablet` | 受付端末の画面。カード → 操作の選択 → バーコード → 完了 | `useTabletOperations`、`TabletContext`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
 | `/barcodes` | テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き) | `react-barcode` |

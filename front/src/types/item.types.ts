@@ -48,9 +48,4 @@ export interface Item {
   updatedAt?: string;
 }
 
-// Helper type for grouped items (frontend only)
-export interface ItemGroup {
-  itemType: ItemType;
-  items: Item[];
-  availableCount: number;
-}
+// カタログの型は shared/(@sinsakai/shared)の ItemTypeSummary・ItemTypeDetail を使う。ここに残すのはタブレットが使う分だけ(0.8で作り直す)

@@ -99,6 +99,8 @@
   - 登録・ログインの6本(2026-10-25 A1〜A4): リクエストの項目名は`password`・`token`にする(A1)。認証コードの`purpose`は今は`"signup"`だけ受け付け、パスワードの再設定は0.8で足す(A2)。ログアウト(`DELETE /api/sessions/current`)ではDBのリフレッシュトークンも消す(A3。ずれ8・R-15)。6本のリクエストと応答は`shared/src/auth.ts`にZodで書き、backの検証とfrontの型の両方に使う。`back/src/features/auth/auth.schema.ts`は消す(A4。C7)
   - ログインでは、パスワードの長さを確かめず、空でないことだけを確かめる。長さ(8文字以上)は登録のときだけ。短く打ち間違えた人だけ「入力内容が正しくありません」になり、文言が分かれていたため(2026-10-25 B1-A)
   - 本人(2026-10-25 Me1〜Me4): `GET /api/items/me`を`GET /api/me`(プロフィールと貸し出しの決まり)と`GET /api/me/rentals`(借りている物)に分ける。カードの番号は、0.8で使い捨てのバーコード(`POST /api/me/tablet-codes`)ができるまで`Me.cardNumber`として返し、そのときに外す(Me1。今もダッシュボードのバーコードに使っているため)。画面の`AuthContext`は`Me`だけを持ち、借りている物はダッシュボードがその都度取る(Me2。貸し出すたびに変わるため)。`Rental.itemType`にジャンル`genre: { id, name }`を足す(Me3。ダッシュボードが出している)。返し終わった物の履歴(`?state=all`)は、履歴の画面を作るときに足す(Me4)
+  - カタログ(2026-10-28 Ca1〜Ca4): `GET /api/items`を`GET /api/categories`・`GET /api/item-types`・`GET /api/item-types/{id}`にする(ログイン必須。Q11)。詳細の画面のURLは種類の名前ではなくID(`/items/[id]`)にする(Ca1)。どこからもリンクされていない物品の一覧の画面(`/items`)は消す。物品1つ1つの一覧は在庫管理(5)で作る(Ca2)。検索・ジャンル・カテゴリの絞り込みは今は画面でし、種類が増えたら`?categoryId=&genreId=&q=`を足す(Ca3)。全数と詳細の物品の一覧には廃棄済み(`DISPOSED`)を入れない。修理中・紛失は入れて状態で見せる(Ca4)
+  - 詳細の物品の一覧に、バーコードは入れない。画面にバーコードがあると、実物を持たずにタブレットで読めてしまい、棚にある物が「貸出中」と記録されるおそれがあるため。バーコードは実物に貼った物だけから読む(2026-10-28 Ca5-B、開発者の指摘)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
@@ -114,6 +116,9 @@
 - [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
+
+- 順番(2026-10-28決定 S2): カタログのPR → 0.8 → 0.7の残り(`satisfies`・画面の手書きの型・コマンドの呼び名・通しの確かめ)。タブレットの型は0.8で作り直すので、画面の手書きの型を消すのは0.8のあとにする
+- [ ] 画面の認証の作り(2026-10-28 Ca6〜Ca8): 再読み込みすると、`AuthContext`が「ログインしていない」から始まるので、詳細のページがログインの画面へ送ってしまう(ダッシュボードは2秒待ちで避けている)。状態を「確かめ中・ログインしている・していない」の3つにして直す。そのときに、自作のままにするか、ライブラリ(TanStack Query・SWR、Auth.js、Better Auth など)を使うかを、認証の設計と一緒に決める。Next.jsの`proxy.ts`でサーバーで先に確かめるかも考える(守りはAPIでする)
 
 新しいAPIの形は`shared/`に書く(0.7)。
 
@@ -154,15 +159,16 @@
 - [ ] 利用者の情報を出す`console.log`を消す(ずれ5)
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
-- [ ] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11)
-- [ ] 画面のリントのエラー7件を直す(2026-10-24に見つけた。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`dashboard/page.tsx`・`contexts/AuthContext.tsx`の`any`、`items/page.tsx`・`components/BarcodeScanner.tsx`の宣言より前に使っている変数。警告も11件ある
+- [x] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11。2026-10-28、カタログを新しいAPIに移すときに`item.service.ts`ごと消した)
+- [ ] 画面のリントのエラーを直す(2026-10-24に7件見つけた。2026-10-28には5件。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`contexts/AuthContext.tsx`の`any`、`components/BarcodeScanner.tsx`の宣言より前に使っている変数(2件)。警告も6件ある。`items/page.tsx`と`dashboard/page.tsx`の`any`の分は、その所を作り直したときに消えた
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
+- [ ] `/barcodes`(テスト用に全部の物品とカードのバーコードを印刷する画面)は、誰でも開ける。実物を持たずに借りられてしまうので、本番の前に管理者だけにするか消す(2026-10-28、Ca5の話から)
 
 ## 4. フロントの認証
 
-- [ ] `AuthContext`に読み込み中の状態を持たせ、`dashboard`の2秒待ちをやめる
+- [ ] `AuthContext`に読み込み中の状態を持たせ、`dashboard`の2秒待ちをやめる(0.8でまとめて直す。下の0.8の項目)
 - [ ] アクセストークンのCookieの期限をサーバーと揃える(ずれ10)
-- [ ] 画面の崩れを直す(2026-10-24、開発者がブラウザで見つけた。文字が重なっている所、ボタンのアイコンが正しく出ない所がある。どの画面のどこかは、直すときに開発者に聞く。workspacesとDockerの作り直し(0.7)の前からあったかは分からない)
+- [x] 画面の崩れを直す(2026-10-24に見つけた。文字が重なる、ボタンのアイコンが正しく出ない、絞り込みのモーダルが見えない)。npm workspacesにしたとき(PR #11)に`globals.css`の`@source`がHeroUIの場所からずれ、HeroUIのスタイルが作られていなかった。2026-10-28に直し、開発者がブラウザで確かめた
 
 ## 5. 在庫管理(新機能)
 

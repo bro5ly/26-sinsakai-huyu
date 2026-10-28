@@ -19,17 +19,17 @@
 
 | # | 問題 | 例 | 直したか |
 |---|---|---|---|
-| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 一部(登録・ログイン・本人は2026-10-25) |
+| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 一部(タブレットの3本だけ残っている。0.8) |
 | P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | 一部(登録・ログインは2026-10-25) |
 | P3 | 置き場所がずれている | 自分の情報が`/items/me`。`/tablet/*`は資源でなく端末でまとめている | 一部(本人は2026-10-25に`/api/me`へ) |
-| P4 | 物品の種類のAPIが無い | カタログの詳細は、全件を取って画面でタイトルで絞り込んでいる | |
-| P5 | 作ったときも200 | 登録・貸し出し | 一部(登録・ログイン・本人は2026-10-25) |
+| P4 | 物品の種類のAPIが無い | カタログの詳細は、全件を取って画面でタイトルで絞り込んでいる | 済み(2026-10-28) |
+| P5 | 作ったときも200 | 登録・貸し出し | 一部(タブレットの3本だけ残っている。0.8) |
 | P6 | ステータスの意味のずれ | ログインでパスワード違いは400、利用者がいないと404(どちらも401で、違いから登録済みかが分かる)。期限切れの認証コードは410で`VERIFICATION_NOT_STARTED` | 済み(2026-10-24) |
 | P7 | 同じ`code`を別の意味に使う | `ITEM_NOT_AVAILABLE`が400と409の両方 | 済み(2026-10-24) |
 | P8 | 不正な入力で500になる(不具合) | Cookie無しのリフレッシュ、壊れた登録用トークンでの登録 | 済み(2026-10-24) |
-| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | 一部(登録・ログイン・本人は2026-10-25) |
-| P10 | DBの列がそのまま出る | 物品に`itemTypeId`・`genreId`・`notes`・`createdAt`・`updatedAt` | |
-| P11 | 同じ名前で意味が違う | 物品の`status`は計算した値(RENTEDを含む)、貸し出しの応答の中の`item.status`はDBの値 | |
+| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | 一部(タブレットの3本だけ残っている。0.8) |
+| P10 | DBの列がそのまま出る | 物品に`itemTypeId`・`genreId`・`notes`・`createdAt`・`updatedAt` | 一部(本人・カタログは2026-10-25〜28) |
+| P11 | 同じ名前で意味が違う | 物品の`status`は計算した値(RENTEDを含む)、貸し出しの応答の中の`item.status`はDBの値 | 一部(本人・カタログは`state`に。2026-10-25〜28) |
 | P12 | 画面の文言が応答に入る | 「認証に成功しました」など | 一部(登録・ログインは2026-10-25) |
 | P13 | JSONで返らないエラーがある | 存在しないURLの404、タブレットの認証の失敗(Express既定のHTML) | 済み(2026-10-24) |
 | P14 | DBの中身がエラーに漏れる | 一意制約の違反で、制約の列名を`target`として返す | 済み(2026-10-24) |
@@ -128,10 +128,12 @@
 
 ### 4.3 カタログ(Web。**ログイン必須**。`docs/spec.md`のQ11、2026-10-23決定)
 
+**2026-10-28に移した**(絞り込みは今は画面で。全数と詳細に廃棄済みを入れない。詳細にバーコードを入れない。形は`shared/src/catalog.ts`)。
+
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
 | `GET /api/categories` | Bearer | — | 200 `{ items: Category[] }`(ジャンル付き。絞り込みの選択肢) | UC-6 |
-| `GET /api/item-types` | Bearer | `?categoryId=&genreId=&q=` | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
+| `GET /api/item-types` | Bearer | `?categoryId=&genreId=&q=`(今は付けず、画面で絞り込む。種類が増えたら足す。2026-10-28 Ca3) | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
 | `GET /api/item-types/{id}` | Bearer | — | 200 `ItemTypeDetail`(物品1つ1つの状態付き) | UC-6 |
 
 ### 4.4 タブレット
@@ -171,10 +173,11 @@ Me           SessionUser + { email, grade | null, major | null,
                borrowing: { canBorrow, maxItems, suspendedUntil | null, activeCount, hasOverdue } }
 Category     { id, name, genres: { id, name }[] }
 ItemTypeSummary { id, title, genre: { id, name }, category: { id, name }, imageUrl | null,
-                  rentalPeriodDays, availableCount, totalCount }
+                  rentalPeriodDays, availableCount, totalCount }   // totalCountに廃棄済みは入れない(2026-10-28 Ca4)
 ItemTypeDetail  ItemTypeSummary + { description | null, author | null, publisher | null, isbn | null,
                   manufacturer | null, model | null,
-                  items: { id, location | null, state: ItemState }[] }
+                  items: { id, location | null, state: ItemState }[] }   // 廃棄済みは入れない(Ca4)
+                  // バーコードは入れない。画面に出すと、実物を持たずに借りられてしまう(2026-10-28 Ca5-B)
 ItemState    "AVAILABLE" | "RENTED" | "MAINTENANCE" | "LOST" | "DISPOSED"   // 計算した値。DBの値はそのまま出さない
 Rental       { id, itemType: { id, title, genre: { id, name } }, item: { id, barcode }, rentedAt, dueDate, returnedAt | null,
                state: "RENTING" | "OVERDUE" | "RETURNED" }
@@ -227,7 +230,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/auth/login` | `POST /api/sessions` (2026-10-25 移した) |
 | `POST /api/auth/refreshSession` | `POST /api/sessions/refresh` (2026-10-25 移した) |
 | `POST /api/auth/logout` | `DELETE /api/sessions/current` (2026-10-25 移した) |
-| `GET /api/items` | `GET /api/item-types`(と`GET /api/categories`) |
+| `GET /api/items` | `GET /api/item-types`(と`GET /api/categories`)(2026-10-28 移した) |
 | `GET /api/items/me` | `GET /api/me`・`GET /api/me/rentals`(2026-10-25 移した) |
 | `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き) |
 | `POST /api/tablet/checkout` | `POST /api/tablet/rentals` |
