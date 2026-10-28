@@ -122,7 +122,7 @@
 |---|---|---|---|---|
 | `GET /api/me` | Web | — | 200 `Me` | UC-5 |
 | `GET /api/me/rentals` | Web | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
-| `PUT /api/me/pin` | Web | `{ pin }`(数字4桁) | 204(ロックも解除) | UC-7 |
+| `PUT /api/me/pin` | Web | `{ pin, password }`(数字4桁。パスワードを入れ直す。P1。同じ数字・連続した数字は400。P2) | 204(ロックも解除) | UC-7 |
 | `POST /api/me/tablet-codes` | Web | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
 
 ### 4.3 カタログ(Web。**ログイン必須**。`docs/spec.md`のQ11、2026-10-23決定)
