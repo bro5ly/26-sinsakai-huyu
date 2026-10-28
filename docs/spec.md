@@ -341,12 +341,11 @@
 | 1 | 認証コードを`create`で保存するので、同じ学籍番号の2回目の申請が一意制約で失敗する(期限切れでも) | `back/src/features/auth/auth.repository.ts`の`saveTmpCode` | R-5 |
 | 2 | 登録用トークンをリフレッシュトークンの秘密鍵で署名・検証している | `back/src/lib/jwt.ts` | 非機能「認証」 |
 | 3 | タブレット用トークンをアクセストークンと同じ秘密鍵で署名し、ミドルウェアは`role`を見ていない。Webのトークンでタブレットの貸し出しが、タブレットのトークンで`/me`が通る | `lib/jwt.ts`、`middleware/` | 非機能「認証」 |
-| 5 | 利用者の情報を出す`console.log`が残っている | `UserRepository.ts`、`auth.service.ts`、`item.repository.ts`、`front/src/contexts/AuthContext.tsx` | 非機能「個人情報」 |
+| 5 | 利用者の情報を出す`console.log`が残っている | `UserRepository.ts`、`auth.service.ts`、`front/src/contexts/AuthContext.tsx` | 非機能「個人情報」 |
 | 6 | `user`の`canBorrow`・`suspendedUntil`・`maxItems`と延滞を、貸し出しで見ていない | `back/src/features/rentals/` | 6章 C4〜C7 |
 | 7 | 延滞をダッシュボードで目立たせていない(APIは`status: "OVERDUE"`を返す) | `front/src/components/dashboard/` | R-30 |
 | 9 | リフレッシュトークンは利用者1人1件なので、別の端末でログインすると前の端末のセッションが切れる | `refresh_tokens.userId`が一意 | 要確認Q9 |
 | 10 | 画面のアクセストークンのCookieは1時間、サーバーの期限は15分 | `front/src/contexts/AuthContext.tsx` | R-13 |
-| 11 | `/api/items/:title`を呼ぶ関数があるが、APIが無い | `front/src/services/item.service.ts` | — |
 | 12 | 名簿を`user.student_id`の外部キーとPrismaのJOIN(`externalUser`)で読んでいる。学校のDB・APIに替えられない | `UserRepository.ts`、`item.repository.ts`、`rental.repository.ts`、`schema.prisma` | 非機能「名簿の差し替え」 |
 | 13 | タブレットの端末を確かめていない。`/api/tablet/*`はどこからでも呼べ、カードの番号だけで他人の名前で借りられる | `back/src/features/rentals/` | `docs/auth.md` R-A1〜A6 |
 | 14 | カード認証の応答に名前・学籍番号・学年・専攻・借りている物が入り、回数の制限も無い | `rental.service.ts`の`signInWithIc` | `docs/auth.md` R-A12・A13・4.6 |
