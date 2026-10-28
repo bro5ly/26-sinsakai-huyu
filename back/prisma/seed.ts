@@ -17,7 +17,7 @@ async function main() {
   await prisma.genre.deleteMany();
   await prisma.category.deleteMany();
   await prisma.notification.deleteMany();
-  await prisma.refreshToken.deleteMany();
+  await prisma.session.deleteMany();
   await prisma.verificationCode.deleteMany();
   await prisma.user.deleteMany();
   await prisma.externalUser.deleteMany();

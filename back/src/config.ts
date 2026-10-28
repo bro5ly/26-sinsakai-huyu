@@ -11,7 +11,6 @@ const envSchema = z.object({
     FRONTEND_URL: z.string().default("http://localhost:4545"),
     DATABASE_URL: requiredString,
     JWT_ACCESS_SECRET: requiredString,
-    JWT_REFRESH_SECRET: requiredString,
     MAIL_HOST: optionalString,
     MAIL_PORT: z.coerce.number().int().positive().default(2525),
     MAIL_USER: optionalString,
@@ -24,7 +23,8 @@ export type Config = {
     port: number;
     frontendUrl: string;
     databaseUrl: string;
-    jwt: { accessSecret: string; refreshSecret: string };
+    // タブレットのセッションをDBの番号にする(0.8のe)までの間だけ。Webと登録用はもうJWTを使わない(A8-3・A8-8)
+    jwt: { accessSecret: string };
     mail: { host: string | undefined; port: number; user: string | undefined; pass: string | undefined; from: string };
 };
 
@@ -42,7 +42,7 @@ export const loadConfig = (env: Record<string, string | undefined>): Config => {
         port: e.PORT,
         frontendUrl: e.FRONTEND_URL,
         databaseUrl: e.DATABASE_URL,
-        jwt: { accessSecret: e.JWT_ACCESS_SECRET, refreshSecret: e.JWT_REFRESH_SECRET },
+        jwt: { accessSecret: e.JWT_ACCESS_SECRET },
         mail: { host: e.MAIL_HOST, port: e.MAIL_PORT, user: e.MAIL_USER, pass: e.MAIL_PASS, from: e.MAIL_FROM },
     };
 };

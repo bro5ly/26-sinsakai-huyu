@@ -14,8 +14,11 @@ export class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // Webのセッションの番号はHttpOnlyのCookieにあるので、どの呼び出しにもCookieを付ける(A8-3)。
+    // 書き換えのリクエストにはブラウザがOriginを付け、サーバーはそれを確かめる(A8-7)
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
@@ -42,41 +45,28 @@ export class ApiService {
     return data;
   }
 
-  public async get<T>(
-    endpoint: string,
-    accessToken?: string
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: "GET",
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    });
+  // bearer はタブレットの今のトークンだけが使う。タブレットもCookieのセッションにする(0.8のe)ときに消す
+  private static authorization(bearer?: string): HeadersInit {
+    return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
 
-  public async delete<T>(
-    endpoint: string,
-    options: { accessToken?: string; credentials?: RequestCredentials } = {}
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: "DELETE",
-      headers: options.accessToken
-        ? { Authorization: `Bearer ${options.accessToken}` }
-        : {},
-      credentials: options.credentials,
-    });
+  public async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET" });
+  }
+
+  public async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 
   public async post<T>(
     endpoint: string,
     body?: unknown,
-    options: { accessToken?: string; credentials?: RequestCredentials } = {}
+    options: { bearer?: string } = {}
   ): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
-      headers: options.accessToken
-        ? { Authorization: `Bearer ${options.accessToken}` }
-        : {},
-      credentials: options.credentials,
+      headers: ApiService.authorization(options.bearer),
     });
   }
 }

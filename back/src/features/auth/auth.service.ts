@@ -1,20 +1,27 @@
-import * as jwtLib from "@/lib/jwt.js"
 import bcrypt from "bcrypt"
 import type { UserRepository } from "../user/UserRepository.js"
 import type { Roster, RosterEntry } from "../roster/roster.js"
 import type { AuthRepository } from "./auth.repository.js"
+import type { SessionRepository } from "./session.repository.js"
 import type { MailService } from "@/lib/mail.js"
 import { DomainError } from "@/lib/domain-error.js"
+import { hashToken, newToken } from "@/lib/session-token.js"
 import type { AuthResult, VerifyCodeResult } from "./auth.types.js"
 
 // テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
 export type UserStore = Pick<UserRepository, "create" | "findById" | "findByStudentId">
-export type AuthStore = Pick<AuthRepository, "saveRefreshToken" | "findRefreshToken" | "deleteRefreshToken" | "saveTmpCode" | "checkTmpCode" | "deleteTmpCode">
+export type CodeStore = Pick<AuthRepository, "saveTmpCode" | "checkTmpCode" | "deleteTmpCode" | "saveRegistrationToken" | "findByRegistrationTokenHash">
+export type SessionStore = Pick<SessionRepository, "create" | "findByTokenHash" | "deleteByTokenHash">
 export type Mailer = Pick<MailService, "sendCode">
 type User = NonNullable<Awaited<ReturnType<UserStore["findById"]>>>
 
+// 登録用トークンの期限。応答の expiresAt もこれから作る
+const REGISTRATION_TOKEN_MINUTES = 15
+// Webのセッションは、作ってから7日で必ず切れる。使っても延ばさない(docs/backlog.md 0.8 A8-6)
+export const WEB_SESSION_DAYS = 7
+
 export class AuthService {
-    constructor(private users: UserStore, private authRepository: AuthStore, private mailService: Mailer, private roster: Roster){}
+    constructor(private users: UserStore, private authRepository: CodeStore, private sessions: SessionStore, private mailService: Mailer, private roster: Roster){}
 
     requestVerification = async (studentId: string): Promise<void> => {
         //1. 受け取った学籍番号が別dbにあるか確認
@@ -51,25 +58,24 @@ export class AuthService {
         if(record.code !== code){
             throw new DomainError('INVALID_CODE')
         }
-        
-        await this.authRepository.deleteTmpCode(studentId)
 
-        const token = jwtLib.signRegistrationToken({studentId})
+        // コードは1回だけ使える。もうトークンを出したコードでは、もう1つ出さない(A8-8)
+        if(record.tokenHash) throw new DomainError('INVALID_CODE')
+
+        // 登録用トークンはDBにハッシュだけを置き、登録で1回使ったら行ごと消す(JWTと違い、1回だけにできる。A8-8)
+        const token = newToken()
         // 画面が「あと何分で手続きが切れるか」を出せるように、期限も返す(docs/api.md 4.1)
-        return {token, expiresAt: new Date(Date.now() + jwtLib.REGISTRATION_TOKEN_MINUTES * 60 * 1000)}
-        //5. トークンとこのアプリの登録情報（nameとpassword）を受け取り、ユーザーの作成
-        
+        const expiresAt = new Date(Date.now() + REGISTRATION_TOKEN_MINUTES * 60 * 1000)
+        await this.authRepository.saveRegistrationToken({studentId, tokenHash: hashToken(token), expiresAt})
+        return {token, expiresAt}
     }
 
     signUp = async (plainPassword: string, registerToken: string): Promise<AuthResult> => {
 
-        // 壊れている・期限切れのトークンはJWTのライブラリの例外になるので、401に変える(500にしない。docs/api.md 3.2)
-        let studentId: string
-        try {
-            ({studentId} = jwtLib.verifyRegistrationToken(registerToken) as {studentId: string})
-        } catch {
-            throw new DomainError('INVALID_TOKEN')
-        }
+        // でたらめ・使用済み(行ごと消してある)・期限切れは、どれも同じに断る
+        const record = await this.authRepository.findByRegistrationTokenHash(hashToken(registerToken))
+        if(!record || !record.tokenExpiresAt || new Date() >= record.tokenExpiresAt) throw new DomainError('INVALID_TOKEN')
+        const {studentId} = record
 
         const existsUser = await this.users.findByStudentId(studentId)
         if(existsUser) throw new DomainError('ALREADY_REGISTERED')
@@ -79,86 +85,46 @@ export class AuthService {
 
         const passwordHash = await bcrypt.hash(plainPassword,10)
         const user = await this.users.create({studentId, passwordHash})
+        await this.authRepository.deleteTmpCode(studentId)
 
-        return this.generateSession(user, entry)
+        return this.createSession(user, entry)
     }
 
     login = async (studentId: string, plainPassword: string) => {
         const existsUser = await this.users.findByStudentId(studentId)
-        // 学籍番号が無い・パスワード違い・名簿から消えた、のどれかは言わない(R-16・R-A14)
+        // 学籍番号が無い・パスワード違い・無効な人・名簿から消えた、のどれかは言わない(R-16・R-A14)
         if(!existsUser) throw new DomainError('INVALID_CREDENTIALS')
         const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
         if(!isMatch) throw new DomainError('INVALID_CREDENTIALS')
+        if(!existsUser.isActive) throw new DomainError('INVALID_CREDENTIALS')
 
-        return this.generateSession(existsUser, await this.rosterEntryOf(existsUser, 'INVALID_CREDENTIALS'))
+        // 名簿から消えた人(卒業など)は、ここで止める。セッションの途中では名簿を見ない(A8-10)
+        const entry = await this.roster.findByStudentId(existsUser.studentId)
+        if(!entry) throw new DomainError('INVALID_CREDENTIALS')
+
+        return this.createSession(existsUser, entry)
     }
 
 
-    // auth.service.ts
-
-    refreshSession = async (refreshToken: string): Promise<AuthResult> => {
-        // 1. まずは JWT として正しいか（改ざん・期限切れ）をチェック。Cookieが無い・壊れているときも401にする(500にしない)
-        if (!refreshToken) throw new DomainError('INVALID_SESSION');
-        let payload: { sub: string };
-        try {
-            payload = jwtLib.verifyRefreshToken(refreshToken) as { sub: string };
-        } catch {
-            throw new DomainError('INVALID_SESSION');
-        }
-
-        // 2. 次に、DBにそのトークンが記録されているかチェック（★ここで作成したメソッドを使う）
-        const savedToken = await this.authRepository.findRefreshToken(refreshToken);
-
-        // DBにない ＝ すでにログアウト済み、あるいは不正なトークン
-        if (!savedToken) {
-            throw new DomainError('INVALID_SESSION');
-        }
-
-        // DB側の期限も一応チェック
-        if (new Date() > savedToken.expiresAt) {
-            throw new DomainError('INVALID_SESSION');
-        }
-
-        // 3. 全てOKなら新しいセッションを発行
-        const user = await this.users.findById(payload.sub);
-        if (!user) throw new DomainError('INVALID_SESSION');
-
-        return this.generateSession(user, await this.rosterEntryOf(user, 'INVALID_SESSION'));
+    // Cookieを消すだけでは、盗まれた番号が期限(7日)まで使えるので、DBからも消す(R-15)。無ければ何もしない
+    logout = async (sessionToken: string | undefined): Promise<void> => {
+        if (!sessionToken) return
+        await this.sessions.deleteByTokenHash(hashToken(sessionToken))
     }
 
-    // 名簿から消えた人(卒業など)は、登録が残っていても通さない(docs/spec.md Q13)
-    private async rosterEntryOf(user: User, whenMissing: 'INVALID_CREDENTIALS' | 'INVALID_SESSION'): Promise<RosterEntry> {
-        const entry = await this.roster.findByStudentId(user.studentId)
-        if (!entry) throw new DomainError(whenMissing)
-        return entry
-    }
-
-    // Cookieを消すだけでは、盗まれたトークンが期限(7日)まで使えるので、DBからも消す(R-15)。無ければ何もしない
-    logout = async (refreshToken: string | undefined): Promise<void> => {
-        if (!refreshToken) return
-        await this.authRepository.deleteRefreshToken(refreshToken)
-    }
-
-    private async generateSession(user: User, profile: RosterEntry): Promise<AuthResult> {
-        const accessToken = jwtLib.signAccessToken({
-            sub: user.id,
-            role: user.role
+    // 番号そのものはCookieにだけ入れ、DBにはハッシュだけを置く。ログインのたびに別のセッションを作る(ほかの端末のログインは切らない。Q9)
+    private async createSession(user: User, profile: RosterEntry): Promise<AuthResult> {
+        const sessionToken = newToken()
+        await this.sessions.create({
+            tokenHash: hashToken(sessionToken),
+            userId: user.id,
+            kind: 'WEB',
+            expiresAt: new Date(Date.now() + WEB_SESSION_DAYS * 24 * 60 * 60 * 1000),
         })
-
-        const refreshToken = jwtLib.signRefreshToken({
-            sub: user.id
-        })
-
-        const days = 7
-        const expiredAt = new Date()
-        expiredAt.setDate(expiredAt.getDate() + days)
-
-        await this.authRepository.saveRefreshToken({userId: user.id,refreshToken,expiredAt})
 
         return {
-            accessToken,
-            refreshToken,
-            // 学年・専攻・カードの番号は入れない(画面は /api/items/me で取る。docs/api.md 5章 SessionUser)
+            sessionToken,
+            // 学年・専攻・カードの番号は入れない(画面は /api/me で取る。docs/api.md 5章 SessionUser)
             user: {
                 id: user.id,
                 name: profile.name,

@@ -1,6 +1,6 @@
 import {Router, type Response} from "express";
 import { rateLimit } from "express-rate-limit";
-import { AuthService } from "./auth.service.js";
+import { AuthService, WEB_SESSION_DAYS } from "./auth.service.js";
 import {
     createSessionRequestSchema,
     createUserRequestSchema,
@@ -13,9 +13,11 @@ import type { AuthResult } from "./auth.types.js";
 import { route } from "@/lib/route.js";
 import { DomainError } from "@/lib/domain-error.js";
 import type { Deps } from "@/deps.js";
+import { SESSION_COOKIE } from "@/middleware/auth.middleware.js";
 import type { Config } from "@/config.js";
 
-const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000
+// Cookieの期限は、DBのセッションの期限(7日。A8-6)とそろえる
+const SESSION_COOKIE_MAX_AGE = WEB_SESSION_DAYS * 24 * 60 * 60 * 1000
 
 // パスワードの総当たりを遅くする。数はdocs/auth.md 4.6(接続元ごとに15分で20回。C5)。
 // 学校の回線では全員が同じ接続元に見えるので、成功したログインは数えない(2026-10-24 K9-B。学籍番号ごとの制限は0.8)。
@@ -34,19 +36,20 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
         // ライブラリの呼び出しの中なので、throwではなくnextでエラー用のミドルウェアに渡す
         handler: (_req, _res, next) => next(new DomainError('RATE_LIMITED')),
     })
-    // リフレッシュトークンのCookie。付けるときと消すときで設定をそろえないと、消えない
-    const refreshCookie = {
+    // セッションのCookie。JSから読めず(HttpOnly)、ほかのサイトからのリクエストには付かない(SameSite=Strict。A8-7)。
+    // 付けるときと消すときで設定をそろえないと、消えない
+    const sessionCookie = {
         httpOnly: true,
         secure: config.nodeEnv === 'production',
         sameSite: 'strict',
         path: '/',
     } as const
-    const auth = new AuthService(deps.users, deps.auth, deps.mailer, deps.roster)
+    const auth = new AuthService(deps.users, deps.auth, deps.sessions, deps.mailer, deps.roster)
 
-    // 応答の本文はshared/の形で返す。リフレッシュトークンはCookieにだけ入れ、本文には入れない
-    const sendSession = (res: Response, status: 200 | 201, data: AuthResult) => {
-        res.cookie('refreshToken', data.refreshToken, { ...refreshCookie, maxAge: REFRESH_COOKIE_MAX_AGE })
-        return res.status(status).json({ user: data.user, accessToken: data.accessToken } satisfies Session)
+    // 応答の本文はshared/の形で返す。セッションの番号はCookieにだけ入れ、本文には入れない(JSに渡さない。A8-3)
+    const sendSession = (res: Response, data: AuthResult) => {
+        res.cookie(SESSION_COOKIE, data.sessionToken, { ...sessionCookie, maxAge: SESSION_COOKIE_MAX_AGE })
+        return res.status(201).json({ user: data.user } satisfies Session)
     }
 
     // 名簿にいてもいなくても同じ202を返す(学籍番号があるか・登録済みかを知られないため。R-16)
@@ -62,21 +65,16 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
     }))
 
     router.post('/users', route({ body: createUserRequestSchema }, async ({ body, res }) => {
-        return sendSession(res, 201, await auth.signUp(body.password, body.token))
+        return sendSession(res, await auth.signUp(body.password, body.token))
     }))
 
     router.post('/sessions', loginLimiter, route({ body: createSessionRequestSchema }, async ({ body, res }) => {
-        return sendSession(res, 201, await auth.login(body.studentId, body.password))
-    }))
-
-    // リフレッシュトークンを入れ替える(回転させる)。新しいセッションを作るのではないので200
-    router.post('/sessions/refresh', route({}, async ({ req, res }) => {
-        return sendSession(res, 200, await auth.refreshSession(req.cookies.refreshToken))
+        return sendSession(res, await auth.login(body.studentId, body.password))
     }))
 
     router.delete('/sessions/current', route({}, async ({ req, res }) => {
-        await auth.logout(req.cookies.refreshToken)
-        res.clearCookie('refreshToken', refreshCookie)
+        await auth.logout(req.cookies?.[SESSION_COOKIE])
+        res.clearCookie(SESSION_COOKIE, sessionCookie)
         return res.status(204).end()
     }))
 

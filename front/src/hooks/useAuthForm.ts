@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { authService, meService } from "@/services";
+import { authService } from "@/services";
 import { ApiError } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,7 +8,7 @@ type Mode = "login" | "signup-request" | "signup-verify" | "signup-password";
 
 export const useAuthForm = () => {
   const router = useRouter();
-  const { setAuth } = useAuth();
+  const { loadMe } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
@@ -27,10 +27,10 @@ export const useAuthForm = () => {
       setError("");
       try {
         // 失敗は ApiError で来る(成功かどうかはHTTPのステータスで分かる)
-        const response = await authService.login(studentId, password);
+        await authService.login(studentId, password);
 
-        // ログインの応答はSessionUserだけなので、本人の全体(Me)を取ってから入れる
-        setAuth(await meService.getMe(response.accessToken), response.accessToken);
+        // ログインの応答はSessionUserだけなので、Cookieのセッションで本人の全体(Me)を取ってから入れる
+        await loadMe();
         setSuccess("Welcome back.");
         setTimeout(() => router.push("/dashboard"), 1000);
       } catch (err) {
@@ -39,7 +39,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [studentId, password, setAuth, router]
+    [studentId, password, loadMe, router]
   );
 
   const handleRequestVerification = useCallback(
@@ -84,10 +84,10 @@ export const useAuthForm = () => {
       setLoading(true);
       setError("");
       try {
-        const response = await authService.signup(password, registrationToken);
+        await authService.signup(password, registrationToken);
 
-        // ログインの応答はSessionUserだけなので、本人の全体(Me)を取ってから入れる
-        setAuth(await meService.getMe(response.accessToken), response.accessToken);
+        // 登録の応答はSessionUserだけなので、Cookieのセッションで本人の全体(Me)を取ってから入れる
+        await loadMe();
         setSuccess("Account created.");
         setTimeout(() => router.push("/dashboard"), 1000);
       } catch (err) {
@@ -96,7 +96,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [password, registrationToken, setAuth, router]
+    [password, registrationToken, loadMe, router]
   );
 
   return {

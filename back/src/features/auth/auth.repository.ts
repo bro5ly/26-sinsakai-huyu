@@ -2,37 +2,6 @@ import type { PrismaClient } from "@/generated/prisma/client.js";
 
 export class AuthRepository {
     constructor(private readonly db: PrismaClient){}
-    async saveRefreshToken(data: {userId: string, refreshToken: string, expiredAt: Date}){
-        return this.db.refreshToken.upsert({
-            where: {
-                userId: data.userId
-            },
-            update: {
-                token: data.refreshToken,
-                expiresAt: data.expiredAt
-            },
-            create: {
-                userId: data.userId,
-                token: data.refreshToken,
-                expiresAt: data.expiredAt
-            }
-        })
-    }
-
-    async findRefreshToken(refreshToken: string){
-        return this.db.refreshToken.findFirst({
-            where: {token: refreshToken}
-        })
-    }
-
-    // 無いトークン(ログアウト済みなど)でも失敗させない。何度ログアウトしてもよいように
-    async deleteRefreshToken(refreshToken: string){
-        await this.db.refreshToken.deleteMany({
-            where: {token: refreshToken}
-        })
-    }
-    
-
     async saveTmpCode(data: {verificationCode: string, studentId: string,expiredAt: Date}){
         return this.db.verificationCode.create({
             data:{
@@ -54,6 +23,21 @@ export class AuthRepository {
             where:{
                 studentId
             }
+        })
+    }
+
+    // コードが合ったあとに、登録用トークンのハッシュを同じ行に書く。番号そのものは置かない(A8-8)
+    async saveRegistrationToken(data: {studentId: string, tokenHash: string, expiresAt: Date}){
+        await this.db.verificationCode.update({
+            where: {studentId: data.studentId},
+            data: {tokenHash: data.tokenHash, tokenExpiresAt: data.expiresAt},
+        })
+    }
+
+    async findByRegistrationTokenHash(tokenHash: string){
+        return this.db.verificationCode.findUnique({
+            where: {tokenHash},
+            select: {studentId: true, tokenExpiresAt: true},
         })
     }
 }

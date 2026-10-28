@@ -282,7 +282,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   rentals?: Prisma.RentalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-  refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -301,7 +301,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   rentals?: Prisma.RentalOrderByRelationAggregateInput
   notifications?: Prisma.NotificationOrderByRelationAggregateInput
-  refreshTokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
+  sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -323,7 +323,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   rentals?: Prisma.RentalListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-  refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  sessions?: Prisma.SessionListRelationFilter
 }, "id" | "studentId">
 
 export type UserOrderByWithAggregationInput = {
@@ -382,7 +382,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -401,7 +401,7 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -420,7 +420,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -439,7 +439,7 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -583,18 +583,18 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type UserCreateNestedOneWithoutRefreshTokensInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefreshTokensInput
+export type UserCreateNestedOneWithoutSessionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSessionsInput, Prisma.UserUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSessionsInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutRefreshTokensNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefreshTokensInput
-  upsert?: Prisma.UserUpsertWithoutRefreshTokensInput
+export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSessionsInput, Prisma.UserUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSessionsInput
+  upsert?: Prisma.UserUpsertWithoutSessionsInput
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRefreshTokensInput, Prisma.UserUpdateWithoutRefreshTokensInput>, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
 export type UserCreateNestedOneWithoutRentalsInput = {
@@ -625,7 +625,7 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
 }
 
-export type UserCreateWithoutRefreshTokensInput = {
+export type UserCreateWithoutSessionsInput = {
   id?: string
   studentId: string
   passwordHash: string
@@ -643,7 +643,7 @@ export type UserCreateWithoutRefreshTokensInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
-export type UserUncheckedCreateWithoutRefreshTokensInput = {
+export type UserUncheckedCreateWithoutSessionsInput = {
   id?: string
   studentId: string
   passwordHash: string
@@ -661,23 +661,23 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
-export type UserCreateOrConnectWithoutRefreshTokensInput = {
+export type UserCreateOrConnectWithoutSessionsInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSessionsInput, Prisma.UserUncheckedCreateWithoutSessionsInput>
 }
 
-export type UserUpsertWithoutRefreshTokensInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutRefreshTokensInput, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+export type UserUpsertWithoutSessionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSessionsInput, Prisma.UserUncheckedUpdateWithoutSessionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSessionsInput, Prisma.UserUncheckedCreateWithoutSessionsInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutRefreshTokensInput = {
+export type UserUpdateToOneWithWhereWithoutSessionsInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutRefreshTokensInput, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSessionsInput, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
-export type UserUpdateWithoutRefreshTokensInput = {
+export type UserUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -695,7 +695,7 @@ export type UserUpdateWithoutRefreshTokensInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutRefreshTokensInput = {
+export type UserUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   studentId?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -728,7 +728,7 @@ export type UserCreateWithoutRentalsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRentalsInput = {
@@ -746,7 +746,7 @@ export type UserUncheckedCreateWithoutRentalsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRentalsInput = {
@@ -780,7 +780,7 @@ export type UserUpdateWithoutRentalsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRentalsInput = {
@@ -798,7 +798,7 @@ export type UserUncheckedUpdateWithoutRentalsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -816,7 +816,7 @@ export type UserCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -834,7 +834,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -868,7 +868,7 @@ export type UserUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -886,7 +886,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
-  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -897,13 +897,13 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
 export type UserCountOutputType = {
   rentals: number
   notifications: number
-  refreshTokens: number
+  sessions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rentals?: boolean | UserCountOutputTypeCountRentalsArgs
   notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
-  refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
+  sessions?: boolean | UserCountOutputTypeCountSessionsArgs
 }
 
 /**
@@ -933,8 +933,8 @@ export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Ty
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.RefreshTokenWhereInput
+export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SessionWhereInput
 }
 
 
@@ -954,7 +954,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
-  refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1010,7 +1010,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
-  refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1021,7 +1021,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     rentals: Prisma.$RentalPayload<ExtArgs>[]
     notifications: Prisma.$NotificationPayload<ExtArgs>[]
-    refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
+    sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1433,7 +1433,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   rentals<T extends Prisma.User$rentalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rentalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RentalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  refreshTokens<T extends Prisma.User$refreshTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1912,27 +1912,27 @@ export type User$notificationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * User.refreshTokens
+ * User.sessions
  */
-export type User$refreshTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the RefreshToken
+   * Select specific fields to fetch from the Session
    */
-  select?: Prisma.RefreshTokenSelect<ExtArgs> | null
+  select?: Prisma.SessionSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the RefreshToken
+   * Omit specific fields from the Session
    */
-  omit?: Prisma.RefreshTokenOmit<ExtArgs> | null
+  omit?: Prisma.SessionOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.RefreshTokenInclude<ExtArgs> | null
-  where?: Prisma.RefreshTokenWhereInput
-  orderBy?: Prisma.RefreshTokenOrderByWithRelationInput | Prisma.RefreshTokenOrderByWithRelationInput[]
-  cursor?: Prisma.RefreshTokenWhereUniqueInput
+  include?: Prisma.SessionInclude<ExtArgs> | null
+  where?: Prisma.SessionWhereInput
+  orderBy?: Prisma.SessionOrderByWithRelationInput | Prisma.SessionOrderByWithRelationInput[]
+  cursor?: Prisma.SessionWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.RefreshTokenScalarFieldEnum | Prisma.RefreshTokenScalarFieldEnum[]
+  distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
 }
 
 /**

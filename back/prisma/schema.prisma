@@ -36,6 +36,12 @@ enum ItemStatus {
   DISPOSED // 廃棄済み
 }
 
+// セッションをどこで使うか。Webのセッションでタブレットの操作は通らず、その逆も通らない(docs/auth.md R-A18)
+enum SessionKind {
+  WEB // Webサイトのログイン
+  TABLET // タブレットでカード + PINを通した人(0.8のeで使い始める)
+}
+
 // 通知の種類
 enum NotificationType {
   RENTAL_CONFIRMATION // 貸出完了通知
@@ -65,7 +71,7 @@ model User {
 
   rentals       Rental[]
   notifications Notification[]
-  refreshTokens RefreshToken[]
+  sessions      Session[]
 
   @@map("user")
 }
@@ -92,19 +98,26 @@ model VerificationCode {
   code      String
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
+  // コードが合ったあとに渡す登録用トークン。番号そのものは持たず、ハッシュだけを持つ。登録で1回使ったら行ごと消す(docs/auth.md A8-8)
+  tokenHash      String?   @unique @map("token_hash")
+  tokenExpiresAt DateTime? @map("token_expires_at")
 
   @@map("verification_codes")
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+// ログインのセッション。番号そのものは持たず、SHA-256のハッシュだけを持つ(DBが漏れても、そのままは使えない)。
+// 行を消せばすぐに使えなくなる。1人が複数の端末でログインできるように、利用者ごとに何件でも持てる(docs/spec.md Q9)
+model Session {
+  id        String      @id @default(uuid()) @map("UniqueID")
+  tokenHash String      @unique @map("token_hash")
+  userId    String      @map("user_id")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      SessionKind
+  expiresAt DateTime    @map("expires_at")
+  createdAt DateTime    @default(now()) @map("created_at")
 
-  @@map("refresh_tokens")
+  @@index([userId])
+  @@map("session")
 }
 
 model Category {

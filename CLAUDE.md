@@ -26,7 +26,7 @@
 - **APIの成功レスポンスは、`docs/api.md`の新しい形に移す途中**。移したAPI(今は登録・ログインの6本、本人の`/api/me`・`/api/me/rentals`、カタログの`/api/categories`・`/api/item-types`)は包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。まだのAPI(`/api/tablet/*`。0.8で作り直す)は`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される(`data`で包まれない)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
 - **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`shared/src/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
-- トークン: アクセストークン15分(`Authorization: Bearer`)、リフレッシュトークン7日(HttpOnly Cookie`refreshToken`、DBに利用者1人1件)、タブレット用トークン3分。秘密鍵の使い回しなど既知の問題は`docs/spec.md`の「現状とのずれ」
+- 認証: Webはサーバーのセッション(番号をHttpOnly・`SameSite=Strict`のCookie`session`に入れ、DBの`session`にはSHA-256のハッシュだけ。7日で切れる。1人が何件でも持てる)。書き換えのリクエストは`Origin`が画面のURLでないと403 `FORBIDDEN_ORIGIN`。登録用トークン(15分)もDBのハッシュで1回だけ。タブレットだけ、まだ3分のJWT(`Authorization: Bearer`。0.8のeでセッションにする)。仕組みと理由は`docs/auth.md`の2章(2026-10-28 A8-3〜A8-11)
 - `.env`はコミットしない。値をコードやログに書かない
 - 利用者の画面の文言は日本語
 
@@ -43,7 +43,7 @@
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
 
-APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所はリポジトリ直下(workspacesのため)。依存を足すときは`docker compose exec api npm install <名前> -w back`(画面は`web`と`-w front`)で直下のロックファイルを書き換える。依存を足した人がいたら`docker compose up -d --build -V api`(画面なら`web`)で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。**`curl`で確かめる前に、`docker compose logs api`に変えたファイルの「change in … Restarting」が出たことを見る**(Macでは変更の通知が落ち、古いコードのまま動いていたことがある。今はpolling(`CHOKIDAR_USEPOLLING`)で見張っている)。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
+APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所はリポジトリ直下(workspacesのため)。依存を足すときは`docker compose exec api npm install <名前> -w back`(画面は`web`と`-w front`)で直下のロックファイルを書き換える。依存を足した人がいたら`docker compose up -d --build -V api`(画面なら`web`)で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。**`curl`で確かめる前に、`docker compose logs api`に変えたファイルの「change in … Restarting」が出たことを見る**(Macでは変更の通知が落ち、古いコードのまま動いていたことがある。今はpolling(`CHOKIDAR_USEPOLLING`)で見張っている)。`curl`で書き換えのリクエスト(POST・DELETE)を送るときは`-H "Origin: http://localhost:4545"`を付け、ログインの`Set-Cookie`は`-c`/`-b`で受け渡す。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、`/barcodes`で印刷できる)。
 
 ## コーディング規約
 

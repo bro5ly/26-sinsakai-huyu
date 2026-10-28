@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Categories, ItemTypeDetail, ItemTypes } from "@sinsakai/shared";
-import { authMiddleware } from "@/middleware/auth.middleware.js";
+import { createAuthMiddleware } from "@/middleware/auth.middleware.js";
 import { route } from "@/lib/route.js";
 import type { Deps } from "@/deps.js";
 import { CatalogService } from "./catalog.service.js";
@@ -9,6 +9,7 @@ import { CatalogService } from "./catalog.service.js";
 export const createCatalogRoutes = (deps: Deps) => {
     const router = Router();
     const catalog = new CatalogService(deps.catalog);
+    const authMiddleware = createAuthMiddleware(deps.sessions);
 
     router.get("/categories", authMiddleware, route({ auth: true }, async ({ res }) => {
         return res.status(200).json({ items: await catalog.listCategories() } satisfies Categories);

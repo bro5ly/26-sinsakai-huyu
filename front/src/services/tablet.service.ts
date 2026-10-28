@@ -16,7 +16,7 @@ class TabletService extends ApiService {
     return this.post<CheckoutResponse>(
       "/api/tablet/checkout",
       { barcode },
-      { accessToken: token }
+      { bearer: token }
     );
   }
 
@@ -24,7 +24,7 @@ class TabletService extends ApiService {
     return this.post<ReturnResponse>(
       "/api/tablet/return",
       { barcode },
-      { accessToken: token }
+      { bearer: token }
     );
   }
 }
