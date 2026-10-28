@@ -95,7 +95,7 @@
 
 | 誰が | 渡し方 |
 |---|---|
-| Web(学生・管理者) | アクセストークン(15分のJWT)を`Authorization: Bearer`。リフレッシュトークンはHttpOnly Cookie |
+| Web(学生・管理者) | 今: アクセストークン(15分のJWT)を`Authorization: Bearer`。リフレッシュトークンはHttpOnly Cookie。**0.8で、セッションの番号をHttpOnly Cookieで渡す形に変える**(2026-10-28 A8-3。`accessToken`と`POST /api/sessions/refresh`は無くなる見込み。形は0.8のaで決めてこの表と4.1を直す) |
 | タブレットの端末 | 端末の登録の番号をHttpOnly Cookie(`/api/tablet/...`のすべてで確かめる) |
 | タブレットで本人確認した人 | 本人確認のセッションの番号(サーバーに持つ乱数)を`Authorization: Bearer` |
 
@@ -113,7 +113,7 @@
 | `POST /api/sessions` | なし | `{ studentId, password }` | 201 `{ user: SessionUser, accessToken }` + Cookie | 400・401 `INVALID_CREDENTIALS`・429 | UC-2 |
 | `POST /api/sessions/refresh` | Cookie | なし | 200 `{ user: SessionUser, accessToken }` + Cookie | 401 `INVALID_SESSION` | UC-2 |
 | `DELETE /api/sessions/current` | Cookie | なし | 204(Cookieを消し、DBのトークンも消す) | — | UC-3 |
-| `POST /api/password-resets` | なし | `{ token, password }` | 204(その人のリフレッシュトークンを全部消す) | 400・401 `INVALID_TOKEN` | UC-4 |
+| `POST /api/password-resets` | なし | `{ token, password }` | 204(その人のWebのセッションを全部消す) | 400・401 `INVALID_TOKEN` | UC-4 |
 
 ### 4.2 本人(Web)
 
