@@ -100,6 +100,7 @@
   - ログインでは、パスワードの長さを確かめず、空でないことだけを確かめる。長さ(8文字以上)は登録のときだけ。短く打ち間違えた人だけ「入力内容が正しくありません」になり、文言が分かれていたため(2026-10-25 B1-A)
   - 本人(2026-10-25 Me1〜Me4): `GET /api/items/me`を`GET /api/me`(プロフィールと貸し出しの決まり)と`GET /api/me/rentals`(借りている物)に分ける。カードの番号は、0.8で使い捨てのバーコード(`POST /api/me/tablet-codes`)ができるまで`Me.cardNumber`として返し、そのときに外す(Me1。今もダッシュボードのバーコードに使っているため)。画面の`AuthContext`は`Me`だけを持ち、借りている物はダッシュボードがその都度取る(Me2。貸し出すたびに変わるため)。`Rental.itemType`にジャンル`genre: { id, name }`を足す(Me3。ダッシュボードが出している)。返し終わった物の履歴(`?state=all`)は、履歴の画面を作るときに足す(Me4)
   - カタログ(2026-10-28 Ca1〜Ca4): `GET /api/items`を`GET /api/categories`・`GET /api/item-types`・`GET /api/item-types/{id}`にする(ログイン必須。Q11)。詳細の画面のURLは種類の名前ではなくID(`/items/[id]`)にする(Ca1)。どこからもリンクされていない物品の一覧の画面(`/items`)は消す。物品1つ1つの一覧は在庫管理(5)で作る(Ca2)。検索・ジャンル・カテゴリの絞り込みは今は画面でし、種類が増えたら`?categoryId=&genreId=&q=`を足す(Ca3)。全数と詳細の物品の一覧には廃棄済み(`DISPOSED`)を入れない。修理中・紛失は入れて状態で見せる(Ca4)
+  - 詳細の物品の一覧に、バーコードは入れない。画面にバーコードがあると、実物を持たずにタブレットで読めてしまい、棚にある物が「貸出中」と記録されるおそれがあるため。バーコードは実物に貼った物だけから読む(2026-10-28 Ca5-B、開発者の指摘)
 - [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
@@ -158,6 +159,7 @@
 - [ ] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11)
 - [ ] 画面のリントのエラー7件を直す(2026-10-24に見つけた。`npm run lint`が落ちる): `barcodes/page.tsx`・`dashboard/page.tsx`の`useEffect`の中の`setState`、`dashboard/page.tsx`・`contexts/AuthContext.tsx`の`any`、`items/page.tsx`・`components/BarcodeScanner.tsx`の宣言より前に使っている変数。警告も11件ある
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
+- [ ] `/barcodes`(テスト用に全部の物品とカードのバーコードを印刷する画面)は、誰でも開ける。実物を持たずに借りられてしまうので、本番の前に管理者だけにするか消す(2026-10-28、Ca5の話から)
 
 ## 4. フロントの認証
 

@@ -175,6 +175,7 @@ ItemTypeSummary { id, title, genre: { id, name }, category: { id, name }, imageU
 ItemTypeDetail  ItemTypeSummary + { description | null, author | null, publisher | null, isbn | null,
                   manufacturer | null, model | null,
                   items: { id, location | null, state: ItemState }[] }   // 廃棄済みは入れない(Ca4)
+                  // バーコードは入れない。画面に出すと、実物を持たずに借りられてしまう(2026-10-28 Ca5-B)
 ItemState    "AVAILABLE" | "RENTED" | "MAINTENANCE" | "LOST" | "DISPOSED"   // 計算した値。DBの値はそのまま出さない
 Rental       { id, itemType: { id, title, genre: { id, name } }, item: { id, barcode }, rentedAt, dueDate, returnedAt | null,
                state: "RENTING" | "OVERDUE" | "RETURNED" }
