@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @plugin './hero.ts';
-@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+/* npm workspacesでHeroUIはリポジトリ直下のnode_modulesに入る(front/node_modulesには無い)。
+   ここがずれるとHeroUIのスタイルが1つも作られず、入力欄やモーダルが崩れる(2026-10-28) */
+@source '../../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant dark (&:is(.dark *));
 
 @theme {
