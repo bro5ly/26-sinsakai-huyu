@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useItems, useFilteredItems, useItemFilters, useMyRentals } from "@/hooks";
+import { useCatalog, useFilteredItemTypes, useMyRentals } from "@/hooks";
 import {
   Header,
   LoadingSpinner,
@@ -15,7 +15,7 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, logout, accessToken } = useAuth();
-  const { allItems, loading: itemsLoading } = useItems();
+  const { itemTypes, categories: categoryList, loading: itemsLoading } = useCatalog(accessToken);
   const rentals = useMyRentals(accessToken);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -23,13 +23,15 @@ export default function DashboardPage() {
   const [genreFilter, setGenreFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
 
-  const filteredItems = useFilteredItems(
-    allItems,
+  const filteredItems = useFilteredItemTypes(
+    itemTypes,
     searchQuery,
     genreFilter,
     categoryFilter
   );
-  const { categories, genres } = useItemFilters(allItems);
+  // 絞り込みの選択肢は /api/categories から(物品から集めない)
+  const categories = categoryList.map((category) => category.name);
+  const genres = categoryList.flatMap((category) => category.genres.map((genre) => genre.name));
 
   // 初期化フラグを管理
   useEffect(() => {

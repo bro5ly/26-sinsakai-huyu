@@ -1,6 +1,5 @@
 import type { ErrorCode } from "@sinsakai/shared";
 import { User } from "./user.types";
-import { Item } from "./item.types";
 import { Rental } from "./rental.types";
 
 export class ApiError extends Error {
@@ -24,14 +23,6 @@ export interface ApiResponse<T = unknown> {
 
 // 登録・ログインの応答の型は shared/(@sinsakai/shared)の Session・VerificationToken を使う
 
-
-export interface ItemsResponse extends ApiResponse {
-  data: Item[];
-}
-
-export interface ItemDetailResponse extends ApiResponse {
-  data: Item[];
-}
 
 // Tablet API Responses
 export interface TabletSigninResponse extends ApiResponse {
