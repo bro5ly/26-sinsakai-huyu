@@ -131,7 +131,7 @@
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
 | `GET /api/categories` | Bearer | — | 200 `{ items: Category[] }`(ジャンル付き。絞り込みの選択肢) | UC-6 |
-| `GET /api/item-types` | Bearer | `?categoryId=&genreId=&q=` | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
+| `GET /api/item-types` | Bearer | `?categoryId=&genreId=&q=`(今は付けず、画面で絞り込む。種類が増えたら足す。2026-10-28 Ca3) | 200 `{ items: ItemTypeSummary[] }`(貸し出せる数・全数付き) | UC-6 |
 | `GET /api/item-types/{id}` | Bearer | — | 200 `ItemTypeDetail`(物品1つ1つの状態付き) | UC-6 |
 
 ### 4.4 タブレット
@@ -171,10 +171,10 @@ Me           SessionUser + { email, grade | null, major | null,
                borrowing: { canBorrow, maxItems, suspendedUntil | null, activeCount, hasOverdue } }
 Category     { id, name, genres: { id, name }[] }
 ItemTypeSummary { id, title, genre: { id, name }, category: { id, name }, imageUrl | null,
-                  rentalPeriodDays, availableCount, totalCount }
+                  rentalPeriodDays, availableCount, totalCount }   // totalCountに廃棄済みは入れない(2026-10-28 Ca4)
 ItemTypeDetail  ItemTypeSummary + { description | null, author | null, publisher | null, isbn | null,
                   manufacturer | null, model | null,
-                  items: { id, location | null, state: ItemState }[] }
+                  items: { id, location | null, state: ItemState }[] }   // 廃棄済みは入れない(Ca4)
 ItemState    "AVAILABLE" | "RENTED" | "MAINTENANCE" | "LOST" | "DISPOSED"   // 計算した値。DBの値はそのまま出さない
 Rental       { id, itemType: { id, title, genre: { id, name } }, item: { id, barcode }, rentedAt, dueDate, returnedAt | null,
                state: "RENTING" | "OVERDUE" | "RETURNED" }
