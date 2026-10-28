@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cookieParser from 'cookie-parser';
 import { createApiRoutes } from '@/routes/index.js'
 import { errorHandler, notFoundHandler } from '@/middleware/error.middleware.js';
+import { createOriginCheck } from '@/middleware/origin.middleware.js';
 import type { Deps } from '@/deps.js'
 import type { Config } from '@/config.js'
 
@@ -25,6 +26,8 @@ export const createApp = (deps: Deps, config: Config) => {
   // Expressの既定と同じ100kbをはっきり書く。今のAPIは学籍番号やバーコードなどの小さな入力だけ(L1)
   app.use(express.json({ limit: '100kb' }))
   app.use(cookieParser())
+  // 書き換えのリクエストは、画面のURLから来たものだけを通す(CSRFの対策。A8-7)
+  app.use(createOriginCheck(config.frontendUrl))
   app.use('/api', createApiRoutes(deps, config))
 
   // どのrouteにも当てはまらないURLと、すべてのエラー(RFC 9457の形)。必ず最後に置く

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Me, MyRentals } from "@sinsakai/shared";
-import { authMiddleware } from "@/middleware/auth.middleware.js";
+import { createAuthMiddleware } from "@/middleware/auth.middleware.js";
 import { route } from "@/lib/route.js";
 import type { Deps } from "@/deps.js";
 import { MeService } from "./me.service.js";
@@ -18,12 +18,12 @@ const toRental = (rental: RentalView): MyRentals["items"][number] => ({
     returnedAt: rental.returnedAt?.toISOString() ?? null,
 });
 
-// ログイン中の本人(docs/api.md 4.2)。どちらもアクセストークンが要る
+// ログイン中の本人(docs/api.md 4.2)。どちらもWebのセッションが要る
 export const createMeRoutes = (deps: Deps) => {
     const router = Router();
     const me = new MeService(deps.me, deps.roster);
 
-    router.use(authMiddleware);
+    router.use(createAuthMiddleware(deps.sessions));
 
     router.get("/", route({ auth: true }, async ({ user, res }) => {
         return res.status(200).json(toMe(await me.getMe(user.id, new Date())) satisfies Me);

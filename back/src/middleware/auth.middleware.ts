@@ -1,21 +1,21 @@
 import type { RequestHandler } from "express";
-import * as jwtLib from "@/lib/jwt.js";
 import { DomainError } from "@/lib/domain-error.js";
+import { hashToken } from "@/lib/session-token.js";
+import { checkSession } from "@/features/auth/session.check.js";
+import type { SessionStore } from "@/features/auth/auth.service.js";
 
-// Authorization: Bearer <アクセストークン> を確かめ、req.user に入れる
-export const authMiddleware: RequestHandler = (req, _res, next) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
-    if (!token) throw new DomainError("UNAUTHENTICATED");
+// Webのセッションの番号を入れるCookie。付けるとき(auth.routes.ts)と読むときで名前をそろえる
+export const SESSION_COOKIE = "session";
 
-    let decoded: { sub: string; role: string };
-    try {
-        decoded = jwtLib.verifyAccessToken(token) as { sub: string; role: string };
-    } catch {
-        // 期限切れ・改ざん・壊れたトークン。画面はリフレッシュしてやり直す
-        throw new DomainError("UNAUTHENTICATED");
-    }
+// Cookieのセッションの番号を、DBのセッションと照らして確かめ、req.user に入れる(docs/auth.md 2章、A8-3)。
+// 毎回DBを読むので、ログアウト・管理者の取り消し・無効にした人(R-A14)は次のリクエストから止まる
+export const createAuthMiddleware = (sessions: Pick<SessionStore, "findByTokenHash">): RequestHandler => async (req, _res, next) => {
+    const token: unknown = req.cookies?.[SESSION_COOKIE];
+    if (typeof token !== "string" || token === "") throw new DomainError("UNAUTHENTICATED");
 
-    req.user = { id: decoded.sub, role: decoded.role };
+    const result = checkSession(await sessions.findByTokenHash(hashToken(token)), "WEB", new Date());
+    if (!result.ok) throw new DomainError(result.reason);
+
+    req.user = result.user;
     next();
 };

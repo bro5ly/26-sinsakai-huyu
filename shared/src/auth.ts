@@ -53,10 +53,9 @@ export const sessionUserSchema = z.object({
     role: z.enum(["MEMBER", "ADMIN"]),
 });
 
-// POST /api/users・POST /api/sessions(201)・POST /api/sessions/refresh(200)。リフレッシュトークンは本文に入れず、HttpOnly Cookieにだけ入れる
+// POST /api/users・POST /api/sessions(201)。セッションの番号は本文に入れず、HttpOnly Cookieにだけ入れる(JSに渡さない。A8-3)
 export const sessionSchema = z.object({
     user: sessionUserSchema,
-    accessToken: z.string(),
 });
 
 export type VerificationCodeRequest = z.infer<typeof verificationCodeRequestSchema>;

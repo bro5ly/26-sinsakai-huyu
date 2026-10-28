@@ -6,6 +6,8 @@ const userSelect = {
     studentId: true,
     passwordHash: true,
     role: true,
+    // 無効な人はログインさせない(R-A14)
+    isActive: true,
 } as const
 
 export class UserRepository {

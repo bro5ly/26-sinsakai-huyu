@@ -3,52 +3,19 @@ import jwt from 'jsonwebtoken';
 import { DomainError } from './domain-error.js';
 import { getConfig } from '@/config.js';
 
-// 鍵は読み込みの時点ではなく、使うときに設定から取る(読み込みの順番で鍵が空になっていたため)。0.8で用途ごとの鍵に作り直す
-const ACCESS_SECRET = () => getConfig().jwt.accessSecret;
-const REFRESH_SECRET = () => getConfig().jwt.refreshSecret;
-const REGISTRATION_SECRET = () => getConfig().jwt.refreshSecret;
-
-export const signAccessToken = (payload: object) => {
-  return jwt.sign(payload, ACCESS_SECRET(), { expiresIn: '15m' });
-};
-
-export const signRefreshToken = (payload: object) => {
-  return jwt.sign(payload, REFRESH_SECRET(), { expiresIn: '7d' });
-};
-
-export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, ACCESS_SECRET());
-};
-
-export const verifyRefreshToken = (token: string) => {
-  return jwt.verify(token, REFRESH_SECRET());
-};
-
-// 登録用トークンの期限。応答の expiresAt もこれから作る
-export const REGISTRATION_TOKEN_MINUTES = 15;
-
-export const signRegistrationToken = (payload: {studentId: string}) => {
-    return jwt.sign(payload,REGISTRATION_SECRET(),{expiresIn: `${REGISTRATION_TOKEN_MINUTES}m`})
-}
-
-export const verifyRegistrationToken = (token: string) => {
-    try{
-        return jwt.verify(token,REFRESH_SECRET())
-
-    }catch(err){
-        throw new Error('INVALID_OR_EXPIRED_REGISTRATION_TOKEN')
-    }
-}
+// 残っているのはタブレットの今のトークンだけ。Webと登録用はDBの番号にした(docs/backlog.md 0.8 A8-3・A8-8)。
+// タブレットもサーバーのセッションにする(0.8のe)ときに、このファイルごと消す。
+// 鍵は読み込みの時点ではなく、使うときに設定から取る(読み込みの順番で鍵が空になっていたため)
+const TABLET_SECRET = () => getConfig().jwt.accessSecret;
 
 export const signTabletToken = (payload: { sub: string; role: string }) => {
-  return jwt.sign(payload, ACCESS_SECRET(), { expiresIn: '3m' });
+  return jwt.sign(payload, TABLET_SECRET(), { expiresIn: '3m' });
 };
 
-// 検証用（既存の verifyAccessToken を使っても良いですが、名前を分けておくと分かりやすいです）
 // 期限切れは「もう一度カードを読む」、それ以外(改ざん・壊れたトークン)はログインしていない扱い(docs/backlog.md 0.7 H5)
 export const verifyTabletToken = (token: string) => {
   try {
-    return jwt.verify(token, ACCESS_SECRET());
+    return jwt.verify(token, TABLET_SECRET());
   } catch (err) {
     throw new DomainError(err instanceof jwt.TokenExpiredError ? 'SESSION_EXPIRED' : 'UNAUTHENTICATED');
   }
