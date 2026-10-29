@@ -137,8 +137,12 @@
 
 ### 4.4 タブレット
 
+**端末の登録と確かめは2026-10-29に作った**(0.8のd。形は`shared/src/tablet-devices.ts`)。登録は、置くタブレットの上で管理者がその場で学籍番号とパスワードを入れる。管理者のWebのセッションは作らないので、`/api/admin`(Webのセッションのある管理者だけ)の外に置く(D1・D2)。`/api/tablet/`の下は、どれも端末のCookie`device`が要る(無い・取り消し済みは401 `DEVICE_NOT_REGISTERED`。使うたびにCookieを付け直す。D3・D5)。
+
 | メソッドとURL | 認証 | リクエスト | 成功 | おもなエラー | ユースケース |
 |---|---|---|---|---|---|
+| `POST /api/tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }` | 201 `TabletDevice` + Cookie`device`(400日) | 401 `INVALID_CREDENTIALS`・403 `FORBIDDEN`(管理者でない)・400・429 | UC-20 |
+| `GET /api/tablet/device` | 端末 | — | 200 `{ id, name }`(画面が開いたときに確かめる) | 401 `DEVICE_NOT_REGISTERED` | UC-8・UC-20 |
 | `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }` または `{ tabletCode, pin }` | 201 `{ token, expiresAt, user: { displayName }, rentals: Rental[] }` | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429 | UC-8・UC-10 |
 | `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204 | — | UC-8・UC-31 |
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental` | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
@@ -148,11 +152,12 @@ PINのロックは423(Locked)にするか、409にするか(API-Q6)。
 
 ### 4.5 管理者
 
+`/api/admin`の入口で1回だけ、Webのセッションと管理者かを確かめる(ログインしていなければ401、管理者でなければ403 `FORBIDDEN`。2026-10-29 D1)。
+
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
-| `POST /api/admin/tablet-devices` | Web(管理者) | `{ name }` | 201 `TabletDevice`(呼んだタブレットにCookieを入れる) | UC-20 |
-| `GET /api/admin/tablet-devices` | Web(管理者) | — | 200 `{ items: TabletDevice[] }` | UC-20 |
-| `DELETE /api/admin/tablet-devices/{id}` | Web(管理者) | — | 204 | UC-20 |
+| `GET /api/admin/tablet-devices` | Web(管理者) | — | 200 `{ items: TabletDevice[] }`(取り消していない端末だけ) | UC-20 |
+| `DELETE /api/admin/tablet-devices/{id}` | Web(管理者) | — | 204(行は消さず、取り消した日時を入れる。取り消し済みでも204。無ければ404。D4) | UC-20 |
 | 在庫管理(`/api/admin/item-types`・`/api/admin/items`・`/api/admin/rentals`・`/api/admin/users/{id}`) | Web(管理者) | `docs/inventory.md`で決める | | UC-21〜UC-24 |
 
 ### 4.6 そのほか
@@ -236,7 +241,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き) |
 | `POST /api/tablet/checkout` | `POST /api/tablet/rentals` |
 | `POST /api/tablet/return` | `POST /api/tablet/returns` |
-| (無し) | `PUT /api/me/pin`(2026-10-28に作った)・パスワードの再設定・使い捨てのバーコード・タブレットの端末・在庫管理・`/api/health` |
+| (無し) | `PUT /api/me/pin`(2026-10-28に作った)・タブレットの端末(2026-10-29に作った)・パスワードの再設定・使い捨てのバーコード・在庫管理・`/api/health` |
 
 **移り方**: 外部の利用者はいないので、古いURLは残さず、画面とサーバーを同じ変更で移す(API-Q8)。
 
