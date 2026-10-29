@@ -5,7 +5,7 @@ import { cryptoSecrets, hashToken } from "@/lib/session-token.js";
 import { bcryptPasswords } from "@/lib/password.js";
 import type { Roster } from "@/features/roster/roster.js";
 import type { NewSession, SessionRecord, SessionStore } from "@/features/auth/auth.types.js";
-import type { ActiveRentalRecord } from "@/features/me/me.types.js";
+import type { RentalRecord } from "@/features/rentals/rental.types.js";
 import { TabletSessionService } from "./tablet-session.service.js";
 import type { ActiveRentalReader, CardHolderRecord, CardHolderStore, PinAttempt } from "./tablet-session.types.js";
 
@@ -43,7 +43,7 @@ const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession
   ...overrides,
 });
 
-const rental = (dueDate: Date): ActiveRentalRecord => ({
+const rental = (dueDate: Date): RentalRecord => ({
   id: "rental-1",
   rentedAt: new Date(dueDate.getTime() - 7 * day),
   dueDate,
@@ -51,7 +51,7 @@ const rental = (dueDate: Date): ActiveRentalRecord => ({
   item: { id: "item-1" },
   itemType: { id: "type-1", title: "MacBook Pro", genre: { id: "genre-1", name: "ノートパソコン" } },
 });
-const rentals = (items: ActiveRentalRecord[] = []): ActiveRentalReader => ({
+const rentals = (items: RentalRecord[] = []): ActiveRentalReader => ({
   findActiveRentalsByUserId: async () => items,
 });
 

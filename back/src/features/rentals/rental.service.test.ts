@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { notUsed } from "@/test/fake-roster.js";
 import { RentalService } from "./rental.service.js";
-import type { BorrowerRecord, CheckoutItemRecord, RentalRecord, RentalStore } from "./rental.types.js";
+import type {
+  BorrowerRecord,
+  CheckoutItemRecord,
+  NewRental,
+  RentalRecord,
+  RentalReturn,
+  RentalStore,
+} from "./rental.types.js";
 
 const now = new Date("2026-10-29T03:00:00Z");
 const day = 86_400_000;
@@ -19,17 +26,17 @@ const rental = (overrides: Partial<RentalRecord> = {}): RentalRecord => ({
 });
 
 const store = (overrides: Partial<RentalStore> = {}): RentalStore => ({
-  findItemForCheckout: async (barcode) => (barcode === "MAC-002" ? item : null),
-  findBorrower: async (userId) => (userId === "user-1" ? borrower : null),
+  findCheckoutItemByBarcode: async (barcode) => (barcode === "MAC-002" ? item : null),
+  findBorrowerById: async (userId) => (userId === "user-1" ? borrower : null),
   createRental: notUsed,
-  returnByBarcode: notUsed,
+  saveReturnByBarcode: notUsed,
   ...overrides,
 });
 
-type Created = Parameters<RentalStore["createRental"]>[0];
+type Created = NewRental;
 const rentalService = (rentals: RentalStore) => new RentalService({ rentals });
 
-type Returned = Parameters<RentalStore["returnByBarcode"]>[0];
+type Returned = RentalReturn;
 
 describe("checkout(タブレットで借りる)", () => {
   describe("正常系", () => {
@@ -57,7 +64,7 @@ describe("checkout(タブレットで借りる)", () => {
   describe("異常系", () => {
     it("RS2 判断表Cで断られたら、記録せずにその理由で断る(C1・C6など)", async () => {
       const overdue = store({
-        findBorrower: async () => ({ ...borrower, activeDueDates: [new Date(now.getTime() - day)] }),
+        findBorrowerById: async () => ({ ...borrower, activeDueDates: [new Date(now.getTime() - day)] }),
         createRental: notUsed,
       });
 
@@ -71,6 +78,14 @@ describe("checkout(タブレットで借りる)", () => {
         rentalService(overdue).checkout({ userId: "user-1", barcode: "MAC-002", deviceId: "device-1" }, now),
       ).rejects.toMatchObject({ code: "HAS_OVERDUE" });
     });
+
+    it("RS5 同時に借りられて記録がぶつかったら(repositoryが null を返す)、ITEM_ALREADY_RENTED で断る(0.9 D2)", async () => {
+      const service = rentalService(store({ createRental: async () => null }));
+
+      await expect(
+        service.checkout({ userId: "user-1", barcode: "MAC-002", deviceId: "device-1" }, now),
+      ).rejects.toMatchObject({ code: "ITEM_ALREADY_RENTED" });
+    });
   });
 });
 
@@ -79,7 +94,7 @@ describe("returnItem(タブレットで返す)", () => {
     it("RS3 返していない貸し出しがあれば、返却日時と返した端末を付けて返却済みにし、状態付きで返す(R-22・A-Q4・E3)", async () => {
       const returned: Returned[] = [];
       const service = rentalService(
-        store({ returnByBarcode: async (data) => (returned.push(data), rental({ returnedAt: data.returnedAt })) }),
+        store({ saveReturnByBarcode: async (data) => (returned.push(data), rental({ returnedAt: data.returnedAt })) }),
       );
 
       const result = await service.returnItem({ barcode: "MAC-002", deviceId: "device-1" }, now);
@@ -91,7 +106,7 @@ describe("returnItem(タブレットで返す)", () => {
 
   describe("異常系", () => {
     it("RS4 その物品の返していない貸し出しが無ければ、ACTIVE_RENTAL_NOT_FOUND(R-23)", async () => {
-      const service = rentalService(store({ returnByBarcode: async () => null }));
+      const service = rentalService(store({ saveReturnByBarcode: async () => null }));
 
       await expect(service.returnItem({ barcode: "MAC-003", deviceId: "device-1" }, now)).rejects.toMatchObject({
         code: "ACTIVE_RENTAL_NOT_FOUND",

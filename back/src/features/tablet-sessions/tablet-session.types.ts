@@ -1,5 +1,5 @@
 // タブレットの本人確認(カード + PIN)の中の型。Prismaの型はrepositoryの中だけで使う(docs/backlog.md 0.7 T1〜T3、0.9)
-import type { ActiveRentalRecord } from "@/features/me/me.types.js";
+import type { RentalRecord } from "@/features/rentals/rental.types.js";
 
 // カードを持つ人の、このシステムのDBにある分(PINの状態)。名前は名簿から取る
 export interface CardHolderRecord {
@@ -33,5 +33,5 @@ export interface StartedTabletSession {
 
 // 本人確認が通った人の、借りている物(画面に名前・期限・延滞を出す。R-A13)。MeRepository が満たす
 export interface ActiveRentalReader {
-  findActiveRentalsByUserId(userId: string): Promise<ActiveRentalRecord[]>;
+  findActiveRentalsByUserId(userId: string): Promise<RentalRecord[]>;
 }

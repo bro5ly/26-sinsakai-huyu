@@ -1,6 +1,5 @@
-// features/me/me.types.ts
-// 本人の機能の中の型。Prismaの型はrepositoryの中だけで使い、serviceはここの名前の付いた型だけを見る(docs/backlog.md 0.7 T2・T3)
-import type { RentalState } from "@sinsakai/shared";
+// 本人の機能の中の型。Prismaの型はrepositoryの中だけで使い、serviceはここの名前の付いた型だけを見る(docs/backlog.md 0.7 T2・T3、0.9)
+import type { RentalRecord } from "@/features/rentals/rental.types.js";
 
 // このシステムのDBにある本人。名前・メールなどは名簿(Roster)から取る
 export interface MeUserRecord {
@@ -14,24 +13,20 @@ export interface MeUserRecord {
   pin: { registered: boolean; locked: boolean };
 }
 
-export interface ActiveRentalRecord {
-  id: string;
-  rentedAt: Date;
-  dueDate: Date;
-  returnedAt: Date | null;
-  // 物品のバーコードは画面に出さないので読まない(BC1)
-  item: { id: string };
-  itemType: { id: string; title: string; genre: { id: string; name: string } };
+// repositoryに渡す入力(0.9 M3)
+export interface NewPin {
+  userId: string;
+  pinHash: string;
 }
 
 export interface MeStore {
-  findUser(userId: string): Promise<MeUserRecord | null>;
-  // 返却されていない貸し出しを、借りた日の新しい順で
-  findActiveRentalsByUserId(userId: string): Promise<ActiveRentalRecord[]>;
+  findUserById(userId: string): Promise<MeUserRecord | null>;
+  // 返却されていない貸し出しを、借りた日の新しい順で。形は貸し出しと同じ(rental.select.ts。D3)
+  findActiveRentalsByUserId(userId: string): Promise<RentalRecord[]>;
   // PINを変える前に、パスワードを入れ直させて確かめる(P1)
-  findPasswordHash(userId: string): Promise<string | null>;
+  findPasswordHashByUserId(userId: string): Promise<string | null>;
   // PINを保存し、失敗の回数を0に戻してロックを解く(R-A7)
-  savePin(data: { userId: string; pinHash: string }): Promise<void>;
+  savePin(data: NewPin): Promise<void>;
 }
 
 // serviceが返す形。日付は中ではDateのまま持ち、APIの境目(routes)でISOの文字列にする(T5)
@@ -53,5 +48,3 @@ export interface MeView {
   };
   pin: { registered: boolean; locked: boolean };
 }
-
-export type RentalView = ActiveRentalRecord & { state: RentalState };

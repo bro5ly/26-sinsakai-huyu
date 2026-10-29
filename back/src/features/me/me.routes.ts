@@ -13,10 +13,13 @@ const toMe = (me: MeView): Me => ({
   ...me,
   borrowing: { ...me.borrowing, suspendedUntil: me.borrowing.suspendedUntil?.toISOString() ?? null },
 });
-// ログイン中の本人(docs/api.md 4.2)。どちらもWebのセッションが要る
-export const createMeRoutes = (deps: Deps) => {
+export const createMeService = (deps: Deps): MeService =>
+  new MeService({ me: deps.me, roster: deps.roster, passwords: deps.passwords });
+
+// ログイン中の本人(docs/api.md 4.2)。どれもWebのセッションが要る
+export const createMeRoutes = (deps: Deps): Router => {
   const router = Router();
-  const me = new MeService(deps.me, deps.roster);
+  const me = createMeService(deps);
 
   router.use(createAuthMiddleware(deps.sessions));
 
@@ -41,7 +44,7 @@ export const createMeRoutes = (deps: Deps) => {
     "/pin",
     createPasswordFailureLimiter(),
     route({ auth: true, body: setPinRequestSchema }, async ({ user, body, res }) => {
-      await me.setPin(user.id, body);
+      await me.setPin({ userId: user.id, pin: body.pin, password: body.password });
       return res.status(204).end();
     }),
   );

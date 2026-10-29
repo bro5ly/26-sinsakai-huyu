@@ -275,7 +275,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
       findItemType: async (id) => (id === macbookType.id ? macbookType : null),
     },
     me: {
-      findUser: async (userId) =>
+      findUserById: async (userId) =>
         userId === "user-1"
           ? {
               id: "user-1",
@@ -297,18 +297,18 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
         },
       ],
-      findPasswordHash: async (userId) => (userId === "user-1" ? passwordHash : null),
+      findPasswordHashByUserId: async (userId) => (userId === "user-1" ? passwordHash : null),
       savePin: async (data) => {
         savedPins.push(data);
       },
     },
     // MAC-002 は貸し出せる。MAC-001 は山田さんが借りている(返却の確かめ用)
     rentals: {
-      findItemForCheckout: async (barcode) =>
+      findCheckoutItemByBarcode: async (barcode) =>
         barcode === "MAC-002"
           ? { id: "item-2", status: "AVAILABLE", hasActiveRental: false, rentalPeriodDays: 7 }
           : null,
-      findBorrower: async (userId) =>
+      findBorrowerById: async (userId) =>
         userId === "user-1" ? { canBorrow: true, maxItems: 3, suspendedUntil: null, activeDueDates: [] } : null,
       createRental: async (data) => {
         rentalWrites.push({ kind: "rent", deviceId: data.deviceId });
@@ -320,7 +320,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           itemType: rentalItemType,
         };
       },
-      returnByBarcode: async (data) => {
+      saveReturnByBarcode: async (data) => {
         if (data.barcode !== "MAC-001") return null;
         rentalWrites.push({ kind: "return", deviceId: data.deviceId });
         return { ...rental, returnedAt: data.returnedAt, item: { id: "item-1" }, itemType: rentalItemType };
@@ -1112,10 +1112,10 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
       // DBに触れたらテストが落ちるようにして、ミドルウェアで止まることを見る
       const { app } = fakeDeps({
         rentals: {
-          findItemForCheckout: notUsed,
-          findBorrower: notUsed,
+          findCheckoutItemByBarcode: notUsed,
+          findBorrowerById: notUsed,
           createRental: notUsed,
-          returnByBarcode: notUsed,
+          saveReturnByBarcode: notUsed,
         },
       });
 
@@ -1137,20 +1137,20 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
     it("H69 延滞がある人なら、409 HAS_OVERDUEを返す(C6。判断表Cの細かい場合分けは rental.check.test.ts)", async () => {
       const { app } = fakeDeps({
         rentals: {
-          findItemForCheckout: async () => ({
+          findCheckoutItemByBarcode: async () => ({
             id: "item-2",
             status: "AVAILABLE",
             hasActiveRental: false,
             rentalPeriodDays: 7,
           }),
-          findBorrower: async () => ({
+          findBorrowerById: async () => ({
             canBorrow: true,
             maxItems: 3,
             suspendedUntil: null,
             activeDueDates: [new Date("2000-01-01")],
           }),
           createRental: notUsed,
-          returnByBarcode: notUsed,
+          saveReturnByBarcode: notUsed,
         },
       });
 

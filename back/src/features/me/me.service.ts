@@ -1,15 +1,21 @@
-import bcrypt from "bcrypt";
 import { DomainError } from "@/lib/domain-error.js";
 import type { Roster } from "@/features/roster/roster.js";
 import { rentalStatus } from "@/features/rentals/rental.status.js";
-import type { MeStore, MeUserRecord, MeView, RentalView } from "./me.types.js";
+import type { RentalView } from "@/features/rentals/rental.types.js";
+import type { PasswordHasher } from "@/lib/password.js";
+import type { MeStore, MeUserRecord, MeView } from "./me.types.js";
 
 // ログイン中の本人の情報(docs/api.md 4.2)。「今」は外から渡し、延滞の境目をテストできるようにする
 export class MeService {
-  constructor(
-    private readonly store: MeStore,
-    private readonly roster: Roster,
-  ) {}
+  private readonly me: MeStore;
+  private readonly roster: Roster;
+  private readonly passwords: PasswordHasher;
+
+  constructor(parts: { me: MeStore; roster: Roster; passwords: PasswordHasher }) {
+    this.me = parts.me;
+    this.roster = parts.roster;
+    this.passwords = parts.passwords;
+  }
 
   async getMe(userId: string, now: Date): Promise<MeView> {
     const user = await this.findUser(userId);
@@ -17,7 +23,7 @@ export class MeService {
     const entry = await this.roster.findByStudentId(user.studentId);
     if (!entry) throw new DomainError("UNAUTHENTICATED");
 
-    const rentals = await this.store.findActiveRentalsByUserId(user.id);
+    const rentals = await this.me.findActiveRentalsByUserId(user.id);
     return {
       id: user.id,
       name: entry.name,
@@ -40,24 +46,26 @@ export class MeService {
 
   async getMyRentals(userId: string, now: Date): Promise<RentalView[]> {
     const user = await this.findUser(userId);
-    const rentals = await this.store.findActiveRentalsByUserId(user.id);
+    const rentals = await this.me.findActiveRentalsByUserId(user.id);
     return rentals.map((rental) => ({ ...rental, state: rentalStatus(rental, now) }));
   }
 
   // PINは本人だと示すものなので、変える前にパスワードで本人を確かめ直す(共用のPCでログインしたまま離れた人のPINを、他人が変えられないように。P1)。
   // 推測しやすいPIN・4桁でないPINは、入力の検証(shared/src/me.ts)で先に断っている
-  async setPin(userId: string, input: { pin: string; password: string }): Promise<void> {
-    const passwordHash = await this.store.findPasswordHash(userId);
+  async setPin(input: { userId: string; pin: string; password: string }): Promise<void> {
+    const passwordHash = await this.me.findPasswordHashByUserId(input.userId);
     if (!passwordHash) throw new DomainError("UNAUTHENTICATED");
-    if (!(await bcrypt.compare(input.password, passwordHash))) throw new DomainError("WRONG_PASSWORD");
+    if (!(await this.passwords.matches({ plain: input.password, hash: passwordHash }))) {
+      throw new DomainError("WRONG_PASSWORD");
+    }
 
     // 4桁は1万通りしかなく、DBが漏れればハッシュから総当たりで分かる。守りはタブレットでのロックと端末の登録(docs/auth.md R-A5)
-    await this.store.savePin({ userId, pinHash: await bcrypt.hash(input.pin, 10) });
+    await this.me.savePin({ userId: input.userId, pinHash: await this.passwords.hash(input.pin) });
   }
 
   // トークンは正しくても、利用者が消されていることがある
   private async findUser(userId: string): Promise<MeUserRecord> {
-    const user = await this.store.findUser(userId);
+    const user = await this.me.findUserById(userId);
     if (!user) throw new DomainError("UNAUTHENTICATED");
     return user;
   }
