@@ -28,5 +28,5 @@ export interface RegisteredDevice {
 
 // 学籍番号とパスワードで本人を確かめる(AuthService.verifyCredentials)。登録の場で管理者を確かめるのに使う(D2)
 export interface CredentialVerifier {
-    verifyCredentials(studentId: string, password: string): Promise<{ user: UserRecord }>;
+    verifyCredentials(studentId: string, password: string, now: Date): Promise<{ user: UserRecord }>;
 }

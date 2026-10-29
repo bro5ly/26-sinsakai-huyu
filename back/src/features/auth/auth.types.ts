@@ -9,14 +9,20 @@ export interface UserRecord {
     passwordHash: string;
     role: "MEMBER" | "ADMIN";
     isActive: boolean;
+    // 続けて間違えた回数と、いつまで止めるか(F1)
+    loginFailedAttempts: number;
+    loginLockedUntil: Date | null;
 }
 
 // 登録の認証コード。コードが合ったら、同じ行に登録用トークンのハッシュを書く(A8-8)
 export interface CodeRecord {
     studentId: string;
-    code: string;
+    // コードそのものは持たず、ハッシュだけ(docs/auth.md 4.6)
+    codeHash: string;
     expiresAt: Date;
     tokenHash: string | null;
+    // このコードで間違えた回数(R-8)
+    attempts: number;
 }
 
 export interface RegistrationTokenRecord {
@@ -39,10 +45,13 @@ export interface UserStore {
     create(data: { studentId: string; passwordHash: string }): Promise<UserRecord>;
     findById(userId: string): Promise<UserRecord | null>;
     findByStudentId(studentId: string): Promise<UserRecord | null>;
+    saveLoginAttempt(data: { userId: string; failedAttempts: number; lockedUntil: Date | null }): Promise<void>;
 }
 
 export interface CodeStore {
-    saveTmpCode(data: { studentId: string; code: string; expiresAt: Date }): Promise<void>;
+    // 申請し直したら、前のコード・間違えた回数・登録用トークンを消して置き換える(R-5)
+    saveTmpCode(data: { studentId: string; codeHash: string; expiresAt: Date }): Promise<void>;
+    saveCodeAttempts(data: { studentId: string; attempts: number }): Promise<void>;
     checkTmpCode(studentId: string): Promise<CodeRecord | null>;
     deleteTmpCode(studentId: string): Promise<void>;
     saveRegistrationToken(data: { studentId: string; tokenHash: string; expiresAt: Date }): Promise<void>;

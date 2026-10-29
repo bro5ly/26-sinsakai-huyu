@@ -23,8 +23,8 @@ beforeAll(async () => {
 
 const yamada = rosterEntry({ studentId: "20240001", name: "山田 太郎", email: "yamada@example.com", serialNumber: "IC-CARD-001", grade: "2年", major: "情報工学科" });
 const newcomer = rosterEntry({ studentId: "20260001", name: "テスト 太郎", email: "taro@example.com", serialNumber: "SN-001" });
-const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const, isActive: true });
-const adminUser = () => ({ id: "admin-1", studentId: "90240001", passwordHash, role: "ADMIN" as const, isActive: true });
+const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const, isActive: true, loginFailedAttempts: 0, loginLockedUntil: null });
+const adminUser = () => ({ ...registered(), id: "admin-1", studentId: "90240001", role: "ADMIN" as const });
 const takahashi = rosterEntry({ studentId: "90240001", name: "高橋 先生", email: "admin@example.com", serialNumber: "IC-CARD-ADMIN", userType: "FACULTY" });
 
 // カタログの種類。使える物が1つ、貸出中が1つ、廃棄済みが1つ
@@ -98,10 +98,12 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
             findById: async (id) => (id === "user-1" ? registered() : null),
             findByStudentId: async (studentId) => (studentId === "20240001" ? registered() : studentId === "90240001" ? adminUser() : null),
+            saveLoginAttempt: async () => undefined,
         },
         auth: {
             saveTmpCode: async () => undefined as never,
-            checkTmpCode: async () => ({ code: "123456", expiresAt: new Date("2099-01-01"), tokenHash: null }) as never,
+            saveCodeAttempts: async () => undefined,
+            checkTmpCode: async () => ({ studentId: "20260001", codeHash: hashToken("123456"), expiresAt: new Date("2099-01-01"), tokenHash: null, attempts: 0 }),
             deleteTmpCode: async () => undefined as never,
             saveRegistrationToken: async () => undefined,
             findByRegistrationTokenHash: async (hash) => (hash === hashToken(REGISTRATION_TOKEN) ? { studentId: "20260001", tokenExpiresAt: new Date("2099-01-01") } : null),
