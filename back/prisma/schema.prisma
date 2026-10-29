@@ -78,6 +78,8 @@ model User {
   rentals       Rental[]
   notifications Notification[]
   sessions      Session[]
+  // この人が登録したタブレットの端末
+  registeredTabletDevices TabletDevice[]
 
   @@map("user")
 }
@@ -237,4 +239,21 @@ model Notification {
   user   User    @relation(fields: [userId], references: [id])
 
   @@map("notification")
+}
+
+// 貸し出しを受け付けるタブレットの端末(docs/auth.md R-A1〜A3)。名前は管理者が付ける(例: 図書室入口)。
+// 番号そのものは端末のCookieにだけ置き、ここにはSHA-256のハッシュだけを持つ。
+// 取り消しても行は消さない(返却を受け付けた端末を、貸し出しの記録から指すため。D4)
+model TabletDevice {
+  id             String    @id @default(uuid()) @map("UniqueID")
+  name           String
+  tokenHash      String    @unique @map("token_hash")
+  registeredById String    @map("registered_by_id")
+  registeredBy   User      @relation(fields: [registeredById], references: [id])
+  createdAt      DateTime  @default(now()) @map("created_at")
+  lastUsedAt     DateTime? @map("last_used_at")
+  // 取り消した日時。あれば、次の呼び出しから断る(R-A3)
+  revokedAt      DateTime? @map("revoked_at")
+
+  @@map("tablet_device")
 }

@@ -94,3 +94,8 @@ export type Rental = Prisma.RentalModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model TabletDevice
+ * 
+ */
+export type TabletDevice = Prisma.TabletDeviceModel
