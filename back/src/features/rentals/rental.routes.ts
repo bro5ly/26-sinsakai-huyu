@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { RentalService } from "./rental.service.js";
-import { rentalSchema } from "./rental.schema.js";
 import { createTabletSessionMiddleware } from "@/middleware/tablet.auth.middleware.js";
 import { TabletSessionService } from "@/features/tablet-sessions/tablet-session.service.js";
 import { route } from "@/lib/route.js";
@@ -11,6 +10,7 @@ import { createDeviceAttemptLimiter } from "@/lib/rate-limit.js";
 import { createTabletDeviceService } from "@/features/tablet-devices/tablet-device.routes.js";
 import {
   createTabletSessionRequestSchema,
+  tabletItemRequestSchema,
   type CurrentTabletDevice,
   type Rental,
   type TabletSession,
@@ -66,7 +66,7 @@ export const createTabletRoutes = (deps: Deps, config: Config) => {
   router.post(
     "/rentals",
     tabletMiddleware,
-    route({ body: rentalSchema.itemAction, auth: true }, async ({ req, body, user, res }) => {
+    route({ body: tabletItemRequestSchema, auth: true }, async ({ req, body, user, res }) => {
       const device = req.device;
       if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない");
       const rental = await rentals.checkout(
@@ -80,7 +80,7 @@ export const createTabletRoutes = (deps: Deps, config: Config) => {
   // 返却は、登録された端末であれば、カードもPINも要らない(返すのは本人でなくてよい。A-Q4・E7)。返した端末を記録する(E3)
   router.post(
     "/returns",
-    route({ body: rentalSchema.itemAction }, async ({ req, body, res }) => {
+    route({ body: tabletItemRequestSchema }, async ({ req, body, res }) => {
       const device = req.device;
       if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない");
       const rental = await rentals.returnItem({ barcode: body.barcode, deviceId: device.id }, new Date());
