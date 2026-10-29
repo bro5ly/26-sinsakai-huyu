@@ -22,7 +22,7 @@ const SESSION_COOKIE_MAX_AGE = WEB_SESSION_DAYS * 24 * 60 * 60 * 1000;
 export const createAuthService = (deps: Deps) =>
   new AuthService({
     users: deps.users,
-    codes: deps.auth,
+    verificationCodes: deps.verificationCodes,
     sessions: deps.sessions,
     mailer: deps.mailer,
     roster: deps.roster,
@@ -64,7 +64,7 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
   router.post(
     "/verification-tokens",
     route({ body: verificationTokenRequestSchema }, async ({ body, res }) => {
-      const data = await auth.verifyCode(body.studentId, body.code, new Date());
+      const data = await auth.verifyCode({ studentId: body.studentId, code: body.code }, new Date());
       // 日付は中ではDate、APIの境目でISOの文字列にする(T5)
       return res
         .status(201)
@@ -75,7 +75,7 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
   router.post(
     "/users",
     route({ body: createUserRequestSchema }, async ({ body, res }) => {
-      return sendSession(res, await auth.signUp(body.password, body.token, new Date()));
+      return sendSession(res, await auth.signUp({ token: body.token, password: body.password }, new Date()));
     }),
   );
 
@@ -83,7 +83,7 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
     "/sessions",
     loginLimiter,
     route({ body: createSessionRequestSchema }, async ({ body, res }) => {
-      return sendSession(res, await auth.login(body.studentId, body.password, new Date()));
+      return sendSession(res, await auth.login({ studentId: body.studentId, password: body.password }, new Date()));
     }),
   );
 

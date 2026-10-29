@@ -1,5 +1,4 @@
-// features/auth/auth.types.ts
-// 認証の機能の中の型。Prismaの型はrepositoryの中だけで使い、serviceはここの名前の付いた型だけを見る(docs/backlog.md 0.7 T1〜T3、0.8 R8)
+// 認証の機能の中の型。Prismaの型はrepositoryの中だけで使い、serviceはここの名前の付いた型だけを見る(docs/backlog.md 0.7 T1〜T3、0.9)
 import type { SessionUser } from "@sinsakai/shared";
 
 // このシステムのDBにある利用者。名前・メールなどは名簿(Roster)から取る
@@ -15,7 +14,7 @@ export interface UserRecord {
 }
 
 // 登録の認証コード。コードが合ったら、同じ行に登録用トークンのハッシュを書く(A8-8)
-export interface CodeRecord {
+export interface VerificationCodeRecord {
   studentId: string;
   // コードそのものは持たず、ハッシュだけ(docs/auth.md 4.6)
   codeHash: string;
@@ -41,52 +40,69 @@ export interface SessionRecord {
   user: { id: string; role: "MEMBER" | "ADMIN"; isActive: boolean };
 }
 
-export interface UserStore {
-  create(data: { studentId: string; passwordHash: string }): Promise<UserRecord>;
-  findById(userId: string): Promise<UserRecord | null>;
-  findByStudentId(studentId: string): Promise<UserRecord | null>;
-  saveLoginAttempt(data: { userId: string; failedAttempts: number; lockedUntil: Date | null }): Promise<void>;
+// repositoryに渡す入力。インターフェースとrepositoryの両方がこの名前を使う(0.9 M3)
+export interface NewUser {
+  studentId: string;
+  passwordHash: string;
 }
 
-export interface CodeStore {
+export interface LoginAttempt {
+  userId: string;
+  failedAttempts: number;
+  lockedUntil: Date | null;
+}
+
+export interface NewVerificationCode {
+  studentId: string;
+  codeHash: string;
+  expiresAt: Date;
+}
+
+export interface VerificationCodeAttempts {
+  studentId: string;
+  attempts: number;
+}
+
+export interface NewRegistrationToken {
+  studentId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}
+
+export interface NewSession {
+  tokenHash: string;
+  userId: string;
+  kind: SessionRecord["kind"];
+  expiresAt: Date;
+  // タブレットのセッションだけ: 作った端末(R-A8)
+  deviceId?: string;
+}
+
+export interface UserStore {
+  createUser(data: NewUser): Promise<UserRecord>;
+  findUserById(userId: string): Promise<UserRecord | null>;
+  findUserByStudentId(studentId: string): Promise<UserRecord | null>;
+  saveLoginAttempt(data: LoginAttempt): Promise<void>;
+}
+
+export interface VerificationCodeStore {
   // 申請し直したら、前のコード・間違えた回数・登録用トークンを消して置き換える(R-5)
-  saveTmpCode(data: { studentId: string; codeHash: string; expiresAt: Date }): Promise<void>;
-  saveCodeAttempts(data: { studentId: string; attempts: number }): Promise<void>;
-  checkTmpCode(studentId: string): Promise<CodeRecord | null>;
-  deleteTmpCode(studentId: string): Promise<void>;
-  saveRegistrationToken(data: { studentId: string; tokenHash: string; expiresAt: Date }): Promise<void>;
-  findByRegistrationTokenHash(tokenHash: string): Promise<RegistrationTokenRecord | null>;
+  saveCode(data: NewVerificationCode): Promise<void>;
+  saveCodeAttempts(data: VerificationCodeAttempts): Promise<void>;
+  findCodeByStudentId(studentId: string): Promise<VerificationCodeRecord | null>;
+  // 無い行でも失敗させない(同時に2回間違えて、2つとも消しに来ることがあるため)
+  deleteCodeByStudentId(studentId: string): Promise<void>;
+  saveRegistrationToken(data: NewRegistrationToken): Promise<void>;
+  findRegistrationTokenByHash(tokenHash: string): Promise<RegistrationTokenRecord | null>;
 }
 
 export interface SessionStore {
-  create(data: {
-    tokenHash: string;
-    userId: string;
-    kind: SessionRecord["kind"];
-    expiresAt: Date;
-    deviceId?: string;
-  }): Promise<void>;
-  findByTokenHash(tokenHash: string): Promise<SessionRecord | null>;
+  createSession(data: NewSession): Promise<void>;
+  findSessionByTokenHash(tokenHash: string): Promise<SessionRecord | null>;
   // タブレットのセッションを使うたびに、最後に使った日時を書き換える(無操作30秒を数えるため)
-  touch(tokenHash: string, now: Date): Promise<void>;
+  saveSessionLastUsedAt(tokenHash: string, now: Date): Promise<void>;
   // 無い番号(ログアウト済みなど)でも失敗させない。何度ログアウトしてもよいように
-  deleteByTokenHash(tokenHash: string): Promise<void>;
-}
-
-// パスワードのハッシュ(本物は lib/password.ts のbcrypt)
-export interface PasswordHasher {
-  hash(plain: string): Promise<string>;
-  matches(plain: string, hash: string): Promise<boolean>;
-}
-
-// 推測できない値を作る(本物は lib/session-token.ts)。テストでは決まった値を返せる
-export interface SecretSource {
-  newCode(): string;
-  newToken(): string;
-}
-
-export interface Mailer {
-  sendCode(email: string, code: string): Promise<void>;
+  deleteSessionByTokenHash(tokenHash: string): Promise<void>;
 }
 
 export interface AuthResult {

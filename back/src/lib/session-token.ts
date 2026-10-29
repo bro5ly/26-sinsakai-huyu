@@ -7,6 +7,14 @@ export const newToken = (): string => randomBytes(32).toString("base64url");
 // 認証コード(6桁の数字。R-4)。Math.randomは推測されうるので、暗号用の乱数で作る。人が打つので短く、そのぶん回数で守る(docs/auth.md 4.6)
 export const newCode = (): string => randomInt(0, 1_000_000).toString().padStart(6, "0");
 
+// 推測できない値を作る部品。serviceは buildDeps() から受け取る(テストでは決まった値を返せる。docs/backlog.md 0.9 D1)
+export interface SecretSource {
+  newCode(): string;
+  newToken(): string;
+}
+
+export const cryptoSecrets: SecretSource = { newCode, newToken };
+
 // DBには番号そのものではなく、これだけを置く(DBが漏れても、そのままは使えない)
 export const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 

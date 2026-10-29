@@ -13,7 +13,10 @@ export class TabletDeviceService {
   // 置くタブレットの上で、管理者がその場で学籍番号とパスワードを入れて登録する。
   // Webのセッションは作らない(公共の場のタブレットに、管理者のログインを残さないため。D2)
   async register(input: { studentId: string; password: string; name: string }, now: Date): Promise<RegisteredDevice> {
-    const { user } = await this.credentials.verifyCredentials(input.studentId, input.password, now);
+    const { user } = await this.credentials.verifyCredentials(
+      { studentId: input.studentId, password: input.password },
+      now,
+    );
     if (user.role !== "ADMIN") throw new DomainError("FORBIDDEN");
 
     // 番号そのものは端末のCookieにだけ置き、DBにはハッシュだけを置く(A8-5)

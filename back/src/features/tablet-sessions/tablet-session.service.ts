@@ -42,7 +42,7 @@ export class TabletSessionService {
 
     const token = newToken();
     const expiresAt = new Date(now.getTime() + TABLET_SESSION_MS);
-    await this.sessions.create({
+    await this.sessions.createSession({
       tokenHash: hashToken(token),
       userId: check.holder.id,
       kind: "TABLET",
@@ -71,14 +71,14 @@ export class TabletSessionService {
   ): Promise<{ id: string; role: "MEMBER" | "ADMIN" }> {
     if (!token) throw new DomainError("UNAUTHENTICATED");
     const tokenHash = hashToken(token);
-    const result = checkTabletSession(await this.sessions.findByTokenHash(tokenHash), deviceId, now);
+    const result = checkTabletSession(await this.sessions.findSessionByTokenHash(tokenHash), deviceId, now);
     if (!result.ok) throw new DomainError(result.reason);
-    await this.sessions.touch(tokenHash, now);
+    await this.sessions.saveSessionLastUsedAt(tokenHash, now);
     return result.user;
   }
 
   // 「終わる」・完了の表示から10秒で、すぐ無効にする(立ち去った人の名前で次の人が借りられないように。R-A10)
   async end(token: string): Promise<void> {
-    await this.sessions.deleteByTokenHash(hashToken(token));
+    await this.sessions.deleteSessionByTokenHash(hashToken(token));
   }
 }

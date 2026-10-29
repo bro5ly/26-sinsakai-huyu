@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import { hashToken } from "@/lib/session-token.js";
-import type { SessionRecord, SessionStore } from "@/features/auth/auth.types.js";
+import type { NewSession, SessionRecord, SessionStore } from "@/features/auth/auth.types.js";
 import type { ActiveRentalRecord } from "@/features/me/me.types.js";
 import { TabletSessionService } from "./tablet-session.service.js";
 import type { ActiveRentalReader, CardHolderRecord, CardHolderStore } from "./tablet-session.types.js";
@@ -32,12 +32,12 @@ const holders = (record: CardHolderRecord | null, attempts: Attempt[] = []): Car
   savePinAttempt: async (data) => void attempts.push(data),
 });
 
-type CreatedSession = Parameters<SessionStore["create"]>[0];
+type CreatedSession = NewSession;
 const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession[] = []): SessionStore => ({
-  create: async (data) => void created.push(data),
-  findByTokenHash: notUsed,
-  touch: notUsed,
-  deleteByTokenHash: notUsed,
+  createSession: async (data) => void created.push(data),
+  findSessionByTokenHash: notUsed,
+  saveSessionLastUsedAt: notUsed,
+  deleteSessionByTokenHash: notUsed,
   ...overrides,
 });
 
@@ -117,7 +117,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder()),
-        sessions({ create: notUsed }),
+        sessions({ createSession: notUsed }),
         rentals(),
       );
 
@@ -128,7 +128,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder({ pinHash: null })),
-        sessions({ create: notUsed }),
+        sessions({ createSession: notUsed }),
         rentals(),
       );
 
@@ -139,7 +139,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder({ pinLockedAt: now })),
-        sessions({ create: notUsed }),
+        sessions({ createSession: notUsed }),
         rentals(),
       );
 
@@ -151,7 +151,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder({ pinFailedAttempts: 1 }), attempts),
-        sessions({ create: notUsed }),
+        sessions({ createSession: notUsed }),
         rentals(),
       );
 
@@ -166,7 +166,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder({ pinFailedAttempts: 4 }), attempts),
-        sessions({ create: notUsed }),
+        sessions({ createSession: notUsed }),
         rentals(),
       );
 
@@ -194,8 +194,8 @@ describe("authenticate・end(タブレットのセッションを確かめる・
         new FakeRoster([suzuki]),
         holders(holder()),
         sessions({
-          findByTokenHash: async (hash) => (hash === hashToken("t-1") ? tabletSession() : null),
-          touch: async (hash, at) => void touched.push([hash, at]),
+          findSessionByTokenHash: async (hash) => (hash === hashToken("t-1") ? tabletSession() : null),
+          saveSessionLastUsedAt: async (hash, at) => void touched.push([hash, at]),
         }),
         rentals(),
       );
@@ -209,7 +209,7 @@ describe("authenticate・end(タブレットのセッションを確かめる・
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder()),
-        sessions({ deleteByTokenHash: async (hash) => void deleted.push(hash) }),
+        sessions({ deleteSessionByTokenHash: async (hash) => void deleted.push(hash) }),
         rentals(),
       );
 
@@ -230,7 +230,9 @@ describe("authenticate・end(タブレットのセッションを確かめる・
       const service = new TabletSessionService(
         new FakeRoster([suzuki]),
         holders(holder()),
-        sessions({ findByTokenHash: async () => tabletSession({ lastUsedAt: new Date(now.getTime() - 31_000) }) }),
+        sessions({
+          findSessionByTokenHash: async () => tabletSession({ lastUsedAt: new Date(now.getTime() - 31_000) }),
+        }),
         rentals(),
       );
 

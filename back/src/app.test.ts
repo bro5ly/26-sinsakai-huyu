@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
-import { hashToken, newCode, newToken } from "@/lib/session-token.js";
+import { cryptoSecrets, hashToken } from "@/lib/session-token.js";
 import { bcryptPasswords } from "@/lib/password.js";
 import { PASSWORD_FAILURE_LIMIT } from "@/lib/rate-limit.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
@@ -216,31 +216,31 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
   const deviceById = (id: string) => [...devices.values()].find((d) => d.id === id) ?? null;
   const deps: Deps = {
     users: {
-      create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
-      findById: async (id) => (id === "user-1" ? registered() : null),
-      findByStudentId: async (studentId) =>
+      createUser: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
+      findUserById: async (id) => (id === "user-1" ? registered() : null),
+      findUserByStudentId: async (studentId) =>
         studentId === "20240001" ? registered() : studentId === "90240001" ? adminUser() : null,
       saveLoginAttempt: async () => undefined,
     },
-    auth: {
-      saveTmpCode: async () => undefined as never,
+    verificationCodes: {
+      saveCode: async () => undefined as never,
       saveCodeAttempts: async () => undefined,
-      checkTmpCode: async () => ({
+      findCodeByStudentId: async () => ({
         studentId: "20260001",
         codeHash: hashToken("123456"),
         expiresAt: new Date("2099-01-01"),
         tokenHash: null,
         attempts: 0,
       }),
-      deleteTmpCode: async () => undefined as never,
+      deleteCodeByStudentId: async () => undefined as never,
       saveRegistrationToken: async () => undefined,
-      findByRegistrationTokenHash: async (hash) =>
+      findRegistrationTokenByHash: async (hash) =>
         hash === hashToken(REGISTRATION_TOKEN)
           ? { studentId: "20260001", tokenExpiresAt: new Date("2099-01-01") }
           : null,
     },
     sessions: {
-      create: async ({ tokenHash, userId, kind, expiresAt, deviceId }) => {
+      createSession: async ({ tokenHash, userId, kind, expiresAt, deviceId }) => {
         sessions.set(tokenHash, {
           kind,
           expiresAt,
@@ -250,18 +250,18 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           user: { ...member, id: userId },
         });
       },
-      touch: async (hash, now) => {
+      saveSessionLastUsedAt: async (hash, now) => {
         const session = sessions.get(hash);
         if (session) session.lastUsedAt = now;
       },
-      findByTokenHash: async (hash) => sessions.get(hash) ?? null,
-      deleteByTokenHash: async (hash) => {
+      findSessionByTokenHash: async (hash) => sessions.get(hash) ?? null,
+      deleteSessionByTokenHash: async (hash) => {
         deletedSessionHashes.push(hash);
         sessions.delete(hash);
       },
     },
     mailer: {
-      sendCode: async (to, code) => {
+      sendCode: async ({ to, code }) => {
         sentMails.push({ to, code });
         return undefined as never;
       },
@@ -359,7 +359,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
       },
     },
     passwords: bcryptPasswords,
-    secrets: { newCode, newToken },
+    secrets: cryptoSecrets,
     ...overrides,
   };
   return {
@@ -601,7 +601,12 @@ describe("CSRFの対策(書き換えのリクエストはOriginを確かめる�
   describe("異常系", () => {
     it("H44 Originが無い書き換えのリクエストは、Cookieがあっても、403 FORBIDDEN_ORIGINで断り、中身を見ない", async () => {
       const { app } = fakeDeps({
-        sessions: { create: notUsed, findByTokenHash: notUsed, touch: notUsed, deleteByTokenHash: notUsed },
+        sessions: {
+          createSession: notUsed,
+          findSessionByTokenHash: notUsed,
+          saveSessionLastUsedAt: notUsed,
+          deleteSessionByTokenHash: notUsed,
+        },
       });
 
       expectProblem(await request(app).delete("/api/sessions/current").set(webSession), 403, "FORBIDDEN_ORIGIN");
