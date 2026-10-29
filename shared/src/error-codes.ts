@@ -12,6 +12,7 @@ export const errorCatalog = {
     SESSION_EXPIRED: { status: 401, detail: "時間が過ぎました。もう一度カードを読んでください" },
     FORBIDDEN: { status: 403, detail: "この操作はできません" },
     FORBIDDEN_ORIGIN: { status: 403, detail: "この画面からは操作できません" },
+    WRONG_PASSWORD: { status: 403, detail: "パスワードが違います" },
     NOT_FOUND: { status: 404, detail: "見つかりません" },
     ITEM_NOT_FOUND: { status: 404, detail: "そのバーコードの物品が見つかりません" },
     ACTIVE_RENTAL_NOT_FOUND: { status: 404, detail: "この物品は貸し出されていません" },

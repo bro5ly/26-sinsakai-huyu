@@ -10,6 +10,8 @@ export interface MeUserRecord {
     canBorrow: boolean;
     maxItems: number;
     suspendedUntil: Date | null;
+    // PINのハッシュやロックの日時は渡さず、画面に要る「登録済みか・ロック中か」だけにする(P3)
+    pin: { registered: boolean; locked: boolean };
 }
 
 export interface ActiveRentalRecord {
@@ -25,6 +27,10 @@ export interface MeStore {
     findUser(userId: string): Promise<MeUserRecord | null>;
     // 返却されていない貸し出しを、借りた日の新しい順で
     findActiveRentals(userId: string): Promise<ActiveRentalRecord[]>;
+    // PINを変える前に、パスワードを入れ直させて確かめる(P1)
+    findPasswordHash(userId: string): Promise<string | null>;
+    // PINを保存し、失敗の回数を0に戻してロックを解く(R-A7)
+    savePin(data: { userId: string; pinHash: string }): Promise<void>;
 }
 
 // serviceが返す形。日付は中ではDateのまま持ち、APIの境目(routes)でISOの文字列にする(T5)
@@ -45,6 +51,7 @@ export interface MeView {
         activeCount: number;
         hasOverdue: boolean;
     };
+    pin: { registered: boolean; locked: boolean };
 }
 
 export type RentalView = ActiveRentalRecord & { state: RentalState };

@@ -67,6 +67,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     const sentMails: { to: string; code: string }[] = [];
     const sessions = initialSessions();
     const deletedSessionHashes: string[] = [];
+    const savedPins: { userId: string; pinHash: string }[] = [];
     const deps: Deps = {
         users: {
             create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
@@ -104,7 +105,9 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         me: {
             findUser: async (userId) =>
-                userId === "user-1" ? { id: "user-1", studentId: "20240001", role: "MEMBER", canBorrow: true, maxItems: 3, suspendedUntil: null } : null,
+                userId === "user-1"
+                    ? { id: "user-1", studentId: "20240001", role: "MEMBER", canBorrow: true, maxItems: 3, suspendedUntil: null, pin: { registered: true, locked: false } }
+                    : null,
             findActiveRentals: async () => [
                 {
                     id: "rental-1",
@@ -115,6 +118,10 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
                     itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
                 },
             ],
+            findPasswordHash: async (userId) => (userId === "user-1" ? passwordHash : null),
+            savePin: async (data) => {
+                savedPins.push(data);
+            },
         },
         rentals: {
             findUserWithActiveRentals: async (studentId) => (studentId === "20240001" ? ({ id: "user-1", studentId, rentals: [] } as never) : null),
@@ -124,7 +131,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         ...overrides,
     };
-    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes };
+    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins };
 };
 
 type App = ReturnType<typeof fakeDeps>["app"];
@@ -432,6 +439,7 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
                 major: "情報工学科",
                 cardNumber: "IC-CARD-001",
                 borrowing: { canBorrow: true, maxItems: 3, suspendedUntil: null, activeCount: 1, hasOverdue: false },
+                pin: { registered: true, locked: false },
             });
             expect(res.body).not.toHaveProperty("success");
         });
@@ -480,6 +488,58 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
             const res = await request(app).get("/api/items/me").set(webSession);
 
             expectProblem(res, 404, "NOT_FOUND");
+        });
+    });
+});
+
+describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
+    const putPin = (app: App, body: object) => request(app).put("/api/me/pin").set("Origin", frontendUrl).set(webSession).send(body);
+
+    describe("正常系", () => {
+        it("H46 パスワードが合えば、204を本文なしで返し、PINのハッシュを保存する(UC-7・R-A5・P1)", async () => {
+            const { app, savedPins } = fakeDeps();
+
+            const res = await putPin(app, { pin: "8068", password: "password123" });
+
+            expect(res.status).toBe(204);
+            expect(res.text).toBe("");
+            expect(savedPins.map((p) => p.userId)).toEqual(["user-1"]);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H47 入れ直したパスワードが違えば、403 WRONG_PASSWORDを返し、保存しない(P1・P5)", async () => {
+            const { app, savedPins } = fakeDeps();
+
+            expectProblem(await putPin(app, { pin: "8068", password: "wrong-password" }), 403, "WRONG_PASSWORD");
+            expect(savedPins).toEqual([]);
+        });
+
+        it("H48 推測しやすいPIN・4桁の数字でないPINは、400 VALIDATION_ERRORで、errorsにpinを入れる(P2)", async () => {
+            const { app, savedPins } = fakeDeps();
+
+            for (const pin of ["1234", "0000", "123", "12a4"]) {
+                const res = await putPin(app, { pin, password: "password123" });
+                expectProblem(res, 400, "VALIDATION_ERROR");
+                expect(res.body.errors.map((e: { path: string }) => e.path)).toEqual(["pin"]);
+            }
+            expect(savedPins).toEqual([]);
+        });
+
+        it("H49 ログインしていなければ、401 UNAUTHENTICATED", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await request(app).put("/api/me/pin").set("Origin", frontendUrl).send({ pin: "8068", password: "password123" }), 401, "UNAUTHENTICATED");
+        });
+    });
+
+    describe("境界値", () => {
+        it("H50 失敗は接続元ごとに15分で20回まで。21回目は、パスワードを確かめずに429 RATE_LIMITED(P6)", async () => {
+            const { app, savedPins } = fakeDeps();
+            for (let i = 0; i < 20; i++) await putPin(app, { pin: "8068", password: "wrong-password" });
+
+            expectProblem(await putPin(app, { pin: "8068", password: "password123" }), 429, "RATE_LIMITED");
+            expect(savedPins).toEqual([]);
         });
     });
 });

@@ -6,9 +6,26 @@ export class MeRepository implements MeStore {
     constructor(private readonly db: PrismaClient) {}
 
     async findUser(userId: string): Promise<MeUserRecord | null> {
-        return this.db.user.findUnique({
+        const row = await this.db.user.findUnique({
             where: { id: userId },
-            select: { id: true, studentId: true, role: true, canBorrow: true, maxItems: true, suspendedUntil: true },
+            select: { id: true, studentId: true, role: true, canBorrow: true, maxItems: true, suspendedUntil: true, pinHash: true, pinLockedAt: true },
+        });
+        if (!row) return null;
+        // PINのハッシュとロックの日時は、このrepositoryの外に出さない(P3)
+        const { pinHash, pinLockedAt, ...user } = row;
+        return { ...user, pin: { registered: pinHash !== null, locked: pinLockedAt !== null } };
+    }
+
+    async findPasswordHash(userId: string): Promise<string | null> {
+        const row = await this.db.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+        return row?.passwordHash ?? null;
+    }
+
+    // 登録し直したら、失敗の回数を0に戻し、ロックを解く(R-A7)
+    async savePin(data: { userId: string; pinHash: string }): Promise<void> {
+        await this.db.user.update({
+            where: { id: data.userId },
+            data: { pinHash: data.pinHash, pinFailedAttempts: 0, pinLockedAt: null },
         });
     }
 

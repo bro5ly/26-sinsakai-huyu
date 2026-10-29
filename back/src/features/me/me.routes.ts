@@ -1,5 +1,6 @@
 import { Router } from "express";
-import type { Me, MyRentals } from "@sinsakai/shared";
+import { setPinRequestSchema, type Me, type MyRentals } from "@sinsakai/shared";
+import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
 import { createAuthMiddleware } from "@/middleware/auth.middleware.js";
 import { route } from "@/lib/route.js";
 import type { Deps } from "@/deps.js";
@@ -33,6 +34,12 @@ export const createMeRoutes = (deps: Deps) => {
     router.get("/rentals", route({ auth: true }, async ({ user, res }) => {
         const rentals = await me.getMyRentals(user.id, new Date());
         return res.status(200).json({ items: rentals.map(toRental) } satisfies MyRentals);
+    }));
+
+    // パスワードを入れ直させるので、ログインと同じく失敗の回数を制限する(ログインしたまま離れた人の画面から、何度でも試せないように。P6)
+    router.put("/pin", createPasswordFailureLimiter(), route({ auth: true, body: setPinRequestSchema }, async ({ user, body, res }) => {
+        await me.setPin(user.id, body);
+        return res.status(204).end();
     }));
 
     return router;
