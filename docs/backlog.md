@@ -106,7 +106,7 @@
   - 本人(2026-10-25 Me1〜Me4): `GET /api/items/me`を`GET /api/me`(プロフィールと貸し出しの決まり)と`GET /api/me/rentals`(借りている物)に分ける。カードの番号は、0.8で使い捨てのバーコード(`POST /api/me/tablet-codes`)ができるまで`Me.cardNumber`として返し、そのときに外す(Me1。今もダッシュボードのバーコードに使っているため。→ 2026-10-29 G0で、使い捨てのバーコードは作らずに外した)。画面の`AuthContext`は`Me`だけを持ち、借りている物はダッシュボードがその都度取る(Me2。貸し出すたびに変わるため)。`Rental.itemType`にジャンル`genre: { id, name }`を足す(Me3。ダッシュボードが出している)。返し終わった物の履歴(`?state=all`)は、履歴の画面を作るときに足す(Me4)
   - カタログ(2026-10-28 Ca1〜Ca4): `GET /api/items`を`GET /api/categories`・`GET /api/item-types`・`GET /api/item-types/{id}`にする(ログイン必須。Q11)。詳細の画面のURLは種類の名前ではなくID(`/items/[id]`)にする(Ca1)。どこからもリンクされていない物品の一覧の画面(`/items`)は消す。物品1つ1つの一覧は在庫管理(5)で作る(Ca2)。検索・ジャンル・カテゴリの絞り込みは今は画面でし、種類が増えたら`?categoryId=&genreId=&q=`を足す(Ca3)。全数と詳細の物品の一覧には廃棄済み(`DISPOSED`)を入れない。修理中・紛失は入れて状態で見せる(Ca4)
   - 詳細の物品の一覧に、バーコードは入れない。画面にバーコードがあると、実物を持たずにタブレットで読めてしまい、棚にある物が「貸出中」と記録されるおそれがあるため。バーコードは実物に貼った物だけから読む(2026-10-28 Ca5-B、開発者の指摘)
-- [x] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**。本人・カタログ(移したとき)、認証(2026-10-28 R8、PR #17)、貸し出し(`rentals`。2026-10-29 e2、PR #20)。画面の`TabletContext`(T7)は、画面の手書きの型を消すとき(下)に消す
+- [x] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**。(→ 2026-10-29に、名前・引数の形・書式がそろっていないことが分かり、0.9でそろえる)本人・カタログ(移したとき)、認証(2026-10-28 R8、PR #17)、貸し出し(`rentals`。2026-10-29 e2、PR #20)。画面の`TabletContext`(T7)は、画面の手書きの型を消すとき(下)に消す
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
   - Prismaの型を使ってよいのはrepositoryの中だけ。serviceが見るのは名前の付いた記録の型だけ(T3)
@@ -119,6 +119,32 @@
 - [x] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる(2026-10-24。各コンテナは`npm ci -w back -w shared`のように要るワークスペースだけを入れる。P3)
 - [x] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(2026-10-29、ブランチ`refactor/shared-types`)(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
 - [x] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)。2026-10-29、クラウドの一時的なPostgreSQLとAPI・画面で通した: テスト248件・型チェック・ビルドは緑(リントは前からの2件)。受け入れ基準はA1〜A5・A10を`curl`で、A7〜A9をPlaywrightで画面から確かめた(A6の3分は`tablet-session.check.test.ts`のテストだけ)。Macでの確かめは最後にまとめて行う(X1)
+
+## 0.9 serviceとrepositoryの形をそろえる(2026-10-29決定)
+
+0.7で中の型(T1〜T7)を済みにしたが、確かめたのは`implements`と推論の型だけで、書式・名前・引数の形・依存の書き方がファイルごとに違っていた(開発者の指摘)。根っこは、`back`に整形とリントの道具が無いこと。道具で守れる所は道具に守らせ、残りの決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書く。
+
+- **S1** Prettierを直下に1つ置き、`back`・`front`・`shared`の全部に同じ設定をかける。整形しただけの差分は`style:`の1つのコミットにする
+- **S2** Prettierの設定は既定に近い形(字下げ2つ・セミコロン有り・二重引用符・行の長さ120)。`front`と、Next.js・Prettierの既定に寄せる
+- **S3** `back`にESLint + typescript-eslintの推奨の規則を入れ、eslint-config-prettierを最後に置く。`../`の相対パスの読み込みを禁止する。型の情報を使う重い規則はCIを作るときに考える
+- **N1** 認証コードのrepositoryは`VerificationCodeRepository`(`verification-code.repository.ts`)、インターフェースは`VerificationCodeStore`、`Deps`は`verificationCodes`(表の名前と同じ)
+- **N2** repositoryのメソッドの名前: 1件を読む`find<物>`(無ければ`null`)、何件も読む`find<物>s`・`findAll<物>`、作る`create<物>`、書き換える`save<中身>`、消す`delete<物>`
+- **N3** serviceが持つ部品は中身で呼ぶ(`users`・`verificationCodes`・`sessions`・`devices`・`rentals`・`roster`・`mailer`)。`store`は使わない。`Deps`の名前と同じにする
+- **N4** `features/user/UserRepository.ts`を`features/auth/user.repository.ts`に移し、`features/user/`は消す
+- **N5** DBを読み書きするインターフェースは`<物>Store`。それ以外(名簿・メール・ハッシュ・乱数・ほかの機能に一部だけ見せる物)は役割の名前
+- **M1** serviceのメソッドの引数: 値が1つならそのまま、2つ以上なら1つのオブジェクト。時計(`now`)はいつも最後の別の引数。端末(`deviceId`)は入力のオブジェクトの中
+- **M2** serviceは部品を名前付きのオブジェクトで受け取る(`new MeService({ users, roster })`)。メソッドは`async name()`の形にし、矢印関数のプロパティにしない
+- **M3** インターフェースとrepositoryの両方に出てくる入力の型は、`*.types.ts`で名前を付けて使う
+- **M4** DBの行の型は、どこも`Prisma.XxxGetPayload<{ select: typeof xxxSelect }>`で作る(手で書かない)
+- **M5** serviceとrepositoryの公開のメソッドには、返す型を必ず書く(リントで確かめる)
+- **D1** bcryptと乱数(PIN・端末とタブレットのセッションの番号も)は、`Deps`の`passwords`・`secrets`から渡す。serviceの中で直接呼ばない
+- **D2** DBの一意制約の失敗(すでに貸し出し中)は、repositoryは「ぶつかった」ことを返すだけにし、serviceが`ITEM_ALREADY_RENTED`を投げる。`DomainError`を投げるのはserviceと判断の関数の結果だけ
+- **D3** 借りている物の形を作る`select`と変換は`rentals`の1か所に置き、`me`と`rentals`のrepositoryが使う
+- 決まりどおりに直すだけの所: 相対パスを`@/`にする、`rental.schema.ts`を`shared/`に移す、空の`auth/strategies/`を消す、何をしているかを書いたコメントを直す、別の機能のserviceの組み立ては、その機能のroutesの`create<機能>Service(deps)`から読む
+- **P1** PR1 = 道具と整形(S1〜S3)、PR2 = 形の整理(N・M・D。機能ごとに`refactor:`のコミット)
+- **P2** X1と同じく、クラウドでテスト・型チェック・ビルド・リントを通したらPRを出してマージし、Macでの確かめは最後にまとめる
+- [ ] PR1 道具と整形
+- [ ] PR2 形の整理
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
 
