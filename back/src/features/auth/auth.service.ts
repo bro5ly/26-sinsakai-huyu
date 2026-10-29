@@ -80,18 +80,24 @@ export class AuthService {
     }
 
     login = async (studentId: string, plainPassword: string) => {
-        const existsUser = await this.users.findByStudentId(studentId)
-        // 学籍番号が無い・パスワード違い・無効な人・名簿から消えた、のどれかは言わない(R-16・R-A14)
-        if(!existsUser) throw new DomainError('INVALID_CREDENTIALS')
-        const isMatch = await bcrypt.compare(plainPassword,existsUser.passwordHash)
+        const { user, entry } = await this.verifyCredentials(studentId, plainPassword)
+        return this.createSession(user, entry)
+    }
+
+    // 学籍番号とパスワードで本人を確かめる。ログインと、タブレットの端末の登録(管理者がその場で確かめる。D2)が使う。
+    // 学籍番号が無い・パスワード違い・無効な人・名簿から消えた、のどれかは言わない(R-16・R-A14)
+    verifyCredentials = async (studentId: string, plainPassword: string): Promise<{ user: UserRecord; entry: RosterEntry }> => {
+        const user = await this.users.findByStudentId(studentId)
+        if(!user) throw new DomainError('INVALID_CREDENTIALS')
+        const isMatch = await bcrypt.compare(plainPassword,user.passwordHash)
         if(!isMatch) throw new DomainError('INVALID_CREDENTIALS')
-        if(!existsUser.isActive) throw new DomainError('INVALID_CREDENTIALS')
+        if(!user.isActive) throw new DomainError('INVALID_CREDENTIALS')
 
         // 名簿から消えた人(卒業など)は、ここで止める。セッションの途中では名簿を見ない(A8-10)
-        const entry = await this.roster.findByStudentId(existsUser.studentId)
+        const entry = await this.roster.findByStudentId(user.studentId)
         if(!entry) throw new DomainError('INVALID_CREDENTIALS')
 
-        return this.createSession(existsUser, entry)
+        return { user, entry }
     }
 
 
