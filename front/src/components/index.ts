@@ -13,5 +13,6 @@ export * from "./common/LoadingSpinner";
 
 // Dashboard components
 export * from "./dashboard/UserProfile";
+export * from "./dashboard/PinSettingModal";
 export * from "./dashboard/RentalsList";
 export * from "./dashboard/ItemsCatalog";
