@@ -1,5 +1,2 @@
-// Re-export all types from a single entry point
-export * from "./user.types";
-export * from "./item.types";
-export * from "./rental.types";
+// APIの資源の形は shared/(@sinsakai/shared)にある。ここには画面だけで使う型を置く
 export * from "./api.types";
