@@ -1,0 +1,10 @@
+# 生成物・依存・写真は整形しない
+node_modules
+.next
+back/src/generated
+back/prisma/migrations
+package-lock.json
+photo
+# 文書は表の幅をそろえると差分が大きくなるので、手で書いた形のまま
+*.md
+.claude
