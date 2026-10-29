@@ -67,6 +67,18 @@ export interface SessionStore {
     deleteByTokenHash(tokenHash: string): Promise<void>;
 }
 
+// パスワードのハッシュ(本物は lib/password.ts のbcrypt)
+export interface PasswordHasher {
+    hash(plain: string): Promise<string>;
+    matches(plain: string, hash: string): Promise<boolean>;
+}
+
+// 推測できない値を作る(本物は lib/session-token.ts)。テストでは決まった値を返せる
+export interface SecretSource {
+    newCode(): string;
+    newToken(): string;
+}
+
 export interface Mailer {
     sendCode(email: string, code: string): Promise<void>;
 }

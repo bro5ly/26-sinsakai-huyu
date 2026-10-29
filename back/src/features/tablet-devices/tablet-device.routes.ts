@@ -2,7 +2,7 @@ import { Router } from "express";
 import { registerTabletDeviceRequestSchema, type TabletDevice, type TabletDevices } from "@sinsakai/shared";
 import { route } from "@/lib/route.js";
 import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
-import { AuthService } from "@/features/auth/auth.service.js";
+import { createAuthService } from "@/features/auth/auth.routes.js";
 import type { Deps } from "@/deps.js";
 import type { Config } from "@/config.js";
 import { DEVICE_COOKIE, deviceCookieOptions } from "./device-cookie.js";
@@ -18,7 +18,7 @@ const toTabletDevice = (device: TabletDeviceRecord): TabletDevice => ({
 });
 
 export const createTabletDeviceService = (deps: Deps) =>
-    new TabletDeviceService(deps.devices, new AuthService(deps.users, deps.auth, deps.sessions, deps.mailer, deps.roster));
+    new TabletDeviceService(deps.devices, createAuthService(deps));
 
 // 置くタブレットの上での登録(UC-20)。管理者のWebのセッションは使わず、本文の学籍番号とパスワードでその場で確かめるので、
 // /api/admin(Webのセッションのある管理者だけ)の外に置く(2026-10-29 D1・D2)

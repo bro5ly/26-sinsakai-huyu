@@ -51,7 +51,7 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 
 - バックエンドはESM(`"module": "NodeNext"`)。**importの末尾に`.js`を付け**、`src/`配下は`@/`から書く(例: `import { DomainError } from "@/lib/domain-error.js"`)。型だけのimportは`import type`(`verbatimModuleSyntax`)
 - `strict`に加えて`noUncheckedIndexedAccess`・`exactOptionalPropertyTypes`が有効。配列の要素や省略可能な項目は`undefined`を考えて書く
-- 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール)を`new`するのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
+- 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール。登録・ログインの乱数とbcryptも)を作るのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
 - 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
 - `shared/`の中のファイルどうしは、相対パス(`./x.js`)ではなく`@sinsakai/shared/x`で読み、ファイルを足したら`shared/package.json`の`exports`にも足す(Next.jsのTurbopackが`./x.js`を`x.ts`に読み替えず、画面のビルドが落ちるため。2026-10-24 P6-A)
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。APIの形は`shared/`の型を使い、`front/src/types/`に手で書き直さない(古い重複の`lib/api.ts`・`lib/auth-api.ts`と手書きの型は2026-10-29に消した)

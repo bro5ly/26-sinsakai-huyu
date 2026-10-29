@@ -1,10 +1,8 @@
-import { randomInt } from "node:crypto"
-import bcrypt from "bcrypt"
 import type { Roster, RosterEntry } from "../roster/roster.js"
 import { DomainError } from "@/lib/domain-error.js"
-import { hashToken, newToken, sameHash } from "@/lib/session-token.js"
+import { hashToken, sameHash } from "@/lib/session-token.js"
 import { afterCodeAttempt, afterLoginAttempt, isLoginLocked } from "./attempt.check.js"
-import type { AuthResult, CodeStore, Mailer, SessionStore, UserRecord, UserStore, VerifyCodeResult } from "./auth.types.js"
+import type { AuthResult, CodeStore, Mailer, PasswordHasher, SecretSource, SessionStore, UserRecord, UserStore, VerifyCodeResult } from "./auth.types.js"
 
 // 登録用トークンの期限。応答の expiresAt もこれから作る
 const REGISTRATION_TOKEN_MINUTES = 15
@@ -14,7 +12,24 @@ const CODE_MINUTES = 15
 export const WEB_SESSION_DAYS = 7
 
 export class AuthService {
-    constructor(private users: UserStore, private authRepository: CodeStore, private sessions: SessionStore, private mailService: Mailer, private roster: Roster){}
+    private readonly users: UserStore
+    private readonly authRepository: CodeStore
+    private readonly sessions: SessionStore
+    private readonly mailService: Mailer
+    private readonly roster: Roster
+    private readonly passwords: PasswordHasher
+    private readonly secrets: SecretSource
+
+    // 部品が多いので、取り違えないように名前付きで受け取る(docs/backlog.md 0.7 T4)。時計(now)は呼ぶたびに渡す
+    constructor(parts: { users: UserStore; codes: CodeStore; sessions: SessionStore; mailer: Mailer; roster: Roster; passwords: PasswordHasher; secrets: SecretSource }){
+        this.users = parts.users
+        this.authRepository = parts.codes
+        this.sessions = parts.sessions
+        this.mailService = parts.mailer
+        this.roster = parts.roster
+        this.passwords = parts.passwords
+        this.secrets = parts.secrets
+    }
 
     requestVerification = async (studentId: string, now: Date): Promise<void> => {
         //1. 受け取った学籍番号が別dbにあるか確認
@@ -26,8 +41,8 @@ export class AuthService {
         if(existsUser) return
         //2. 存在する場合、dbからemailを取得
         //3. コードを作成してemailに送信
-        // 6桁の数字。Math.randomは推測されうるので、暗号用の乱数で作る。DBにはハッシュだけを置く(docs/auth.md 4.6)
-        const verificationCode = randomInt(0, 1_000_000).toString().padStart(6, "0")
+        // DBにはハッシュだけを置く(docs/auth.md 4.6)
+        const verificationCode = this.secrets.newCode()
         const expiresAt = new Date(now.getTime() + CODE_MINUTES * 60 * 1000)
         await this.authRepository.saveTmpCode({codeHash: hashToken(verificationCode), studentId: student.studentId, expiresAt});
         await this.mailService.sendCode(student.email,verificationCode)
@@ -45,7 +60,7 @@ export class AuthService {
         }
 
         // 登録用トークンはDBにハッシュだけを置き、登録で1回使ったら行ごと消す(JWTと違い、1回だけにできる。A8-8)
-        const token = newToken()
+        const token = this.secrets.newToken()
         // 画面が「あと何分で手続きが切れるか」を出せるように、期限も返す(docs/api.md 4.1)
         const expiresAt = new Date(now.getTime() + REGISTRATION_TOKEN_MINUTES * 60 * 1000)
         await this.authRepository.saveRegistrationToken({studentId, tokenHash: hashToken(token), expiresAt})
@@ -65,7 +80,7 @@ export class AuthService {
         const entry = await this.roster.findByStudentId(studentId)
         if(!entry) throw new DomainError('INVALID_TOKEN')
 
-        const passwordHash = await bcrypt.hash(plainPassword,10)
+        const passwordHash = await this.passwords.hash(plainPassword)
         const user = await this.users.create({studentId, passwordHash})
         await this.authRepository.deleteTmpCode(studentId)
 
@@ -85,7 +100,7 @@ export class AuthService {
         if(!user) throw new DomainError('INVALID_CREDENTIALS')
         if(isLoginLocked(user.loginLockedUntil, now)) throw new DomainError('RATE_LIMITED')
 
-        const attempt = afterLoginAttempt(user.loginFailedAttempts, await bcrypt.compare(plainPassword,user.passwordHash), now)
+        const attempt = afterLoginAttempt(user.loginFailedAttempts, await this.passwords.matches(plainPassword,user.passwordHash), now)
         // 合ったときは、数えていたときだけ書く(ふだんのログインでDBに書かないように)
         if(!attempt.ok || user.loginFailedAttempts > 0 || user.loginLockedUntil){
             await this.users.saveLoginAttempt({userId: user.id, failedAttempts: attempt.failedAttempts, lockedUntil: attempt.lockedUntil})
@@ -109,7 +124,7 @@ export class AuthService {
 
     // 番号そのものはCookieにだけ入れ、DBにはハッシュだけを置く。ログインのたびに別のセッションを作る(ほかの端末のログインは切らない。Q9)
     private async createSession(user: UserRecord, profile: RosterEntry, now: Date): Promise<AuthResult> {
-        const sessionToken = newToken()
+        const sessionToken = this.secrets.newToken()
         await this.sessions.create({
             tokenHash: hashToken(sessionToken),
             userId: user.id,

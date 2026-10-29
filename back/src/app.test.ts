@@ -2,7 +2,8 @@ import bcrypt from "bcrypt";
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
-import { hashToken } from "@/lib/session-token.js";
+import { hashToken, newCode, newToken } from "@/lib/session-token.js";
+import { bcryptPasswords } from "@/lib/password.js";
 import { PASSWORD_FAILURE_LIMIT } from "@/lib/rate-limit.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
 import type { TabletDeviceRecord } from "@/features/tablet-devices/tablet-device.types.js";
@@ -195,6 +196,8 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
                 if (device) device.revokedAt = now;
             },
         },
+        passwords: bcryptPasswords,
+        secrets: { newCode, newToken },
         ...overrides,
     };
     return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices, pinAttempts, sessions, rentalWrites };
