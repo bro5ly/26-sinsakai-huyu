@@ -217,7 +217,9 @@ export const RentalScalarFieldEnum = {
   dueDate: 'dueDate',
   returnedAt: 'returnedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  rentedDeviceId: 'rentedDeviceId',
+  returnedDeviceId: 'returnedDeviceId'
 } as const
 
 export type RentalScalarFieldEnum = (typeof RentalScalarFieldEnum)[keyof typeof RentalScalarFieldEnum]

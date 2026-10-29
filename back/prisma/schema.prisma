@@ -218,9 +218,16 @@ model Rental {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  item          Item           @relation(fields: [itemId], references: [id])
-  user          User           @relation(fields: [userId], references: [id])
-  notifications Notification[]
+  // 借りた端末と返した端末(2026-10-29 E3。紛失のときに、どこで借りられ・返されたかを管理者が知るため)。
+  // この列より前の記録と、まだ返していない記録では空
+  rentedDeviceId   String? @map("rented_device_id")
+  returnedDeviceId String? @map("returned_device_id")
+
+  item           Item           @relation(fields: [itemId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+  rentedDevice   TabletDevice?  @relation("RentedDevice", fields: [rentedDeviceId], references: [id])
+  returnedDevice TabletDevice?  @relation("ReturnedDevice", fields: [returnedDeviceId], references: [id])
+  notifications  Notification[]
 
   @@map("rental")
 }
@@ -260,6 +267,9 @@ model TabletDevice {
   revokedAt      DateTime? @map("revoked_at")
   // この端末で作ったタブレットのセッション
   sessions       Session[]
+  // この端末で受け付けた貸し出しと返却(E3)
+  rentedRentals   Rental[] @relation("RentedDevice")
+  returnedRentals Rental[] @relation("ReturnedDevice")
 
   @@map("tablet_device")
 }
