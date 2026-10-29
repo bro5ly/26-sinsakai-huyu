@@ -1,0 +1,3 @@
+# 整形だけのコミット。git blame で飛ばす(git config blame.ignoreRevsFile .git-blame-ignore-revs。GitHubは自動で読む)
+# style: Prettierで全部のコードを整形する(2026-10-29、docs/backlog.md 0.9 S1)
+e43cffe0e8f8b5b48067b3514ad847155c2150e2

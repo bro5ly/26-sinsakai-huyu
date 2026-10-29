@@ -133,7 +133,7 @@ docker compose exec api npx tsc --noEmit   # 型チェック
 docker compose exec web npm run build      # 画面のビルド
 ```
 
-Macに`npm`があれば、`npm run check`(型チェック → テスト → 画面のビルド → リント)でまとめて確かめられます(呼び名は直下の`package.json`)。
+Macに`npm`があれば、`npm run check`(型チェック → テスト → 画面のビルド → 整形の確かめ → リント)でまとめて確かめられます。書式はPrettier、リントはESLintで、APIと画面で同じ設定です(呼び名は直下の`package.json`)。
 
 ## ドキュメント
 

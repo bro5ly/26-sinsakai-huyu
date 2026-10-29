@@ -143,7 +143,7 @@
 - 決まりどおりに直すだけの所: 相対パスを`@/`にする、`rental.schema.ts`を`shared/`に移す、空の`auth/strategies/`を消す、何をしているかを書いたコメントを直す、別の機能のserviceの組み立ては、その機能のroutesの`create<機能>Service(deps)`から読む
 - **P1** PR1 = 道具と整形(S1〜S3)、PR2 = 形の整理(N・M・D。機能ごとに`refactor:`のコミット)
 - **P2** X1と同じく、クラウドでテスト・型チェック・ビルド・リントを通したらPRを出してマージし、Macでの確かめは最後にまとめる
-- [ ] PR1 道具と整形
+- [x] PR1 道具と整形(2026-10-29、ブランチ`chore/formatter-linter`。整形だけのコミットは`.git-blame-ignore-revs`に書いた。画面のリントのエラー2件(`BarcodeScanner`、E4)は残っている)
 - [ ] PR2 形の整理
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)

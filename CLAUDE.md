@@ -34,7 +34,7 @@
 
 ホストには`node_modules`が無い。**コマンドはDockerのコンテナの中で動かす**。
 
-よく使うものは、直下の`package.json`に呼び名がある(Macで`npm run <名前>`。中で`docker compose exec ...`を呼ぶ。2026-10-29 H1): `test`・`typecheck`(APIと画面)・`lint`・`build`・`check`(型チェック → テスト → ビルド → リントを順に。途中で失敗したら止まる)・`db:migrate`(`npm run db:migrate -- --name <内容>`)・`db:seed`・`logs`(APIのログの最後の50行)。Macに`npm`が要る
+よく使うものは、直下の`package.json`に呼び名がある(Macで`npm run <名前>`。中で`docker compose exec ...`を呼ぶ。2026-10-29 H1): `test`・`typecheck`(APIと画面)・`lint`(APIと画面)・`format`(Prettierで整形)・`format:check`・`build`・`check`(型チェック → テスト → ビルド → 整形の確かめ → リントを順に。途中で失敗したら止まる)・`db:migrate`(`npm run db:migrate -- --name <内容>`)・`db:seed`・`logs`(APIのログの最後の50行)。Macに`npm`が要る
 
 | 目的 | コマンド |
 |---|---|
@@ -44,6 +44,8 @@
 | テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts` |
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
+| リント(API) | `docker compose exec api npm run lint` |
+| 整形 | `docker compose exec -w /app api npx prettier --write .`(設定は直下の`.prettierrc.json`。文書(`*.md`)はかけない) |
 
 APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所はリポジトリ直下(workspacesのため)。依存を足すときは`docker compose exec api npm install <名前> -w back`(画面は`web`と`-w front`)で直下のロックファイルを書き換える。依存を足した人がいたら`docker compose up -d --build -V api`(画面なら`web`)で作り直す(`node_modules`はコンテナの中の名前の無いボリュームにあり、`-V`を付けないと古いまま残る)。変更したらテスト・型チェック・ビルドを通し、APIは`curl`で、画面はブラウザで確かめる。**`curl`で確かめる前に、`docker compose logs api`に変えたファイルの「change in … Restarting」が出たことを見る**(Macでは変更の通知が落ち、古いコードのまま動いていたことがある。今はpolling(`CHOKIDAR_USEPOLLING`)で見張っている)。`curl`で書き換えのリクエスト(POST・DELETE)を送るときは`-H "Origin: http://localhost:4545"`を付け、ログインの`Set-Cookie`は`-c`/`-b`で受け渡す。テスト用のログインは学籍番号`20240001`・パスワード`password123`(管理者は`90240001`。学籍番号は数字だけ)、**タブレットの画面は、最初に端末の登録が要る**(管理者`90240001`・`password123`で、名前を付けて登録する。`curl`ではタブレットのAPIにCookie`device`が要る)。**タブレットで借りるにはPINが要る**(先にWebでログインし、ダッシュボードの「PINを登録」から)。タブレットのカードは`IC-CARD-001`、物品のバーコードは`MAC-002`など(`MAC-001`はseedで貸出中)(`back/prisma/seed.ts`、開発のときは`/barcodes`で印刷できる)。返却はカード不要で、タブレットの最初の画面の「返す」から。
 
@@ -55,6 +57,7 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 - 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
 - `shared/`の中のファイルどうしは、相対パス(`./x.js`)ではなく`@sinsakai/shared/x`で読み、ファイルを足したら`shared/package.json`の`exports`にも足す(Next.jsのTurbopackが`./x.js`を`x.ts`に読み替えず、画面のビルドが落ちるため。2026-10-24 P6-A)
 - フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。APIの形は`shared/`の型を使い、`front/src/types/`に手で書き直さない(古い重複の`lib/api.ts`・`lib/auth-api.ts`と手書きの型は2026-10-29に消した)
+- 書式はPrettierに任せる(直下の`.prettierrc.json`。字下げ2つ・セミコロン有り・二重引用符・行の長さ120。2026-10-29 0.9 S1・S2)。手で書式をそろえない
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
 - ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)。今は`develop`を使わず`main`を主軸にする(1人の開発で、本番の環境も無いため)。`develop`のブランチは消さずに残し、サーバーとCI/CDを作るときに、`develop`を開発用・`main`を本番用に分けるかを決める(2026-10-25、開発者の希望)
