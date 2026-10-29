@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import request from "supertest";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import { hashToken } from "@/lib/session-token.js";
+import { PASSWORD_FAILURE_LIMIT } from "@/lib/rate-limit.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
 import type { TabletDeviceRecord } from "@/features/tablet-devices/tablet-device.types.js";
 import type { CardHolderRecord } from "@/features/tablet-sessions/tablet-session.types.js";
@@ -23,8 +24,8 @@ beforeAll(async () => {
 
 const yamada = rosterEntry({ studentId: "20240001", name: "山田 太郎", email: "yamada@example.com", serialNumber: "IC-CARD-001", grade: "2年", major: "情報工学科" });
 const newcomer = rosterEntry({ studentId: "20260001", name: "テスト 太郎", email: "taro@example.com", serialNumber: "SN-001" });
-const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const, isActive: true });
-const adminUser = () => ({ id: "admin-1", studentId: "90240001", passwordHash, role: "ADMIN" as const, isActive: true });
+const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const, isActive: true, loginFailedAttempts: 0, loginLockedUntil: null });
+const adminUser = () => ({ ...registered(), id: "admin-1", studentId: "90240001", role: "ADMIN" as const });
 const takahashi = rosterEntry({ studentId: "90240001", name: "高橋 先生", email: "admin@example.com", serialNumber: "IC-CARD-ADMIN", userType: "FACULTY" });
 
 // カタログの種類。使える物が1つ、貸出中が1つ、廃棄済みが1つ
@@ -98,10 +99,12 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
             findById: async (id) => (id === "user-1" ? registered() : null),
             findByStudentId: async (studentId) => (studentId === "20240001" ? registered() : studentId === "90240001" ? adminUser() : null),
+            saveLoginAttempt: async () => undefined,
         },
         auth: {
             saveTmpCode: async () => undefined as never,
-            checkTmpCode: async () => ({ code: "123456", expiresAt: new Date("2099-01-01"), tokenHash: null }) as never,
+            saveCodeAttempts: async () => undefined,
+            checkTmpCode: async () => ({ studentId: "20260001", codeHash: hashToken("123456"), expiresAt: new Date("2099-01-01"), tokenHash: null, attempts: 0 }),
             deleteTmpCode: async () => undefined as never,
             saveRegistrationToken: async () => undefined,
             findByRegistrationTokenHash: async (hash) => (hash === hashToken(REGISTRATION_TOKEN) ? { studentId: "20260001", tokenExpiresAt: new Date("2099-01-01") } : null),
@@ -600,9 +603,9 @@ describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
     });
 
     describe("境界値", () => {
-        it("H50 失敗は接続元ごとに15分で20回まで。21回目は、パスワードを確かめずに429 RATE_LIMITED(P6)", async () => {
+        it("H50 失敗は接続元ごとに15分で100回まで。101回目は、パスワードを確かめずに429 RATE_LIMITED(P6・F2)", async () => {
             const { app, savedPins } = fakeDeps();
-            for (let i = 0; i < 20; i++) await putPin(app, { pin: "8068", password: "wrong-password" });
+            for (let i = 0; i < PASSWORD_FAILURE_LIMIT; i++) await putPin(app, { pin: "8068", password: "wrong-password" });
 
             expectProblem(await putPin(app, { pin: "8068", password: "password123" }), 429, "RATE_LIMITED");
             expect(savedPins).toEqual([]);
@@ -917,14 +920,14 @@ describe("すべての応答に付くヘッダ", () => {
     });
 });
 
-describe("ログインの回数の制限(接続元ごとに、失敗を15分で20回まで。docs/auth.md 4.6・C5・K9-B)", () => {
+describe("ログインの回数の制限(接続元ごとに、失敗を15分で100回まで。docs/auth.md 4.6・C5・K9-B・F2)", () => {
     const login = (app: ReturnType<typeof fakeDeps>["app"]) =>
         post(app, "/api/sessions").send({ studentId: "20240001", password: "wrong-password" });
 
     describe("正常系", () => {
-        it("H23 20回目までは、制限せずにいつもどおり答える", async () => {
+        it("H23 100回目までは、制限せずにいつもどおり答える", async () => {
             const { app } = fakeDeps();
-            for (let i = 0; i < 19; i++) await login(app);
+            for (let i = 0; i < PASSWORD_FAILURE_LIMIT - 1; i++) await login(app);
 
             const res = await login(app);
 
@@ -935,7 +938,7 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で2
             const { app } = fakeDeps();
             const success = () => post(app, "/api/sessions").send({ studentId: "20240001", password: "password123" });
             for (let i = 0; i < 25; i++) await success();
-            for (let i = 0; i < 19; i++) await login(app);
+            for (let i = 0; i < PASSWORD_FAILURE_LIMIT - 1; i++) await login(app);
 
             const res = await success();
 
@@ -944,7 +947,7 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で2
 
         it("H24 ログインのほかのAPI(登録の申請など)は、制限しない", async () => {
             const { app } = fakeDeps();
-            for (let i = 0; i < 20; i++) await login(app);
+            for (let i = 0; i < PASSWORD_FAILURE_LIMIT; i++) await login(app);
 
             const res = await post(app, "/api/verification-codes").send({ studentId: "20260001", purpose: "signup" });
 
@@ -953,13 +956,94 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で2
     });
 
     describe("境界値", () => {
-        it("H25 21回目は、パスワードを確かめずに429 RATE_LIMITEDをRFC 9457の形で返す", async () => {
+        it("H25 101回目は、パスワードを確かめずに429 RATE_LIMITEDをRFC 9457の形で返す", async () => {
             const { app } = fakeDeps();
-            for (let i = 0; i < 20; i++) await login(app);
+            for (let i = 0; i < PASSWORD_FAILURE_LIMIT; i++) await login(app);
 
             const res = await post(app, "/api/sessions").send({ studentId: "20240001", password: "password123" });
 
             expectProblem(res, 429, "RATE_LIMITED");
+        });
+    });
+});
+
+describe("認証コードの申請の回数(学籍番号ごとに1分に1回・1時間に5回。R-5・docs/auth.md 4.6・F5)", () => {
+    const requestCode = (app: App, studentId: string) => post(app, "/api/verification-codes").send({ studentId, purpose: "signup" });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    describe("正常系", () => {
+        it("H72 1分たてば、同じ学籍番号でもう一度申請できる(新しいコードが届き、前のコードは通らなくなる。R-5)", async () => {
+            vi.useFakeTimers({ toFake: ["Date"] });
+            const { app, sentMails } = fakeDeps();
+            expect((await requestCode(app, "20260001")).status).toBe(202);
+
+            vi.setSystemTime(Date.now() + 61_000);
+            expect((await requestCode(app, "20260001")).status).toBe(202);
+            expect(sentMails).toHaveLength(2);
+        });
+
+        it("H73 学籍番号が違えば、別に数える", async () => {
+            const { app } = fakeDeps();
+            await requestCode(app, "20260001");
+
+            expect((await requestCode(app, "20260002")).status).toBe(202);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H74 1分以内にもう一度申請したら、429 RATE_LIMITEDで、メールは送らない", async () => {
+            const { app, sentMails } = fakeDeps();
+            await requestCode(app, "20260001");
+
+            expectProblem(await requestCode(app, "20260001"), 429, "RATE_LIMITED");
+            expect(sentMails).toHaveLength(1);
+        });
+
+        it("H75 名簿に無い学籍番号でも、同じく2回目は429(名簿にいるかを知られないため。F5・R-2)", async () => {
+            const { app } = fakeDeps();
+            await requestCode(app, "99999999");
+
+            expectProblem(await requestCode(app, "99999999"), 429, "RATE_LIMITED");
+        });
+    });
+
+    describe("境界値", () => {
+        it("H76 1時間に5回までは送り、6回目は1分あけても429", async () => {
+            vi.useFakeTimers({ toFake: ["Date"] });
+            const { app, sentMails } = fakeDeps();
+            for (let i = 0; i < 5; i++) {
+                expect((await requestCode(app, "20260001")).status).toBe(202);
+                vi.setSystemTime(Date.now() + 61_000);
+            }
+
+            expectProblem(await requestCode(app, "20260001"), 429, "RATE_LIMITED");
+            expect(sentMails).toHaveLength(5);
+        });
+    });
+});
+
+describe("タブレットの本人確認の回数(端末ごとに、失敗を1分で20回まで。docs/auth.md 4.6)", () => {
+    const startSession = (app: App, body: object) => tabletPost(app, "/api/tablet/sessions").send(body);
+
+    describe("正常系", () => {
+        it("H77 本人確認に成功した分は数えない(混む時間でも、普通に借りる人を止めない)", async () => {
+            const { app } = fakeDeps();
+            for (let i = 0; i < 25; i++) expect((await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" })).status).toBe(201);
+            for (let i = 0; i < 19; i++) await startSession(app, { cardNumber: "IC-CARD-999", pin: "8068" });
+
+            expect((await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" })).status).toBe(201);
+        });
+    });
+
+    describe("境界値", () => {
+        it("H78 20回失敗したら、21回目は、カードとPINを確かめずに429 RATE_LIMITED", async () => {
+            const { app, pinAttempts } = fakeDeps();
+            for (let i = 0; i < 20; i++) expectProblem(await startSession(app, { cardNumber: "IC-CARD-999", pin: "8068" }), 401, "INVALID_CARD_OR_PIN");
+
+            expectProblem(await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" }), 429, "RATE_LIMITED");
+            expect(pinAttempts).toEqual([]);
         });
     });
 });

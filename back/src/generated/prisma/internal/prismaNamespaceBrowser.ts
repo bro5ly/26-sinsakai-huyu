@@ -96,6 +96,8 @@ export const UserScalarFieldEnum = {
   pinHash: 'pinHash',
   pinFailedAttempts: 'pinFailedAttempts',
   pinLockedAt: 'pinLockedAt',
+  loginFailedAttempts: 'loginFailedAttempts',
+  loginLockedUntil: 'loginLockedUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -122,7 +124,8 @@ export type ExternalUserScalarFieldEnum = (typeof ExternalUserScalarFieldEnum)[k
 
 export const VerificationCodeScalarFieldEnum = {
   studentId: 'studentId',
-  code: 'code',
+  codeHash: 'codeHash',
+  attempts: 'attempts',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   tokenHash: 'tokenHash',

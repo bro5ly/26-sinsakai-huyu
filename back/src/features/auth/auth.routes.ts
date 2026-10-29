@@ -10,7 +10,7 @@ import {
 } from "@sinsakai/shared";
 import type { AuthResult } from "./auth.types.js";
 import { route } from "@/lib/route.js";
-import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
+import { createCodeRequestLimiter, createPasswordFailureLimiter } from "@/lib/rate-limit.js";
 import type { Deps } from "@/deps.js";
 import { SESSION_COOKIE } from "@/middleware/auth.middleware.js";
 import type { Config } from "@/config.js";
@@ -40,23 +40,23 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
     }
 
     // 名簿にいてもいなくても同じ202を返す(学籍番号があるか・登録済みかを知られないため。R-16)
-    router.post('/verification-codes', route({ body: verificationCodeRequestSchema }, async ({ body, res }) => {
-        await auth.requestVerification(body.studentId)
+    router.post('/verification-codes', createCodeRequestLimiter(), route({ body: verificationCodeRequestSchema }, async ({ body, res }) => {
+        await auth.requestVerification(body.studentId, new Date())
         return res.status(202).end()
     }))
 
     router.post('/verification-tokens', route({ body: verificationTokenRequestSchema }, async ({ body, res }) => {
-        const data = await auth.verifyCode(body.studentId, body.code)
+        const data = await auth.verifyCode(body.studentId, body.code, new Date())
         // 日付は中ではDate、APIの境目でISOの文字列にする(T5)
         return res.status(201).json({ token: data.token, expiresAt: data.expiresAt.toISOString() } satisfies VerificationToken)
     }))
 
     router.post('/users', route({ body: createUserRequestSchema }, async ({ body, res }) => {
-        return sendSession(res, await auth.signUp(body.password, body.token))
+        return sendSession(res, await auth.signUp(body.password, body.token, new Date()))
     }))
 
     router.post('/sessions', loginLimiter, route({ body: createSessionRequestSchema }, async ({ body, res }) => {
-        return sendSession(res, await auth.login(body.studentId, body.password))
+        return sendSession(res, await auth.login(body.studentId, body.password, new Date()))
     }))
 
     router.delete('/sessions/current', route({}, async ({ req, res }) => {

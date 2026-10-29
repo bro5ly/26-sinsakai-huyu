@@ -27,7 +27,7 @@ export const createTabletDeviceRoutes = (deps: Deps, config: Config) => {
     const devices = createTabletDeviceService(deps);
 
     router.post("/tablet-devices", createPasswordFailureLimiter(), route({ body: registerTabletDeviceRequestSchema }, async ({ body, res }) => {
-        const { device, token } = await devices.register(body);
+        const { device, token } = await devices.register(body, new Date());
         // 番号はCookieにだけ入れ、本文には入れない
         res.cookie(DEVICE_COOKIE, token, deviceCookieOptions(config));
         return res.status(201).json(toTabletDevice(device) satisfies TabletDevice);

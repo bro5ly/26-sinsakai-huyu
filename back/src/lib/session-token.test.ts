@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashToken, newToken } from "./session-token.js";
+import { hashToken, newToken, sameHash } from "./session-token.js";
 
 // セッション・登録用トークン・端末の番号に共通で使う(docs/auth.md 2章、A8-5)
 
@@ -28,6 +28,26 @@ describe("hashToken(DBに置くハッシュにする)", () => {
             const token = newToken();
 
             expect(hashToken(token)).not.toContain(token);
+        });
+    });
+});
+
+describe("sameHash(ハッシュどうしを比べる)", () => {
+    describe("正常系", () => {
+        it("ST5 同じ番号のハッシュなら合う", () => {
+            expect(sameHash(hashToken("123456"), hashToken("123456"))).toBe(true);
+        });
+    });
+
+    describe("異常系", () => {
+        it("ST6 違う番号のハッシュなら合わない", () => {
+            expect(sameHash(hashToken("123456"), hashToken("654321"))).toBe(false);
+        });
+    });
+
+    describe("境界値", () => {
+        it("ST7 長さが違っても例外にせず、合わないとする(timingSafeEqualは長さが違うと投げるため)", () => {
+            expect(sameHash(hashToken("123456"), "ab")).toBe(false);
         });
     });
 });

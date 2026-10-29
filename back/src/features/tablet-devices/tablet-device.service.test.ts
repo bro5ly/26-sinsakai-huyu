@@ -7,7 +7,7 @@ import { TabletDeviceService } from "./tablet-device.service.js";
 import type { CredentialVerifier, DeviceStore, TabletDeviceRecord } from "./tablet-device.types.js";
 
 const now = new Date("2026-10-29T03:00:00Z");
-const admin: UserRecord = { id: "admin-1", studentId: "90240001", passwordHash: "x", role: "ADMIN", isActive: true };
+const admin: UserRecord = { id: "admin-1", studentId: "90240001", passwordHash: "x", role: "ADMIN", isActive: true, loginFailedAttempts: 0, loginLockedUntil: null };
 const member: UserRecord = { ...admin, id: "user-1", studentId: "20240001", role: "MEMBER" };
 
 const device = (overrides: Partial<TabletDeviceRecord> = {}): TabletDeviceRecord => ({
@@ -43,7 +43,7 @@ describe("register(タブレットで端末を登録する)", () => {
             const created: Parameters<DeviceStore["create"]>[0][] = [];
             const service = new TabletDeviceService(store({ create: async (data) => (created.push(data), device({ name: data.name })) }), verifier(admin));
 
-            const result = await service.register({ studentId: "90240001", password: "password123", name: "図書室入口" });
+            const result = await service.register({ studentId: "90240001", password: "password123", name: "図書室入口" }, now);
 
             expect(created).toEqual([{ name: "図書室入口", tokenHash: hashToken(result.token), registeredById: "admin-1" }]);
             expect(result.device.name).toBe("図書室入口");
@@ -54,13 +54,13 @@ describe("register(タブレットで端末を登録する)", () => {
         it("DR2 学籍番号かパスワードが違えば、登録せずに断る(INVALID_CREDENTIALS)", async () => {
             const service = new TabletDeviceService(store(), verifier("wrong"));
 
-            await expect(service.register({ studentId: "90240001", password: "wrong", name: "図書室入口" })).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
+            await expect(service.register({ studentId: "90240001", password: "wrong", name: "図書室入口" }, now)).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
         });
 
         it("DR3 管理者でなければ、パスワードが合っても登録せずに断る(FORBIDDEN。UC-20の例外)", async () => {
             const service = new TabletDeviceService(store(), verifier(member));
 
-            await expect(service.register({ studentId: "20240001", password: "password123", name: "図書室入口" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+            await expect(service.register({ studentId: "20240001", password: "password123", name: "図書室入口" }, now)).rejects.toMatchObject({ code: "FORBIDDEN" });
         });
     });
 });

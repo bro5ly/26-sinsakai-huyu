@@ -7,6 +7,7 @@ import { route } from "@/lib/route.js";
 import type { Deps } from "@/deps.js";
 import type { Config } from "@/config.js";
 import { createDeviceMiddleware } from "@/middleware/device.middleware.js";
+import { createDeviceAttemptLimiter } from "@/lib/rate-limit.js";
 import { createTabletDeviceService } from "@/features/tablet-devices/tablet-device.routes.js";
 import { createTabletSessionRequestSchema, type CurrentTabletDevice, type Rental, type TabletSession } from "@sinsakai/shared";
 import { toRentalResponse } from "./rental.response.js";
@@ -29,7 +30,7 @@ export const createTabletRoutes = (deps: Deps, config: Config) => {
     }))
 
     // カードとPINで本人確認し、この端末でだけ使えるセッションを作る(UC-8・判断表T)
-    router.post('/sessions', route({ body: createTabletSessionRequestSchema }, async ({ req, body, res }) => {
+    router.post('/sessions', createDeviceAttemptLimiter(), route({ body: createTabletSessionRequestSchema }, async ({ req, body, res }) => {
         const device = req.device
         if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない")
         const session = await tabletSessions.start(body, device.id, new Date())

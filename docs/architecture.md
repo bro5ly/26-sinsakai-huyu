@@ -19,7 +19,7 @@
 - 4つともDocker Composeで起動する。設定はリポジトリ直下の`.env`(全サービス共通)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
 - CORSは`FRONTEND_URL`(既定`http://localhost:4545`)だけを許し、Cookieを通す(`credentials: true`)
 - すべての応答に`helmet`のセキュリティのヘッダを付ける。JSONは100kbまで
-- `POST /api/sessions`(ログイン)は接続元ごとに失敗を15分で20回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。超えたら429 `RATE_LIMITED`
+- `POST /api/sessions`(ログイン)は、学籍番号ごとに続けて5回間違えたら15分止める(DBの回数)。加えて、接続元ごとに失敗を15分で100回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。どちらも429 `RATE_LIMITED`。認証コードの申請は学籍番号ごとに1分に1回・1時間に5回、タブレットの本人確認は端末ごとに1分で失敗20回まで(`docs/auth.md` 4.6)
 
 ## バックエンドのレイヤ
 
@@ -59,7 +59,7 @@
 | `GET /item-types/{id}` | Webのセッション | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
 | `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える)、PINの状態(登録済みか・ロック中か) | 200 `Me` |
 | `GET /me/rentals` | Webのセッション | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
-| `PUT /me/pin` | Webのセッション | `{ pin, password }`。パスワードを入れ直し、タブレット用のPIN(4桁。推測しやすいものは400)を登録・変更する。失敗の回数とロックも解く。失敗は接続元ごとに15分で20回まで | 204、パスワード違いは403 `WRONG_PASSWORD` |
+| `PUT /me/pin` | Webのセッション | `{ pin, password }`。パスワードを入れ直し、タブレット用のPIN(4桁。推測しやすいものは400)を登録・変更する。失敗の回数とロックも解く。失敗は接続元ごとに15分で100回まで | 204、パスワード違いは403 `WRONG_PASSWORD` |
 | `POST /tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }`。置くタブレットの上で端末を登録する(Webのセッションは作らない) | 201 `TabletDevice`(+Cookie`device`) |
 | `GET /admin/tablet-devices` | Webのセッション(管理者) | 取り消していない端末の一覧 | 200 `{ items: TabletDevice[] }` |
 | `DELETE /admin/tablet-devices/{id}` | Webのセッション(管理者) | 端末を取り消す(行は消さない) | 204 |
@@ -109,8 +109,8 @@ TabletDevice *─1 User(登録した管理者)
 | テーブル | 中身 |
 |---|---|
 | `external_user` | 学校の名簿の代わり。学籍番号・メール・シリアル番号(一意)・名前・学年・専攻・種別(学生/教職員/外部)。**名前などはここにだけ持つ** |
-| `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active`・タブレット用のPIN(`pin_hash`はbcryptのハッシュ、`pin_failed_attempts`、`pin_locked_at`はロックした日時で、Webで登録し直すまで解けない) |
-| `verification_codes` | 登録の認証コード。主キーが学籍番号。コードが合ったら登録用トークンのハッシュと期限も入れ、登録したら行ごと消す |
+| `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active`・タブレット用のPIN(`pin_hash`はbcryptのハッシュ、`pin_failed_attempts`、`pin_locked_at`はロックした日時で、Webで登録し直すまで解けない)・Webのログインの失敗(`login_failed_attempts`、`login_locked_until`は止める期限で、15分で解ける) |
+| `verification_codes` | 登録の認証コード。主キーが学籍番号。コードはSHA-256のハッシュ(`code_hash`)だけを持ち、間違えた回数(`attempts`)が5回になったら行ごと消す。申請し直したら行を置き換える。コードが合ったら登録用トークンのハッシュと期限も入れ、登録したら行ごと消す |
 | `tablet_device` | 貸し出しを受け付けるタブレットの端末。名前(管理者が付ける)・番号のハッシュ(一意)・登録した管理者・最後に使った日時・取り消した日時(行は消さない) |
 | `session` | ログインのセッション。番号のハッシュ(一意)・利用者・種類(`WEB`・`TABLET`)・期限。タブレットのものは作った端末と最後に使った日時も持つ。利用者を消すと一緒に消える |
 | `category` / `genre` | 分類(例: 機材 > ノートパソコン) |

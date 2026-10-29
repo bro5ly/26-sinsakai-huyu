@@ -9,6 +9,9 @@ const userSelect = {
     role: true,
     // 無効な人はログインさせない(R-A14)
     isActive: true,
+    // 続けて5回間違えたら15分止める(F1)
+    loginFailedAttempts: true,
+    loginLockedUntil: true,
 } as const
 
 export class UserRepository implements UserStore {
@@ -35,6 +38,13 @@ export class UserRepository implements UserStore {
                 studentId
             },
             select: userSelect
+        })
+    }
+
+    async saveLoginAttempt(data: {userId: string, failedAttempts: number, lockedUntil: Date | null}): Promise<void> {
+        await this.db.user.update({
+            where: {id: data.userId},
+            data: {loginFailedAttempts: data.failedAttempts, loginLockedUntil: data.lockedUntil},
         })
     }
 }

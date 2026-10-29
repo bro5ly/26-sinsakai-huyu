@@ -107,8 +107,8 @@
 
 | メソッドとURL | 認証 | リクエスト | 成功 | おもなエラー | ユースケース |
 |---|---|---|---|---|---|
-| `POST /api/verification-codes` | なし | `{ studentId, purpose: "signup" \| "password-reset" }` | **202**(本文なし。名簿にいてもいなくても同じ) | 400・429 | UC-1・UC-4 |
-| `POST /api/verification-tokens` | なし | `{ studentId, purpose, code }` | 201 `{ token, expiresAt }` | 400・401 `INVALID_CODE`・429 | UC-1・UC-4 |
+| `POST /api/verification-codes` | なし | `{ studentId, purpose: "signup" \| "password-reset" }` | **202**(本文なし。名簿にいてもいなくても同じ。申請し直したら前のコードは通らない) | 400・429(学籍番号ごとに1分に1回・1時間に5回。名簿にいない番号も同じ) | UC-1・UC-4 |
+| `POST /api/verification-tokens` | なし | `{ studentId, purpose, code }` | 201 `{ token, expiresAt }` | 400・401 `INVALID_CODE`(5回目の間違いでコードを消す。R-8) | UC-1・UC-4 |
 | `POST /api/users` | なし | `{ token, password }` | 201 `{ user: SessionUser }` + Cookie | 400・401 `INVALID_TOKEN`・409 `ALREADY_REGISTERED` | UC-1 |
 | `POST /api/sessions` | なし | `{ studentId, password }` | 201 `{ user: SessionUser }` + Cookie | 400・401 `INVALID_CREDENTIALS`・429 | UC-2 |
 | `DELETE /api/sessions/current` | Cookie | なし | 204(Cookieを消し、DBのセッションも消す) | — | UC-3 |
@@ -122,7 +122,7 @@
 |---|---|---|---|---|
 | `GET /api/me` | Web | — | 200 `Me` | UC-5 |
 | `GET /api/me/rentals` | Web | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
-| `PUT /api/me/pin` | Web | `{ pin, password }`(数字4桁。パスワードを入れ直す。P1。同じ数字・連続した数字は400。P2) | 204(ロックも解除)。パスワードが違えば403 `WRONG_PASSWORD`(P5)。失敗は接続元ごとに15分で20回まで(P6) | UC-7 |
+| `PUT /api/me/pin` | Web | `{ pin, password }`(数字4桁。パスワードを入れ直す。P1。同じ数字・連続した数字は400。P2) | 204(ロックも解除)。パスワードが違えば403 `WRONG_PASSWORD`(P5)。失敗は接続元ごとに15分で100回まで(P6・F2) | UC-7 |
 | `POST /api/me/tablet-codes` | Web | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
 
 ### 4.3 カタログ(Web。**ログイン必須**。`docs/spec.md`のQ11、2026-10-23決定)
@@ -143,7 +143,7 @@
 |---|---|---|---|---|---|
 | `POST /api/tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }` | 201 `TabletDevice` + Cookie`device`(400日) | 401 `INVALID_CREDENTIALS`・403 `FORBIDDEN`(管理者でない)・400・429 | UC-20 |
 | `GET /api/tablet/device` | 端末 | — | 200 `{ id, name }`(画面が開いたときに確かめる) | 401 `DEVICE_NOT_REGISTERED` | UC-8・UC-20 |
-| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。`{ tabletCode, pin }`は使い捨てのバーコード(g)で足す) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429 | UC-8・UC-10 |
+| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。`{ tabletCode, pin }`は使い捨てのバーコード(g)で足す) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429(端末ごとに1分で失敗20回) | UC-8・UC-10 |
 | `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204(切れていても204。2026-10-29に作った) | — | UC-8・UC-31 |
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental`(2026-10-29に作った。判断表Cで判断し、借りた端末を記録する。C4・C5はどちらも`BORROWING_SUSPENDED`。E8) | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
 | `POST /api/tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }` | 201 `Rental`(返却日時入り。2026-10-29に作った。返した端末を記録する) | 404 `ACTIVE_RENTAL_NOT_FOUND` | UC-9 |

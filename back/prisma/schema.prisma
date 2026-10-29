@@ -55,29 +55,33 @@ enum NotificationType {
 // このシステムに登録した人。名前・メール・カードの番号などは名簿にだけ持ち、写さない。
 // 名簿は名簿の窓口(src/features/roster)からだけ読む。本番の名簿は学校のDBかAPIなので、外部キーもリレーションも張らない
 model User {
-  id               String    @id @default(uuid()) @map("UniqueID")
-  studentId        String    @unique @map("student_id")
-  passwordHash     String    @map("password_hash")
-  role             Role      @default(MEMBER)
-  slackUserId      String?   @map("slack_user_id")
-  slackTeamId      String?   @map("slack_team_id")
-  canBorrow        Boolean   @default(true) @map("can_borrow")
-  maxItems         Int       @default(5) @map("max_items")
-  suspendedUntil   DateTime? @map("suspended_until")
-  suspensionReason String?   @map("suspension_reason")
-  isActive         Boolean   @default(true) @map("is_active")
+  id                  String    @id @default(uuid()) @map("UniqueID")
+  studentId           String    @unique @map("student_id")
+  passwordHash        String    @map("password_hash")
+  role                Role      @default(MEMBER)
+  slackUserId         String?   @map("slack_user_id")
+  slackTeamId         String?   @map("slack_team_id")
+  canBorrow           Boolean   @default(true) @map("can_borrow")
+  maxItems            Int       @default(5) @map("max_items")
+  suspendedUntil      DateTime? @map("suspended_until")
+  suspensionReason    String?   @map("suspension_reason")
+  isActive            Boolean   @default(true) @map("is_active")
   // タブレット用のPIN(数字4桁)。bcryptのハッシュだけを持つ。無ければ未登録(docs/auth.md R-A5)
-  pinHash           String?   @map("pin_hash")
+  pinHash             String?   @map("pin_hash")
   // タブレットで続けて間違えた回数。5回でロックし、Webで登録し直すまで解かない(R-A7)。数えるのは0.8のe
-  pinFailedAttempts Int       @default(0) @map("pin_failed_attempts")
+  pinFailedAttempts   Int       @default(0) @map("pin_failed_attempts")
   // ロックした日時。無ければロックしていない。時間では解けないので「いつまで」は持たない(P4)
-  pinLockedAt       DateTime? @map("pin_locked_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  pinLockedAt         DateTime? @map("pin_locked_at")
+  // Webのログインで続けて間違えた回数。5回で15分止め、止めたら0に戻す(docs/auth.md 4.6・docs/backlog.md 0.8 F1)
+  loginFailedAttempts Int       @default(0) @map("login_failed_attempts")
+  // いつまで止めるか。無ければ止めていない。時間で解ける(PINのロックと違う)
+  loginLockedUntil    DateTime? @map("login_locked_until")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  rentals       Rental[]
-  notifications Notification[]
-  sessions      Session[]
+  rentals                 Rental[]
+  notifications           Notification[]
+  sessions                Session[]
   // この人が登録したタブレットの端末
   registeredTabletDevices TabletDevice[]
 
@@ -102,10 +106,13 @@ model ExternalUser {
 }
 
 model VerificationCode {
-  studentId String   @id @map("student_id")
-  code      String
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  studentId      String    @id @map("student_id")
+  // コードそのものは持たず、SHA-256のハッシュだけを持つ(docs/auth.md 4.6)
+  codeHash       String    @map("code_hash")
+  // このコードで間違えた回数。5回目でコードを無効にする(行ごと消す。R-8)
+  attempts       Int       @default(0)
+  expiresAt      DateTime  @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
   // コードが合ったあとに渡す登録用トークン。番号そのものは持たず、ハッシュだけを持つ。登録で1回使ったら行ごと消す(docs/auth.md A8-8)
   tokenHash      String?   @unique @map("token_hash")
   tokenExpiresAt DateTime? @map("token_expires_at")
