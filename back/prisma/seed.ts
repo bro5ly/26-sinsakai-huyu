@@ -134,7 +134,7 @@ async function main() {
     },
   });
 
-  const equipmentCategory = await prisma.category.create({
+  await prisma.category.create({
     data: {
       name: "実験器具",
       description: "測定器、工具、実験用品など",

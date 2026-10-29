@@ -1,4 +1,4 @@
-import type { Roster, RosterEntry } from "../roster/roster.js"
+import type { Roster, RosterEntry } from "@/features/roster/roster.js"
 import { DomainError } from "@/lib/domain-error.js"
 import { hashToken, sameHash } from "@/lib/session-token.js"
 import { afterCodeAttempt, afterLoginAttempt, isLoginLocked } from "./attempt.check.js"
@@ -87,7 +87,7 @@ export class AuthService {
         return this.createSession(user, entry, now)
     }
 
-    login = async (studentId: string, plainPassword: string, now: Date) => {
+    login = async (studentId: string, plainPassword: string, now: Date): Promise<AuthResult> => {
         const { user, entry } = await this.verifyCredentials(studentId, plainPassword, now)
         return this.createSession(user, entry, now)
     }

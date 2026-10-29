@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { DomainError } from "@/lib/domain-error.js";
-import type { Roster } from "../roster/roster.js";
-import { rentalStatus } from "../rentals/rental.status.js";
+import type { Roster } from "@/features/roster/roster.js";
+import { rentalStatus } from "@/features/rentals/rental.status.js";
 import type { MeStore, MeUserRecord, MeView, RentalView } from "./me.types.js";
 
 // ログイン中の本人の情報(docs/api.md 4.2)。「今」は外から渡し、延滞の境目をテストできるようにする

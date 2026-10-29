@@ -1,4 +1,5 @@
-import { Request } from "express";
+// Expressの型を読み込んでから、Request に項目を足す(このファイルをモジュールにするためでもある)
+import "express";
 
 declare global {
   namespace Express {

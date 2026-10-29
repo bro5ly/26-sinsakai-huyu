@@ -1,6 +1,6 @@
 import type { Category, ItemTypeDetail, ItemTypeSummary } from "@sinsakai/shared";
 import { DomainError } from "@/lib/domain-error.js";
-import { itemAvailability } from "../rentals/rental.status.js";
+import { itemAvailability } from "@/features/rentals/rental.status.js";
 import type { CatalogItemRecord, CatalogStore, ItemTypeRecord } from "./catalog.types.js";
 
 // 廃棄済みはもう戻らないので、全数にも詳細の一覧にも入れない。修理中・紛失は戻ることがあるので入れる(2026-10-28 Ca4)
