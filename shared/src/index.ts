@@ -44,3 +44,13 @@ export {
     type ItemTypes,
     type ItemTypeSummary,
 } from "@sinsakai/shared/catalog";
+export {
+    currentTabletDeviceSchema,
+    registerTabletDeviceRequestSchema,
+    tabletDeviceSchema,
+    tabletDevicesSchema,
+    type CurrentTabletDevice,
+    type RegisterTabletDeviceRequest,
+    type TabletDevice,
+    type TabletDevices,
+} from "@sinsakai/shared/tablet-devices";
