@@ -10,7 +10,7 @@ import {
 } from "@sinsakai/shared";
 import type { AuthResult } from "./auth.types.js";
 import { route } from "@/lib/route.js";
-import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
+import { createCodeRequestLimiter, createPasswordFailureLimiter } from "@/lib/rate-limit.js";
 import type { Deps } from "@/deps.js";
 import { SESSION_COOKIE } from "@/middleware/auth.middleware.js";
 import type { Config } from "@/config.js";
@@ -40,7 +40,7 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
     }
 
     // 名簿にいてもいなくても同じ202を返す(学籍番号があるか・登録済みかを知られないため。R-16)
-    router.post('/verification-codes', route({ body: verificationCodeRequestSchema }, async ({ body, res }) => {
+    router.post('/verification-codes', createCodeRequestLimiter(), route({ body: verificationCodeRequestSchema }, async ({ body, res }) => {
         await auth.requestVerification(body.studentId, new Date())
         return res.status(202).end()
     }))
