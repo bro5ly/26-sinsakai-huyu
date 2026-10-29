@@ -116,14 +116,14 @@
 
 ### 4.2 本人(Web)
 
-**`GET /api/me`・`GET /api/me/rentals`は2026-10-25に移した**(`Me`に0.8まで`cardNumber`、`Rental.itemType`に`genre`。形は`shared/src/me.ts`)。2026-10-28に`PUT /api/me/pin`を作った(0.8のc)。使い捨てのバーコードは0.8のg。
+**`GET /api/me`・`GET /api/me/rentals`は2026-10-25に移した**(`Rental.itemType`に`genre`。形は`shared/src/me.ts`。`Me.cardNumber`は2026-10-29に外した。G0)。2026-10-28に`PUT /api/me/pin`を作った(0.8のc)。使い捨てのバーコードは作らない(G0)。
 
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
 | `GET /api/me` | Web | — | 200 `Me` | UC-5 |
 | `GET /api/me/rentals` | Web | `?state=active`(既定)`\|all`(`all`は履歴の画面を作るときに足す。2026-10-25 Me4) | 200 `{ items: Rental[] }` | UC-5・UC-11 |
 | `PUT /api/me/pin` | Web | `{ pin, password }`(数字4桁。パスワードを入れ直す。P1。同じ数字・連続した数字は400。P2) | 204(ロックも解除)。パスワードが違えば403 `WRONG_PASSWORD`(P5)。失敗は接続元ごとに15分で100回まで(P6・F2) | UC-7 |
-| `POST /api/me/tablet-codes` | Web | — | 201 `{ code, expiresAt }`(60秒の使い捨て。カードを忘れたとき) | UC-10 |
+| ~~`POST /api/me/tablet-codes`~~ | Web | — | 作らない(2026-10-29 G0。カードを忘れたときの借り方は用意しない) | UC-10 |
 
 ### 4.3 カタログ(Web。**ログイン必須**。`docs/spec.md`のQ11、2026-10-23決定)
 
@@ -143,7 +143,7 @@
 |---|---|---|---|---|---|
 | `POST /api/tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }` | 201 `TabletDevice` + Cookie`device`(400日) | 401 `INVALID_CREDENTIALS`・403 `FORBIDDEN`(管理者でない)・400・429 | UC-20 |
 | `GET /api/tablet/device` | 端末 | — | 200 `{ id, name }`(画面が開いたときに確かめる) | 401 `DEVICE_NOT_REGISTERED` | UC-8・UC-20 |
-| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。`{ tabletCode, pin }`は使い捨てのバーコード(g)で足す) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429(端末ごとに1分で失敗20回) | UC-8・UC-10 |
+| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。使い捨てのバーコードの`{ tabletCode, pin }`は作らない。G0) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429(端末ごとに1分で失敗20回) | UC-8・UC-10 |
 | `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204(切れていても204。2026-10-29に作った) | — | UC-8・UC-31 |
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental`(2026-10-29に作った。判断表Cで判断し、借りた端末を記録する。C4・C5はどちらも`BORROWING_SUSPENDED`。E8) | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
 | `POST /api/tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }` | 201 `Rental`(返却日時入り。2026-10-29に作った。返した端末を記録する) | 404 `ACTIVE_RENTAL_NOT_FOUND` | UC-9 |
@@ -191,7 +191,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 ```
 
 今との違い:
-- `serialNumber`(カードの番号)はどの応答にも入れない(`docs/auth.md`の3章)。ダッシュボードのバーコードは`POST /api/me/tablet-codes`の使い捨てに変える。**それまでは`Me.cardNumber`として返す**(2026-10-25 Me1。0.8で外す)
+- `serialNumber`(カードの番号)はどの応答にも入れない(`docs/auth.md`の3章)。ダッシュボードのカードの番号のバーコードはやめ、`Me.cardNumber`も2026-10-29に外した(G0。使い捨てのバーコードは作らない)
 - `status`という名前は、HTTPのステータスと紛らわしいので、物品と貸し出しの状態は`state`にする(API-Q7)
 - `rentalSetting`は`Me.borrowing`にし、借りている数と延滞の有無も入れる(画面で数えない)
 - タブレットの`user`は表示用の名前だけ(R-A13)
@@ -241,7 +241,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き。2026-10-29に移した) |
 | `POST /api/tablet/checkout` | `POST /api/tablet/rentals`(2026-10-29に移した) |
 | `POST /api/tablet/return` | `POST /api/tablet/returns`(2026-10-29に移した。カード不要) |
-| (無し) | `PUT /api/me/pin`(2026-10-28に作った)・タブレットの端末(2026-10-29に作った)・パスワードの再設定・使い捨てのバーコード・在庫管理・`/api/health` |
+| (無し) | `PUT /api/me/pin`(2026-10-28に作った)・タブレットの端末(2026-10-29に作った)・パスワードの再設定・在庫管理・`/api/health` |
 
 **移り方**: 外部の利用者はいないので、古いURLは残さず、画面とサーバーを同じ変更で移す(API-Q8)。
 

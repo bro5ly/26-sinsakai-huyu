@@ -69,7 +69,7 @@
 | `POST /tablet/rentals` | 端末 + タブレットのセッション | `{ barcode }`。判断表C(物品の状態・止められている・停止期間・延滞・上限)で判断して貸し出す。借りた端末を記録する | 201 `Rental` |
 | `POST /tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }`。返却する(本人でなくてよい)。返した端末を記録する | 201 `Rental`(返却日時入り) |
 
-登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/me`で取る(カードの番号は0.8で使い捨てのバーコードに替えるまで。Me1)。
+登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻は`/me`で取る。カードの番号はどの応答にも入れない(2026-10-29にダッシュボードのバーコードをやめ、`Me.cardNumber`を外した。G0)。
 
 ## 認証とトークン
 

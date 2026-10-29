@@ -491,7 +491,7 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
 
 describe("GET /api/me・GET /api/me/rentals(本人)", () => {
     describe("正常系", () => {
-        it("H11 Webのセッションがあれば、GET /api/meは200でMeの形(名簿の項目・カードの番号・貸し出しの決まり)を返す(docs/api.md 4.2。Me1)", async () => {
+        it("H11 Webのセッションがあれば、GET /api/meは200でMeの形(名簿の項目・貸し出しの決まり)を返す。カードの番号は返さない(docs/api.md 4.2。2026-10-29 G0)", async () => {
             const { app } = fakeDeps();
 
             const res = await request(app).get("/api/me").set(webSession);
@@ -506,11 +506,12 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
                 email: "yamada@example.com",
                 grade: "2年",
                 major: "情報工学科",
-                cardNumber: "IC-CARD-001",
                 borrowing: { canBorrow: true, maxItems: 3, suspendedUntil: null, activeCount: 1, hasOverdue: false },
                 pin: { registered: true, locked: false },
             });
             expect(res.body).not.toHaveProperty("success");
+            // カードの番号が画面に出ると、撮られた画面がカードの写しになる(A-Q6・G0)
+            expect(JSON.stringify(res.body)).not.toContain("IC-CARD-001");
         });
 
         it("H32 GET /api/me/rentalsは200で、借りている物を{ items }に入れ、状態とジャンル付きで返す(Me3)", async () => {
