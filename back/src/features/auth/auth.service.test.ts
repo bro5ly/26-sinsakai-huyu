@@ -275,6 +275,26 @@ describe("signUp(パスワードを決めて登録する)", () => {
             await expect(service.signUp("password123", "token-1", new Date())).rejects.toMatchObject({ code: "ALREADY_REGISTERED" });
         });
     });
+
+    describe("境界値", () => {
+        const now = new Date("2026-10-29T10:00:00Z");
+        const serviceWithTokenUntil = (tokenExpiresAt: Date) =>
+            authService(
+                users({ findByStudentId: async () => null, create: newUser }),
+                codes({ findByRegistrationTokenHash: async () => tokenRecord({ tokenExpiresAt }), deleteTmpCode: async () => undefined }),
+                sessions(),
+                mailer(),
+                new FakeRoster([unregistered]),
+            );
+
+        it("A22 登録用トークンの期限ちょうどは、切れている(INVALID_TOKEN。R-6)", async () => {
+            await expect(serviceWithTokenUntil(now).signUp("password123", "token-1", now)).rejects.toMatchObject({ code: "INVALID_TOKEN" });
+        });
+
+        it("A23 期限の1ミリ秒前なら、まだ登録できる(R-6)", async () => {
+            await expect(serviceWithTokenUntil(new Date(now.getTime() + 1)).signUp("password123", "token-1", now)).resolves.toMatchObject({ user: { studentId: "20260001" } });
+        });
+    });
 });
 
 describe("login(学籍番号とパスワードでログインする)", () => {
