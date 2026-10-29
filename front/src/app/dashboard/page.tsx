@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@heroui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog, useFilteredItemTypes, useMyRentals } from "@/hooks";
 import {
@@ -55,6 +56,15 @@ export default function DashboardPage() {
 
       <main className="w-full max-w-xl pt-10 pb-20">
         <UserProfile user={user} onLogout={logout} onPinSaved={loadMe} />
+
+        {/* 管理者だけ。画面では入口を出し分けるだけで、守りはAPI(D1) */}
+        {user.role === "ADMIN" && (
+          <div className="px-6 pb-8">
+            <Button size="sm" variant="flat" className="w-full font-bold" onPress={() => router.push("/admin/tablets")}>
+              タブレットの端末の管理
+            </Button>
+          </div>
+        )}
 
         <RentalsList rentals={rentals} maxItems={user.borrowing.maxItems} />
 
