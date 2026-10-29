@@ -18,6 +18,10 @@ import type { Config } from "@/config.js";
 // Cookieの期限は、DBのセッションの期限(7日。A8-6)とそろえる
 const SESSION_COOKIE_MAX_AGE = WEB_SESSION_DAYS * 24 * 60 * 60 * 1000
 
+// 端末の登録(管理者の確かめ。D2)でも同じ組み立てを使う
+export const createAuthService = (deps: Deps) =>
+    new AuthService({ users: deps.users, codes: deps.auth, sessions: deps.sessions, mailer: deps.mailer, roster: deps.roster, passwords: deps.passwords, secrets: deps.secrets })
+
 // 失敗は throw するだけでよい(Express 5が middleware/error.middleware.ts に渡す)
 export const createAuthRoutes = (deps: Deps, config: Config) => {
     const router = Router();
@@ -31,7 +35,7 @@ export const createAuthRoutes = (deps: Deps, config: Config) => {
         sameSite: 'strict',
         path: '/',
     } as const
-    const auth = new AuthService(deps.users, deps.auth, deps.sessions, deps.mailer, deps.roster)
+    const auth = createAuthService(deps)
 
     // 応答の本文はshared/の形で返す。セッションの番号はCookieにだけ入れ、本文には入れない(JSに渡さない。A8-3)
     const sendSession = (res: Response, data: AuthResult) => {
