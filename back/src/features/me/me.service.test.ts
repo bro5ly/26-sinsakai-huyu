@@ -34,7 +34,7 @@ const store = (overrides: Partial<MeStore> = {}): MeStore => ({
 
 describe("getMe(本人のプロフィールと貸し出しの決まり)", () => {
     describe("正常系", () => {
-        it("ME1 登録済みで名簿にいれば、名簿の名前・メール・学年・専攻・カードの番号と、貸し出しの決まりを返す(R-17。docs/api.md 5章 Me)", async () => {
+        it("ME1 登録済みで名簿にいれば、名簿の名前・メール・学年・専攻と、貸し出しの決まりを返す。カードの番号は返さない(R-17。docs/api.md 5章 Me。G0)", async () => {
             const service = new MeService(store(), new FakeRoster([rosterEntry()]));
 
             const me = await service.getMe("user-3", now);
@@ -48,7 +48,6 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
                 email: "suzuki@example.com",
                 grade: "1年",
                 major: "機械工学科",
-                cardNumber: "IC-CARD-003",
                 borrowing: { canBorrow: true, maxItems: 3, suspendedUntil: null, activeCount: 0, hasOverdue: false },
                 pin: { registered: false, locked: false },
             });

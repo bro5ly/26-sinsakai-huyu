@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Avatar, Button } from "@heroui/react";
-import Barcode from "react-barcode";
 import type { Me } from "@sinsakai/shared";
 import { PinSettingModal } from "./PinSettingModal";
 
@@ -10,25 +9,6 @@ interface UserProfileProps {
   // PINを保存したあとに、本人(PINの状態)を取り直す
   onPinSaved: () => Promise<void> | void;
 }
-
-const BarcodeIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 5v14" />
-    <path d="M8 5v14" />
-    <path d="M12 5v14" />
-    <path d="M17 5v14" />
-    <path d="M21 5v14" />
-  </svg>
-);
 
 // PINの状態の文言。ロック中はタブレットで借りられないので、目立たせる(R-A7)
 const pinStatus = (pin: Me["pin"]) =>
@@ -42,7 +22,6 @@ export const UserProfile = ({
   user,
   onPinSaved,
 }: UserProfileProps) => {
-  const [showBarcode, setShowBarcode] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const status = pinStatus(user.pin);
 
@@ -73,53 +52,9 @@ export const UserProfile = ({
               >
                 Edit Profile
               </Button>
-              <Button
-                size="sm"
-                variant={showBarcode ? "solid" : "flat"}
-                color={showBarcode ? "primary" : "default"}
-                isIconOnly
-                className="h-8 w-8 rounded-md"
-                onPress={() => setShowBarcode(!showBarcode)}
-              >
-                <BarcodeIcon />
-              </Button>
             </div>
           </div>
         </div>
-
-        {/* バーコードエリア (条件付き表示) */}
-        {/* カードの番号は0.8で使い捨てのバーコードに替える(2026-10-25 Me1) */}
-        {showBarcode && user.cardNumber && (
-          <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-              <Barcode
-                value={user.cardNumber}
-                width={1.2}
-                height={50}
-                displayValue={false}
-                margin={0}
-                background="transparent"
-              />
-            </div>
-            <span className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em] mt-2">
-              Serial Number
-            </span>
-          </div>
-        )}
-
-        {/* カードの番号がない場合の警告 */}
-        {showBarcode && !user.cardNumber && (
-          <div className="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-              <p className="text-xs text-orange-600 font-medium">
-                Serial Number not found. Please contact administrator.
-              </p>
-              <p className="text-[10px] text-orange-400 mt-1">
-                Student ID: {user.studentId}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* タブレット用のPIN(UC-7) */}
         <div className="flex items-center justify-between w-full px-4 gap-3">

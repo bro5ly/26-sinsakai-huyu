@@ -44,7 +44,6 @@ export interface MeView {
     email: string;
     grade: string | null;
     major: string | null;
-    cardNumber: string | null;
     borrowing: {
         canBorrow: boolean;
         maxItems: number;

@@ -9,8 +9,7 @@ export const meSchema = sessionUserSchema.extend({
     email: z.string(),
     grade: z.string().nullable(),
     major: z.string().nullable(),
-    // ダッシュボードのバーコードに使う。0.8で使い捨てのバーコード(POST /api/me/tablet-codes)ができたら外す(Me1)
-    cardNumber: z.string().nullable(),
+    // カードの番号は入れない。画面に出すと、撮られた画面がカードの写しになるため(docs/auth.md A-Q6・2026-10-29 G0)
     // 借りている数と延滞の有無はサーバーで数える(画面で数えない)
     borrowing: z.object({
         canBorrow: z.boolean(),

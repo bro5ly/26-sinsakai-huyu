@@ -24,7 +24,6 @@ export class MeService {
             email: entry.email,
             grade: entry.grade,
             major: entry.major,
-            cardNumber: entry.serialNumber,
             borrowing: {
                 canBorrow: user.canBorrow,
                 maxItems: user.maxItems,
