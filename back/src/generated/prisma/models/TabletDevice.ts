@@ -199,6 +199,7 @@ export type TabletDeviceWhereInput = {
   lastUsedAt?: Prisma.DateTimeNullableFilter<"TabletDevice"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"TabletDevice"> | Date | string | null
   registeredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  sessions?: Prisma.SessionListRelationFilter
 }
 
 export type TabletDeviceOrderByWithRelationInput = {
@@ -210,6 +211,7 @@ export type TabletDeviceOrderByWithRelationInput = {
   lastUsedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   registeredBy?: Prisma.UserOrderByWithRelationInput
+  sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
 
 export type TabletDeviceWhereUniqueInput = Prisma.AtLeast<{
@@ -224,6 +226,7 @@ export type TabletDeviceWhereUniqueInput = Prisma.AtLeast<{
   lastUsedAt?: Prisma.DateTimeNullableFilter<"TabletDevice"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"TabletDevice"> | Date | string | null
   registeredBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  sessions?: Prisma.SessionListRelationFilter
 }, "id" | "tokenHash">
 
 export type TabletDeviceOrderByWithAggregationInput = {
@@ -260,6 +263,7 @@ export type TabletDeviceCreateInput = {
   lastUsedAt?: Date | string | null
   revokedAt?: Date | string | null
   registeredBy: Prisma.UserCreateNestedOneWithoutRegisteredTabletDevicesInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutDeviceInput
 }
 
 export type TabletDeviceUncheckedCreateInput = {
@@ -270,6 +274,7 @@ export type TabletDeviceUncheckedCreateInput = {
   createdAt?: Date | string
   lastUsedAt?: Date | string | null
   revokedAt?: Date | string | null
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutDeviceInput
 }
 
 export type TabletDeviceUpdateInput = {
@@ -280,6 +285,7 @@ export type TabletDeviceUpdateInput = {
   lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   registeredBy?: Prisma.UserUpdateOneRequiredWithoutRegisteredTabletDevicesNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutDeviceNestedInput
 }
 
 export type TabletDeviceUncheckedUpdateInput = {
@@ -290,6 +296,7 @@ export type TabletDeviceUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutDeviceNestedInput
 }
 
 export type TabletDeviceCreateManyInput = {
@@ -329,6 +336,11 @@ export type TabletDeviceListRelationFilter = {
 
 export type TabletDeviceOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type TabletDeviceNullableScalarRelationFilter = {
+  is?: Prisma.TabletDeviceWhereInput | null
+  isNot?: Prisma.TabletDeviceWhereInput | null
 }
 
 export type TabletDeviceCountOrderByAggregateInput = {
@@ -403,6 +415,22 @@ export type TabletDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput = {
   deleteMany?: Prisma.TabletDeviceScalarWhereInput | Prisma.TabletDeviceScalarWhereInput[]
 }
 
+export type TabletDeviceCreateNestedOneWithoutSessionsInput = {
+  create?: Prisma.XOR<Prisma.TabletDeviceCreateWithoutSessionsInput, Prisma.TabletDeviceUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.TabletDeviceCreateOrConnectWithoutSessionsInput
+  connect?: Prisma.TabletDeviceWhereUniqueInput
+}
+
+export type TabletDeviceUpdateOneWithoutSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.TabletDeviceCreateWithoutSessionsInput, Prisma.TabletDeviceUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.TabletDeviceCreateOrConnectWithoutSessionsInput
+  upsert?: Prisma.TabletDeviceUpsertWithoutSessionsInput
+  disconnect?: Prisma.TabletDeviceWhereInput | boolean
+  delete?: Prisma.TabletDeviceWhereInput | boolean
+  connect?: Prisma.TabletDeviceWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TabletDeviceUpdateToOneWithWhereWithoutSessionsInput, Prisma.TabletDeviceUpdateWithoutSessionsInput>, Prisma.TabletDeviceUncheckedUpdateWithoutSessionsInput>
+}
+
 export type TabletDeviceCreateWithoutRegisteredByInput = {
   id?: string
   name: string
@@ -410,6 +438,7 @@ export type TabletDeviceCreateWithoutRegisteredByInput = {
   createdAt?: Date | string
   lastUsedAt?: Date | string | null
   revokedAt?: Date | string | null
+  sessions?: Prisma.SessionCreateNestedManyWithoutDeviceInput
 }
 
 export type TabletDeviceUncheckedCreateWithoutRegisteredByInput = {
@@ -419,6 +448,7 @@ export type TabletDeviceUncheckedCreateWithoutRegisteredByInput = {
   createdAt?: Date | string
   lastUsedAt?: Date | string | null
   revokedAt?: Date | string | null
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutDeviceInput
 }
 
 export type TabletDeviceCreateOrConnectWithoutRegisteredByInput = {
@@ -460,6 +490,62 @@ export type TabletDeviceScalarWhereInput = {
   revokedAt?: Prisma.DateTimeNullableFilter<"TabletDevice"> | Date | string | null
 }
 
+export type TabletDeviceCreateWithoutSessionsInput = {
+  id?: string
+  name: string
+  tokenHash: string
+  createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+  revokedAt?: Date | string | null
+  registeredBy: Prisma.UserCreateNestedOneWithoutRegisteredTabletDevicesInput
+}
+
+export type TabletDeviceUncheckedCreateWithoutSessionsInput = {
+  id?: string
+  name: string
+  tokenHash: string
+  registeredById: string
+  createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+  revokedAt?: Date | string | null
+}
+
+export type TabletDeviceCreateOrConnectWithoutSessionsInput = {
+  where: Prisma.TabletDeviceWhereUniqueInput
+  create: Prisma.XOR<Prisma.TabletDeviceCreateWithoutSessionsInput, Prisma.TabletDeviceUncheckedCreateWithoutSessionsInput>
+}
+
+export type TabletDeviceUpsertWithoutSessionsInput = {
+  update: Prisma.XOR<Prisma.TabletDeviceUpdateWithoutSessionsInput, Prisma.TabletDeviceUncheckedUpdateWithoutSessionsInput>
+  create: Prisma.XOR<Prisma.TabletDeviceCreateWithoutSessionsInput, Prisma.TabletDeviceUncheckedCreateWithoutSessionsInput>
+  where?: Prisma.TabletDeviceWhereInput
+}
+
+export type TabletDeviceUpdateToOneWithWhereWithoutSessionsInput = {
+  where?: Prisma.TabletDeviceWhereInput
+  data: Prisma.XOR<Prisma.TabletDeviceUpdateWithoutSessionsInput, Prisma.TabletDeviceUncheckedUpdateWithoutSessionsInput>
+}
+
+export type TabletDeviceUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  registeredBy?: Prisma.UserUpdateOneRequiredWithoutRegisteredTabletDevicesNestedInput
+}
+
+export type TabletDeviceUncheckedUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
+  registeredById?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
 export type TabletDeviceCreateManyRegisteredByInput = {
   id?: string
   name: string
@@ -476,6 +562,7 @@ export type TabletDeviceUpdateWithoutRegisteredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sessions?: Prisma.SessionUpdateManyWithoutDeviceNestedInput
 }
 
 export type TabletDeviceUncheckedUpdateWithoutRegisteredByInput = {
@@ -485,6 +572,7 @@ export type TabletDeviceUncheckedUpdateWithoutRegisteredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutDeviceNestedInput
 }
 
 export type TabletDeviceUncheckedUpdateManyWithoutRegisteredByInput = {
@@ -497,6 +585,35 @@ export type TabletDeviceUncheckedUpdateManyWithoutRegisteredByInput = {
 }
 
 
+/**
+ * Count Type TabletDeviceCountOutputType
+ */
+
+export type TabletDeviceCountOutputType = {
+  sessions: number
+}
+
+export type TabletDeviceCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  sessions?: boolean | TabletDeviceCountOutputTypeCountSessionsArgs
+}
+
+/**
+ * TabletDeviceCountOutputType without action
+ */
+export type TabletDeviceCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TabletDeviceCountOutputType
+   */
+  select?: Prisma.TabletDeviceCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * TabletDeviceCountOutputType without action
+ */
+export type TabletDeviceCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SessionWhereInput
+}
+
 
 export type TabletDeviceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -507,6 +624,8 @@ export type TabletDeviceSelect<ExtArgs extends runtime.Types.Extensions.Internal
   lastUsedAt?: boolean
   revokedAt?: boolean
   registeredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  sessions?: boolean | Prisma.TabletDevice$sessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.TabletDeviceCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tabletDevice"]>
 
 export type TabletDeviceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -544,6 +663,8 @@ export type TabletDeviceSelectScalar = {
 export type TabletDeviceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "tokenHash" | "registeredById" | "createdAt" | "lastUsedAt" | "revokedAt", ExtArgs["result"]["tabletDevice"]>
 export type TabletDeviceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   registeredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  sessions?: boolean | Prisma.TabletDevice$sessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.TabletDeviceCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TabletDeviceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   registeredBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -556,6 +677,7 @@ export type $TabletDevicePayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "TabletDevice"
   objects: {
     registeredBy: Prisma.$UserPayload<ExtArgs>
+    sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -960,6 +1082,7 @@ readonly fields: TabletDeviceFieldRefs;
 export interface Prisma__TabletDeviceClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   registeredBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  sessions<T extends Prisma.TabletDevice$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TabletDevice$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1389,6 +1512,30 @@ export type TabletDeviceDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many TabletDevices to delete.
    */
   limit?: number
+}
+
+/**
+ * TabletDevice.sessions
+ */
+export type TabletDevice$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Session
+   */
+  select?: Prisma.SessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Session
+   */
+  omit?: Prisma.SessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SessionInclude<ExtArgs> | null
+  where?: Prisma.SessionWhereInput
+  orderBy?: Prisma.SessionOrderByWithRelationInput | Prisma.SessionOrderByWithRelationInput[]
+  cursor?: Prisma.SessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
 }
 
 /**
