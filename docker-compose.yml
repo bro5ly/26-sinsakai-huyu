@@ -65,6 +65,15 @@ services:
           condition: service_healthy
       # ここで起動コマンドを上書きする
       command: npx prisma studio --port 5555 --browser none
+
+  # 開発のときに認証コードのメールを受け取る(外には送らない)。届いたメールは http://localhost:8025 で見る。
+  # コードはDBにハッシュでしか置かないので、DBを見ても分からないため(2026-10-29 S1)。
+  # SMTP(1025)はコンテナの間だけで使い、Macには出さない。見る画面もMacの中からだけ開ける
+  mailpit:
+    image: axllent/mailpit:v1.24.1
+    container_name: sinsakai-huyu-mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
       
   db: 
     image: postgres:16
