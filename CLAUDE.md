@@ -23,7 +23,7 @@
 
 ## 全体で守ること
 
-- **APIの成功レスポンスは、すべて`docs/api.md`の新しい形**(2026-10-29に、最後のタブレットの貸し出し・返却を移した)。包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。`{ success: true, ...data }`(`sendSuccess`)は無くした。物品のバーコードは、利用者に返すどの応答にも入れない(実物を持たずに返却できてしまうため。BC1)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
+- **APIの成功レスポンスは、すべて`docs/api.md`の新しい形**(2026-10-29に、最後のタブレットの貸し出し・返却を移した)。包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。`{ success: true, ...data }`(`sendSuccess`)は無くした。物品のバーコードは、利用者に返すどの応答にも入れない(実物を持たずに返却できてしまうため。BC1)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。画面は`shared/`の同じ型で読むので、`shared/`を通さずに形を変えると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
 - **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`shared/src/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - 認証: Webはサーバーのセッション(番号をHttpOnly・`SameSite=Strict`のCookie`session`に入れ、DBの`session`にはSHA-256のハッシュだけ。7日で切れる。1人が何件でも持てる)。書き換えのリクエストは`Origin`が画面のURLでないと403 `FORBIDDEN_ORIGIN`。登録用トークン(15分)もDBのハッシュで1回だけ。タブレットのAPIは、登録された端末のCookie`device`(400日。DBにはハッシュだけ)が要る。管理者だけのAPIは`/api/admin`の下(入口で管理者かを確かめる)。タブレットの本人確認は、カードとPINで作るサーバーのセッション(同じ`session`の表で種類`TABLET`。番号は画面のメモリに持ち`Authorization: Bearer`で送る。作った端末でだけ、無操作30秒・3分まで)。JWTはどこにも使っていない。仕組みと理由は`docs/auth.md`の2章(2026-10-28 A8-3〜A8-11)
@@ -52,7 +52,7 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 - 1つの機能の中は routes → service → repository の向きにだけ依存する。本物の部品(Prisma・名簿の窓口・メール)を`new`するのは`buildDeps()`だけで、`create○○Routes(deps)`が受け取った部品でserviceを作る(DIコンテナは使わない。`docs/backlog.md` 0.7 R1・R2)
 - 入力の検証は`*.schema.ts`のZodで、`lib/route.ts`の`route({ body: schema }, ...)`に渡す。`req.body`を直接読まない。ログインが要るrouteは`auth: true`を付けて`user`を受け取る(R3・R6)
 - `shared/`の中のファイルどうしは、相対パス(`./x.js`)ではなく`@sinsakai/shared/x`で読み、ファイルを足したら`shared/package.json`の`exports`にも足す(Next.jsのTurbopackが`./x.js`を`x.ts`に読み替えず、画面のビルドが落ちるため。2026-10-24 P6-A)
-- フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。`front/src/lib/api.ts`・`lib/auth-api.ts`は古い重複で、新しく使わない
+- フロントのAPI呼び出しは`front/src/services/`(`ApiService`を継承)に置く。APIの形は`shared/`の型を使い、`front/src/types/`に手で書き直さない(古い重複の`lib/api.ts`・`lib/auth-api.ts`と手書きの型は2026-10-29に消した)
 - コメントは「なぜ」を書く。何をしているかはコードで表す
 - 動作確認用の`console.log`(利用者の情報を出すもの)は残さない
 - ブランチは作業のまとまりごとに`fix/…`・`refactor/…`・`feat/…`・`docs/…`で切り、`main`へPRを出す(下の「開発の進め方」)。今は`develop`を使わず`main`を主軸にする(1人の開発で、本番の環境も無いため)。`develop`のブランチは消さずに残し、サーバーとCI/CDを作るときに、`develop`を開発用・`main`を本番用に分けるかを決める(2026-10-25、開発者の希望)

@@ -137,6 +137,6 @@ TabletDevice *─1 User(登録した管理者)
 | `/auth` | ログインと、3段階の新規登録 | `useAuthForm`、`components/auth/` |
 | `/dashboard` | 自分の情報・バーコード・借りている物・カタログ(検索・ジャンル・カテゴリの絞り込みは画面でする) | `useAuth`、`useMyRentals`、`useCatalog`、`components/dashboard/` |
 | `/items/[id]` | 種類の詳細(物品1つ1つの置き場所と状態) | `useItemType` |
-| `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → PIN → 操作の選択(名前と借りている物の名前・期限・延滞) → バーコード → 完了。無操作30秒・完了10秒・「終わる」で最初に戻る | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`TabletContext`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
+| `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → PIN → 操作の選択(名前と借りている物の名前・期限・延滞) → バーコード → 完了。無操作30秒・完了10秒・「終わる」で最初に戻る | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
 | `/admin/tablets` | 管理者だけ。タブレットの端末の一覧と取り消し | `useAdminTabletDevices` |
 | `/barcodes` | 開発のときだけ。テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き。`page.dev.tsx`で、本番のビルドには入らない) | `react-barcode` |

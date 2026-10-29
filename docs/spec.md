@@ -347,7 +347,6 @@ R-11〜R-15は、2026-10-28にWebをサーバーのセッションにした(A8-3
 | # | 内容 | 場所 | 関係する要件 |
 |---|---|---|---|
 | 7 | 延滞をダッシュボードで目立たせていない(APIは`status: "OVERDUE"`を返す) | `front/src/components/dashboard/` | R-30 |
-| 17 | APIの型を4か所で別々に書いていて、ずれている(画面の`UserType`に`FACULTY`が無く`TEACHER`がある、`ItemStatus`に`LOST`・`DISPOSED`が無く`RETIRED`がある、`rentalSetting`の項目が違う、カード認証の`user`の項目が違う)。ダッシュボードは`as any`でずれを隠している | `front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`、`back/src/features/*/…types.ts` | `docs/backlog.md`の0.7 |
 
 ## 11. 要確認
 
