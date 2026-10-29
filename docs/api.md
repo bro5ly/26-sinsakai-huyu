@@ -116,7 +116,7 @@
 
 ### 4.2 本人(Web)
 
-**`GET /api/me`・`GET /api/me/rentals`は2026-10-25に移した**(`Me`に0.8まで`cardNumber`、`Rental.itemType`に`genre`。形は`shared/src/me.ts`)。PINと使い捨てのバーコードは0.8。
+**`GET /api/me`・`GET /api/me/rentals`は2026-10-25に移した**(`Me`に0.8まで`cardNumber`、`Rental.itemType`に`genre`。形は`shared/src/me.ts`)。2026-10-28に`PUT /api/me/pin`を作った(0.8のc)。使い捨てのバーコードは0.8のg。
 
 | メソッドとURL | 認証 | リクエスト | 成功 | ユースケース |
 |---|---|---|---|---|
@@ -169,7 +169,8 @@ PINのロックは423(Locked)にするか、409にするか(API-Q6)。
 ```ts
 SessionUser  { id, name, studentId, userType: "STUDENT" | "FACULTY" | "EXTERNAL", role: "MEMBER" | "ADMIN" }
 Me           SessionUser + { email, grade | null, major | null,
-               borrowing: { canBorrow, maxItems, suspendedUntil | null, activeCount, hasOverdue } }
+               borrowing: { canBorrow, maxItems, suspendedUntil | null, activeCount, hasOverdue },
+               pin: { registered, locked } }   // PINそのもの・残りの回数は出さない(2026-10-28 P3)
 Category     { id, name, genres: { id, name }[] }
 ItemTypeSummary { id, title, genre: { id, name }, category: { id, name }, imageUrl | null,
                   rentalPeriodDays, availableCount, totalCount }   // totalCountに廃棄済みは入れない(2026-10-28 Ca4)
@@ -203,6 +204,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `INVALID_CARD_OR_PIN` | 401 | カードかPINが違う・PIN未登録・無効な人(どれかは言わない) |
 | `SESSION_EXPIRED` | 401 | タブレットの本人確認のセッションが切れた |
 | `PIN_LOCKED` | 423 | PINを5回間違えた(API-Q6) |
+| `WRONG_PASSWORD` | 403 | PINの変更などで入れ直したパスワードが違う(ログイン中なので「学籍番号か」とは言わない。2026-10-28 P5) |
 | `FORBIDDEN_ORIGIN` | 403 | 書き換えのリクエストの`Origin`が画面のURLでない・無い(CSRFの対策。2026-10-28 A8-11) |
 | `FORBIDDEN` | 403 | 管理者でない |
 | `NOT_FOUND` | 404 | 無い資源・存在しないURL |
@@ -234,7 +236,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き) |
 | `POST /api/tablet/checkout` | `POST /api/tablet/rentals` |
 | `POST /api/tablet/return` | `POST /api/tablet/returns` |
-| (無し) | パスワードの再設定・PIN・使い捨てのバーコード・タブレットの端末・在庫管理・`/api/health` |
+| (無し) | `PUT /api/me/pin`(2026-10-28に作った)・パスワードの再設定・使い捨てのバーコード・タブレットの端末・在庫管理・`/api/health` |
 
 **移り方**: 外部の利用者はいないので、古いURLは残さず、画面とサーバーを同じ変更で移す(API-Q8)。
 

@@ -57,8 +57,9 @@
 | `GET /categories` | Webのセッション | カテゴリとその中のジャンル(絞り込みの選択肢) | 200 `{ items: Category[] }` |
 | `GET /item-types` | Webのセッション | 種類ごとの一覧(貸し出せる数と全数。全数に廃棄済みは入れない) | 200 `{ items: ItemTypeSummary[] }` |
 | `GET /item-types/{id}` | Webのセッション | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
-| `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える) | 200 `Me` |
+| `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える)、PINの状態(登録済みか・ロック中か) | 200 `Me` |
 | `GET /me/rentals` | Webのセッション | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
+| `PUT /me/pin` | Webのセッション | `{ pin, password }`。パスワードを入れ直し、タブレット用のPIN(4桁。推測しやすいものは400)を登録・変更する。失敗の回数とロックも解く。失敗は接続元ごとに15分で20回まで | 204、パスワード違いは403 `WRONG_PASSWORD` |
 | `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
 | `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
 | `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
@@ -98,7 +99,7 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 | テーブル | 中身 |
 |---|---|
 | `external_user` | 学校の名簿の代わり。学籍番号・メール・シリアル番号(一意)・名前・学年・専攻・種別(学生/教職員/外部)。**名前などはここにだけ持つ** |
-| `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active` |
+| `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active`・タブレット用のPIN(`pin_hash`はbcryptのハッシュ、`pin_failed_attempts`、`pin_locked_at`はロックした日時で、Webで登録し直すまで解けない) |
 | `verification_codes` | 登録の認証コード。主キーが学籍番号。コードが合ったら登録用トークンのハッシュと期限も入れ、登録したら行ごと消す |
 | `session` | ログインのセッション。番号のハッシュ(一意)・利用者・種類(`WEB`・`TABLET`)・期限。利用者を消すと一緒に消える |
 | `category` / `genre` | 分類(例: 機材 > ノートパソコン) |
