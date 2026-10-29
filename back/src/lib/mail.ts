@@ -9,10 +9,8 @@ export class MailService {
     this.transporter = nodemailer.createTransport({
       host: mail.host,
       port: mail.port,
-      auth: {
-        user: mail.user,
-        pass: mail.pass,
-      },
+      // 手元のmailpitはログインが要らない。ユーザー名が無いときは、ログインを試さない
+      ...(mail.user ? { auth: { user: mail.user, pass: mail.pass } } : {}),
     });
   }
 

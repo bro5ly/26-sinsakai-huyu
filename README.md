@@ -118,12 +118,13 @@ docker compose exec api npm run db:seed             # テスト用のデータ�
 | テスト用のバーコードの印刷(開発のときだけ) | http://localhost:4545/barcodes |
 | API | http://localhost:5454 |
 | DBを見る(Prisma Studio) | http://localhost:5555 |
+| 届いたメールを見る(Mailpit。開発のときだけ。外には送らない) | http://localhost:8025 |
 
 **テスト用のデータ**(`back/prisma/seed.ts`)
 - ログイン: 学籍番号`20240001`、パスワード`password123`(管理者は`90240001`)
 - タブレットのカード: `IC-CARD-001`〜`IC-CARD-003`
 - 物品のバーコード: `MAC-002`など(`MAC-001`は貸出中、`IPAD-005`は修理中)
-- 新規登録を試すときの学籍番号: `20260001`。認証コードのメールを送るにはSMTPの設定(`back/.env`の`MAIL_*`。Mailtrapなどのテスト用のもの)が要ります。コードはハッシュで持つので、DBを見ても分かりません(2026-10-29から)
+- 新規登録を試すときの学籍番号: `20260001`。認証コードのメールはMailpit(http://localhost:8025)に届きます(`back/.env`の`MAIL_HOST=mailpit`・`MAIL_PORT=1025`。見本のとおり)。コードはハッシュで持つので、DBを見ても分かりません
 
 **テスト**
 

@@ -13,7 +13,7 @@
                    │ Prisma(@prisma/adapter-pg)
              PostgreSQL 16 (db :1919→5432)   ← Prisma Studio (:5555)
                    │
-             SMTP(認証コードのメール)
+             SMTP(認証コードのメール。手元では mailpit が受け取り、:8025 で見る)
 ```
 
 - 4つともDocker Composeで起動する。設定はリポジトリ直下の`.env`(全サービス共通)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
