@@ -6,51 +6,51 @@ import { isGuessablePin } from "@sinsakai/shared/pin";
 
 // GET /api/me → 200 Me。プロフィールと貸し出しの決まり。借りている物は GET /api/me/rentals で取る(2026-10-25 Me2)
 export const meSchema = sessionUserSchema.extend({
-    email: z.string(),
-    grade: z.string().nullable(),
-    major: z.string().nullable(),
-    // カードの番号は入れない。画面に出すと、撮られた画面がカードの写しになるため(docs/auth.md A-Q6・2026-10-29 G0)
-    // 借りている数と延滞の有無はサーバーで数える(画面で数えない)
-    borrowing: z.object({
-        canBorrow: z.boolean(),
-        maxItems: z.number().int(),
-        suspendedUntil: z.iso.datetime().nullable(),
-        activeCount: z.number().int(),
-        hasOverdue: z.boolean(),
-    }),
-    // タブレット用のPIN。登録済みか・ロック中か(5回間違えるとロックし、Webで登録し直すまで解けない)だけを出す(2026-10-28 P3)
-    pin: z.object({
-        registered: z.boolean(),
-        locked: z.boolean(),
-    }),
+  email: z.string(),
+  grade: z.string().nullable(),
+  major: z.string().nullable(),
+  // カードの番号は入れない。画面に出すと、撮られた画面がカードの写しになるため(docs/auth.md A-Q6・2026-10-29 G0)
+  // 借りている数と延滞の有無はサーバーで数える(画面で数えない)
+  borrowing: z.object({
+    canBorrow: z.boolean(),
+    maxItems: z.number().int(),
+    suspendedUntil: z.iso.datetime().nullable(),
+    activeCount: z.number().int(),
+    hasOverdue: z.boolean(),
+  }),
+  // タブレット用のPIN。登録済みか・ロック中か(5回間違えるとロックし、Webで登録し直すまで解けない)だけを出す(2026-10-28 P3)
+  pin: z.object({
+    registered: z.boolean(),
+    locked: z.boolean(),
+  }),
 });
 
 // PUT /api/me/pin → 204。PINを変えるときはパスワードを入れ直す(P1)。推測しやすいPINは断る(P2)
 export const setPinRequestSchema = z.object({
-    pin: z
-        .string()
-        // 4桁の数字でなければ、推測しやすいかは見ない(「123」に2つの注意が出ないように)
-        .regex(/^\d{4}$/, { error: "PINは4桁の数字で入力してください", abort: true })
-        .refine((pin) => !isGuessablePin(pin), "同じ数字の並びや、連続した数字(1234など)は使えません"),
-    password: z.string().min(1, "パスワードを入力してください"),
+  pin: z
+    .string()
+    // 4桁の数字でなければ、推測しやすいかは見ない(「123」に2つの注意が出ないように)
+    .regex(/^\d{4}$/, { error: "PINは4桁の数字で入力してください", abort: true })
+    .refine((pin) => !isGuessablePin(pin), "同じ数字の並びや、連続した数字(1234など)は使えません"),
+  password: z.string().min(1, "パスワードを入力してください"),
 });
 
 // 貸し出しの状態。DBには無く、返却期限と返却日時から決める(back/src/features/rentals/rental.status.ts)
 export const rentalStateSchema = z.enum(["RENTING", "OVERDUE", "RETURNED"]);
 
 export const rentalSchema = z.object({
+  id: z.string(),
+  itemType: z.object({
     id: z.string(),
-    itemType: z.object({
-        id: z.string(),
-        title: z.string(),
-        genre: z.object({ id: z.string(), name: z.string() }),
-    }),
-    // 物品のバーコードは入れない。値が分かれば、実物を持たずにタブレットで返却できてしまうため(2026-10-29 BC1)
-    item: z.object({ id: z.string() }),
-    rentedAt: z.iso.datetime(),
-    dueDate: z.iso.datetime(),
-    returnedAt: z.iso.datetime().nullable(),
-    state: rentalStateSchema,
+    title: z.string(),
+    genre: z.object({ id: z.string(), name: z.string() }),
+  }),
+  // 物品のバーコードは入れない。値が分かれば、実物を持たずにタブレットで返却できてしまうため(2026-10-29 BC1)
+  item: z.object({ id: z.string() }),
+  rentedAt: z.iso.datetime(),
+  dueDate: z.iso.datetime(),
+  returnedAt: z.iso.datetime().nullable(),
+  state: rentalStateSchema,
 });
 
 // POST /api/tablet/rentals・POST /api/tablet/returns → 201 Rental(2026-10-29)

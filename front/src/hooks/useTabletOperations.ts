@@ -41,7 +41,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
 
   const userData: TabletUserData | null = useMemo(
     () => (session ? { displayName: session.user.displayName, rentals: session.rentals } : null),
-    [session]
+    [session],
   );
 
   // 最初の画面に戻す。サーバーのセッションも無効にする(useTablet の signout)
@@ -104,7 +104,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
       }
       setError(err.message);
     },
-    [handleReset, onDeviceNotRegistered]
+    [handleReset, onDeviceNotRegistered],
   );
 
   const handleScan = useCallback(
@@ -136,7 +136,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
         handleError(err);
       }
     },
-    [step, apiLoading, sessionToken, checkout, returnItem, handleError, resetInactivityTimer]
+    [step, apiLoading, sessionToken, checkout, returnItem, handleError, resetInactivityTimer],
   );
 
   // カードとPINを一緒に送る。PINが違うときは、カードを読み直さずにもう一度PINを入れられる
@@ -152,7 +152,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
         handleError(err);
       }
     },
-    [apiLoading, cardNumber, signin, handleError, resetInactivityTimer]
+    [apiLoading, cardNumber, signin, handleError, resetInactivityTimer],
   );
 
   const selectCheckout = useCallback(() => {

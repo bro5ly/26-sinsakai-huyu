@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-} from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import type { Me } from "@sinsakai/shared";
 import { authService, meService } from "@/services";
 
@@ -57,11 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ status, user, loadMe, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ status, user, loadMe, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

@@ -5,7 +5,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     // サーバーのcode(shared/ の表)。NO_CONTENTは画面だけで使う
-    public code?: ErrorCode | "NO_CONTENT"
+    public code?: ErrorCode | "NO_CONTENT",
   ) {
     super(message);
     this.name = "ApiError";

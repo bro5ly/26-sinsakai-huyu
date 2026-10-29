@@ -4,7 +4,7 @@
 // 4桁の数字は「1234」だけで約11%を占めるという分析があり、5回でロックしても最初に試されると通ってしまう(2026-10-28 P2)。
 // 9から0への回り込み(7890)は入れない。決まりを2つだけにして、利用者に説明できる形にするため
 export const isGuessablePin = (pin: string): boolean => {
-    const digits = [...pin].map(Number);
-    const steps = digits.slice(1).map((d, i) => d - (digits[i] ?? d));
-    return steps.length > 0 && steps.every((step) => step === steps[0]) && [0, 1, -1].includes(steps[0] ?? NaN);
+  const digits = [...pin].map(Number);
+  const steps = digits.slice(1).map((d, i) => d - (digits[i] ?? d));
+  return steps.length > 0 && steps.every((step) => step === steps[0]) && [0, 1, -1].includes(steps[0] ?? NaN);
 };

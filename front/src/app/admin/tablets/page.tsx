@@ -45,7 +45,9 @@ export default function AdminTabletsPage() {
             </p>
             {error && <p className="text-sm text-danger">{error}</p>}
             {loading && <LoadingSpinner />}
-            {devices && devices.length === 0 && <p className="text-sm text-default-500">登録されている端末はありません。</p>}
+            {devices && devices.length === 0 && (
+              <p className="text-sm text-default-500">登録されている端末はありません。</p>
+            )}
             {devices?.map((device) => (
               <Card key={device.id} className="shadow-none border border-slate-100">
                 <CardBody className="flex flex-row items-center justify-between gap-4">
@@ -59,7 +61,10 @@ export default function AdminTabletsPage() {
                     color="danger"
                     variant="flat"
                     onPress={() => {
-                      if (window.confirm(`「${device.name}」を取り消しますか? この端末は次の操作から使えなくなります。`)) void revoke(device.id);
+                      if (
+                        window.confirm(`「${device.name}」を取り消しますか? この端末は次の操作から使えなくなります。`)
+                      )
+                        void revoke(device.id);
                     }}
                   >
                     取り消す

@@ -18,10 +18,7 @@ const pinStatus = (pin: Me["pin"]) =>
       ? { text: "PINは登録済みです", className: "text-slate-400" }
       : { text: "タブレットで借りるには、PINの登録が必要です", className: "text-warning-600" };
 
-export const UserProfile = ({
-  user,
-  onPinSaved,
-}: UserProfileProps) => {
+export const UserProfile = ({ user, onPinSaved }: UserProfileProps) => {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const status = pinStatus(user.pin);
 
@@ -38,12 +35,8 @@ export const UserProfile = ({
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight mb-0.5 truncate">
-              {user.name}
-            </h1>
-            <p className="text-xs font-semibold text-slate-400 tabular-nums mb-3">
-              ID: {user.studentId}
-            </p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight mb-0.5 truncate">{user.name}</h1>
+            <p className="text-xs font-semibold text-slate-400 tabular-nums mb-3">ID: {user.studentId}</p>
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -69,11 +62,7 @@ export const UserProfile = ({
             {user.pin.registered ? "PINを変える" : "PINを登録"}
           </Button>
         </div>
-        <PinSettingModal
-          isOpen={isPinModalOpen}
-          onClose={() => setIsPinModalOpen(false)}
-          onSaved={onPinSaved}
-        />
+        <PinSettingModal isOpen={isPinModalOpen} onClose={() => setIsPinModalOpen(false)} onSaved={onPinSaved} />
 
         {/* スタッツ情報 */}
         <div className="flex items-center justify-between w-full px-4 py-6 rounded-2xl border-slate-100">
@@ -82,16 +71,9 @@ export const UserProfile = ({
             { label: "Major", value: user.major || "Design" },
             { label: "Rentals", value: user.borrowing.activeCount },
           ].map((stat) => (
-            <div
-              key={stat.label}
-              className="flex flex-col items-center gap-1 flex-1"
-            >
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                {stat.label}
-              </span>
-              <span className="text-lg font-black text-slate-800">
-                {stat.value}
-              </span>
+            <div key={stat.label} className="flex flex-col items-center gap-1 flex-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{stat.label}</span>
+              <span className="text-lg font-black text-slate-800">{stat.value}</span>
             </div>
           ))}
         </div>

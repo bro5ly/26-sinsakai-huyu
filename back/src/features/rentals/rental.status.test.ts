@@ -7,7 +7,10 @@ const now = new Date("2026-10-23T12:00:00.000+09:00");
 describe("rentalStatus(貸し出しの状態)", () => {
   describe("正常系", () => {
     it("S1 返却日時が入っていれば、返却済み(RETURNED)", () => {
-      const rental = { returnedAt: new Date("2026-10-22T10:00:00.000+09:00"), dueDate: new Date("2026-10-24T12:00:00.000+09:00") };
+      const rental = {
+        returnedAt: new Date("2026-10-22T10:00:00.000+09:00"),
+        dueDate: new Date("2026-10-24T12:00:00.000+09:00"),
+      };
       expect(rentalStatus(rental, now)).toBe("RETURNED");
     });
     it("S2 未返却で返却期限が明日なら、貸出中(RENTING)", () => {
@@ -29,7 +32,10 @@ describe("rentalStatus(貸し出しの状態)", () => {
       expect(rentalStatus(rental, now)).toBe("OVERDUE");
     });
     it("S6 返却日時が入っていれば、返却期限を過ぎていても返却済み(RETURNED)", () => {
-      const rental = { returnedAt: new Date("2026-10-23T11:00:00.000+09:00"), dueDate: new Date("2026-10-20T12:00:00.000+09:00") };
+      const rental = {
+        returnedAt: new Date("2026-10-23T11:00:00.000+09:00"),
+        dueDate: new Date("2026-10-20T12:00:00.000+09:00"),
+      };
       expect(rentalStatus(rental, now)).toBe("RETURNED");
     });
   });

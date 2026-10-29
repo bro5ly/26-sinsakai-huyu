@@ -9,11 +9,7 @@ interface BarcodeScannerProps {
   isActive: boolean;
 }
 
-export default function BarcodeScanner({
-  onScan,
-  onError,
-  isActive,
-}: BarcodeScannerProps) {
+export default function BarcodeScanner({ onScan, onError, isActive }: BarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerId = "barcode-reader";
@@ -89,10 +85,7 @@ export default function BarcodeScanner({
           height: 100% !important;
           object-fit: cover !important; /* 映像を正方形にクロップ */
         }
-        #${scannerId}__header_message,
-          #${scannerId}__status_span,
-          #${scannerId}
-          b {
+        #${scannerId}__header_message, #${scannerId}__status_span, #${scannerId} b {
           display: none !important; /* ライブラリのテキストを非表示 */
         }
         #${scannerId} img {

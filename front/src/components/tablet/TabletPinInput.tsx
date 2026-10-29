@@ -34,7 +34,14 @@ export const TabletPinInput = ({ loading, onSubmit, onCancel }: TabletPinInputPr
         onValueChange={(value) => setPin(value.replace(/\D/g, ""))}
       />
       <div className="flex gap-3">
-        <Button type="submit" color="primary" size="lg" className="flex-1 font-black" isLoading={loading} isDisabled={pin.length !== 4}>
+        <Button
+          type="submit"
+          color="primary"
+          size="lg"
+          className="flex-1 font-black"
+          isLoading={loading}
+          isDisabled={pin.length !== 4}
+        >
           OK
         </Button>
         <Button variant="flat" size="lg" className="font-black" onPress={onCancel}>

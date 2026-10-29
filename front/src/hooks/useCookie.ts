@@ -9,21 +9,21 @@ export const useCookie = () => {
     return undefined;
   }, []);
 
-  const setCookie = useCallback(
-    (name: string, value: string | null, maxAge: number = 3600) => {
-      if (typeof document === "undefined") return;
-      if (value) {
-        document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-      } else {
-        document.cookie = `${name}=; path=/; max-age=0;`;
-      }
-    },
-    []
-  );
+  const setCookie = useCallback((name: string, value: string | null, maxAge: number = 3600) => {
+    if (typeof document === "undefined") return;
+    if (value) {
+      document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    } else {
+      document.cookie = `${name}=; path=/; max-age=0;`;
+    }
+  }, []);
 
-  const removeCookie = useCallback((name: string) => {
-    setCookie(name, null, 0);
-  }, [setCookie]);
+  const removeCookie = useCallback(
+    (name: string) => {
+      setCookie(name, null, 0);
+    },
+    [setCookie],
+  );
 
   return { getCookie, setCookie, removeCookie };
 };

@@ -9,7 +9,9 @@ export const SESSION_COOKIE = "session";
 
 // Cookieのセッションの番号を、DBのセッションと照らして確かめ、req.user に入れる(docs/auth.md 2章、A8-3)。
 // 毎回DBを読むので、ログアウト・管理者の取り消し・無効にした人(R-A14)は次のリクエストから止まる
-export const createAuthMiddleware = (sessions: SessionStore): RequestHandler => async (req, _res, next) => {
+export const createAuthMiddleware =
+  (sessions: SessionStore): RequestHandler =>
+  async (req, _res, next) => {
     const token: unknown = req.cookies?.[SESSION_COOKIE];
     if (typeof token !== "string" || token === "") throw new DomainError("UNAUTHENTICATED");
 
@@ -18,4 +20,4 @@ export const createAuthMiddleware = (sessions: SessionStore): RequestHandler => 
 
     req.user = result.user;
     next();
-};
+  };

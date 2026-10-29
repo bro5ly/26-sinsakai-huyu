@@ -39,7 +39,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [studentId, password, loadMe, router]
+    [studentId, password, loadMe, router],
   );
 
   const handleRequestVerification = useCallback(
@@ -57,7 +57,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [studentId]
+    [studentId],
   );
 
   const handleVerifyCode = useCallback(
@@ -75,7 +75,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [studentId, code]
+    [studentId, code],
   );
 
   const handleSignup = useCallback(
@@ -96,7 +96,7 @@ export const useAuthForm = () => {
         setLoading(false);
       }
     },
-    [password, registrationToken, loadMe, router]
+    [password, registrationToken, loadMe, router],
   );
 
   return {

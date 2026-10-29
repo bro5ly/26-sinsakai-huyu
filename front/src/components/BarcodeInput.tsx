@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent } from "react";
 
 interface BarcodeInputProps {
   onSubmit: (barcode: string) => void;
@@ -10,16 +10,16 @@ interface BarcodeInputProps {
 
 export default function BarcodeInput({
   onSubmit,
-  placeholder = 'バーコードを入力',
-  buttonText = '送信',
+  placeholder = "バーコードを入力",
+  buttonText = "送信",
 }: BarcodeInputProps) {
-  const [barcode, setBarcode] = useState('');
+  const [barcode, setBarcode] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (barcode.trim()) {
       onSubmit(barcode.trim());
-      setBarcode('');
+      setBarcode("");
     }
   };
 

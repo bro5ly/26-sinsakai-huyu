@@ -7,19 +7,12 @@ interface SignupPasswordFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export const SignupPasswordForm = ({
-  password,
-  loading,
-  onPasswordChange,
-  onSubmit,
-}: SignupPasswordFormProps) => {
+export const SignupPasswordForm = ({ password, loading, onPasswordChange, onSubmit }: SignupPasswordFormProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-1">
         <h2 className="text-lg font-bold">Set Password</h2>
-        <p className="text-xs text-default-400">
-          Final step to secure your account.
-        </p>
+        <p className="text-xs text-default-400">Final step to secure your account.</p>
       </div>
 
       <Input

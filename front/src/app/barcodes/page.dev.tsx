@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 // 開発のときだけのページ(seed と同じ値の、物品とカードのバーコードを印刷する)。ファイル名を page.dev.tsx にし、
 // next.config.ts の pageExtensions で、開発のときだけページとして読ませる。本番のビルドには入らない(値を配らないため。2026-10-29 BC2)
 
-import Barcode from 'react-barcode';
+import Barcode from "react-barcode";
 
 interface BarcodeItem {
   code: string;
@@ -12,28 +12,28 @@ interface BarcodeItem {
 }
 
 const items: BarcodeItem[] = [
-  { code: 'MAC-001', name: 'MacBook Pro 16インチ #1', type: 'ノートパソコン' },
-  { code: 'MAC-002', name: 'MacBook Pro 16インチ #2', type: 'ノートパソコン' },
-  { code: 'MAC-003', name: 'MacBook Pro 16インチ #3', type: 'ノートパソコン' },
-  { code: 'IPAD-001', name: 'iPad Pro 12.9インチ #1', type: 'タブレット' },
-  { code: 'IPAD-002', name: 'iPad Pro 12.9インチ #2', type: 'タブレット' },
-  { code: 'IPAD-003', name: 'iPad Pro 12.9インチ #3', type: 'タブレット' },
-  { code: 'IPAD-004', name: 'iPad Pro 12.9インチ #4', type: 'タブレット' },
-  { code: 'IPAD-005', name: 'iPad Pro 12.9インチ #5', type: 'タブレット' },
-  { code: 'CAM-001', name: 'Canon EOS R6 Mark II #1', type: 'カメラ' },
-  { code: 'CAM-002', name: 'Canon EOS R6 Mark II #2', type: 'カメラ' },
-  { code: 'BOOK-PY-001', name: 'Python機械学習プログラミング #1', type: '書籍' },
-  { code: 'BOOK-PY-002', name: 'Python機械学習プログラミング #2', type: '書籍' },
-  { code: 'BOOK-PY-003', name: 'Python機械学習プログラミング #3', type: '書籍' },
-  { code: 'BOOK-PY-004', name: 'Python機械学習プログラミング #4', type: '書籍' },
-  { code: 'BOOK-PY-005', name: 'Python機械学習プログラミング #5', type: '書籍' },
+  { code: "MAC-001", name: "MacBook Pro 16インチ #1", type: "ノートパソコン" },
+  { code: "MAC-002", name: "MacBook Pro 16インチ #2", type: "ノートパソコン" },
+  { code: "MAC-003", name: "MacBook Pro 16インチ #3", type: "ノートパソコン" },
+  { code: "IPAD-001", name: "iPad Pro 12.9インチ #1", type: "タブレット" },
+  { code: "IPAD-002", name: "iPad Pro 12.9インチ #2", type: "タブレット" },
+  { code: "IPAD-003", name: "iPad Pro 12.9インチ #3", type: "タブレット" },
+  { code: "IPAD-004", name: "iPad Pro 12.9インチ #4", type: "タブレット" },
+  { code: "IPAD-005", name: "iPad Pro 12.9インチ #5", type: "タブレット" },
+  { code: "CAM-001", name: "Canon EOS R6 Mark II #1", type: "カメラ" },
+  { code: "CAM-002", name: "Canon EOS R6 Mark II #2", type: "カメラ" },
+  { code: "BOOK-PY-001", name: "Python機械学習プログラミング #1", type: "書籍" },
+  { code: "BOOK-PY-002", name: "Python機械学習プログラミング #2", type: "書籍" },
+  { code: "BOOK-PY-003", name: "Python機械学習プログラミング #3", type: "書籍" },
+  { code: "BOOK-PY-004", name: "Python機械学習プログラミング #4", type: "書籍" },
+  { code: "BOOK-PY-005", name: "Python機械学習プログラミング #5", type: "書籍" },
 ];
 
 const icCards: BarcodeItem[] = [
-  { code: 'IC-CARD-001', name: '山田 太郎', type: 'ICカード' },
-  { code: 'IC-CARD-002', name: '佐藤 花子', type: 'ICカード' },
-  { code: 'IC-CARD-003', name: '鈴木 次郎', type: 'ICカード' },
-  { code: 'IC-CARD-ADMIN', name: '高橋 先生(管理者)', type: 'ICカード' },
+  { code: "IC-CARD-001", name: "山田 太郎", type: "ICカード" },
+  { code: "IC-CARD-002", name: "佐藤 花子", type: "ICカード" },
+  { code: "IC-CARD-003", name: "鈴木 次郎", type: "ICカード" },
+  { code: "IC-CARD-ADMIN", name: "高橋 先生(管理者)", type: "ICカード" },
 ];
 
 export default function BarcodesPage() {
@@ -46,9 +46,7 @@ export default function BarcodesPage() {
       <div className="max-w-7xl mx-auto">
         {/* ヘッダー */}
         <div className="mb-8 print:hidden">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            バーコード一覧
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">バーコード一覧</h1>
           <div className="flex gap-4">
             <button
               onClick={handlePrint}
@@ -67,9 +65,7 @@ export default function BarcodesPage() {
 
         {/* ICカード */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-600 pb-2">
-            ICカード（認証用）
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-600 pb-2">ICカード（認証用）</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {icCards.map((card) => (
               <div
@@ -90,9 +86,7 @@ export default function BarcodesPage() {
 
         {/* アイテム */}
         <section>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-green-600 pb-2">
-            貸出物品
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-green-600 pb-2">貸出物品</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
               <div

@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog, useFilteredItemTypes, useMyRentals } from "@/hooks";
-import {
-  Header,
-  LoadingSpinner,
-  UserProfile,
-  RentalsList,
-  ItemsCatalog,
-} from "@/components";
+import { Header, LoadingSpinner, UserProfile, RentalsList, ItemsCatalog } from "@/components";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,12 +18,7 @@ export default function DashboardPage() {
   const [genreFilter, setGenreFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
 
-  const filteredItems = useFilteredItemTypes(
-    itemTypes,
-    searchQuery,
-    genreFilter,
-    categoryFilter
-  );
+  const filteredItems = useFilteredItemTypes(itemTypes, searchQuery, genreFilter, categoryFilter);
   // 絞り込みの選択肢は /api/categories から(物品から集めない)
   const categories = categoryList.map((category) => category.name);
   const genres = categoryList.flatMap((category) => category.genres.map((genre) => genre.name));

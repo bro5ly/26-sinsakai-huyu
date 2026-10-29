@@ -64,9 +64,7 @@ export const ItemsCatalog = ({
   return (
     <section className="px-6">
       <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-        <span className="text-[16px] font-black text-black uppercase tracking-widest">
-          Storage
-        </span>
+        <span className="text-[16px] font-black text-black uppercase tracking-widest">Storage</span>
         <div className="flex gap-2">
           <Input
             placeholder="Search..."
@@ -76,12 +74,7 @@ export const ItemsCatalog = ({
             className="w-32"
             size="sm"
           />
-          <Button
-            isIconOnly
-            variant="flat"
-            size="sm"
-            onPress={() => setIsFilterModalOpen(true)}
-          >
+          <Button isIconOnly variant="flat" size="sm" onPress={() => setIsFilterModalOpen(true)}>
             <FilterIcon />
           </Button>
         </div>
@@ -93,51 +86,33 @@ export const ItemsCatalog = ({
             key={type.id}
             isPressable
             className="border-none bg-white shadow-sm hover:bg-slate-50"
-            onPress={() =>
-              router.push(`/items/${encodeURIComponent(type.id)}`)
-            }
+            onPress={() => router.push(`/items/${encodeURIComponent(type.id)}`)}
           >
             <div className="aspect-square w-full bg-slate-50 relative border-b border-slate-100">
               {type.imageUrl ? (
-                <img
-                  src={type.imageUrl}
-                  alt={type.title}
-                  className="w-full h-full object-cover"
-                />
+                <img src={type.imageUrl} alt={type.title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   {/* Empty state - no content needed as per feature/add-ui */}
                 </div>
               )}
               <div className="absolute top-2 right-2 z-10">
-                <Badge
-                  color={type.availableCount > 0 ? "success" : "danger"}
-                  size="sm"
-                >
+                <Badge color={type.availableCount > 0 ? "success" : "danger"} size="sm">
                   {type.availableCount}
                 </Badge>
               </div>
             </div>
             <div className="p-2">
-              <h3 className="font-bold text-[10px] text-slate-800 line-clamp-1">
-                {type.title}
-              </h3>
+              <h3 className="font-bold text-[10px] text-slate-800 line-clamp-1">{type.title}</h3>
             </div>
           </Card>
         ))}
       </div>
 
       {/* Filter Modal */}
-      <Modal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        backdrop="blur"
-        size="xs"
-      >
+      <Modal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} backdrop="blur" size="xs">
         <ModalContent>
-          <ModalHeader className="text-xs uppercase tracking-[0.2em] font-black">
-            Filter Settings
-          </ModalHeader>
+          <ModalHeader className="text-xs uppercase tracking-[0.2em] font-black">Filter Settings</ModalHeader>
           <ModalBody className="pb-8">
             <div className="space-y-4">
               <Select
@@ -169,12 +144,7 @@ export const ItemsCatalog = ({
             </div>
           </ModalBody>
           <ModalFooter className="border-t border-slate-100">
-            <Button
-              variant="light"
-              size="sm"
-              className="font-bold text-[10px] uppercase"
-              onPress={handleResetFilters}
-            >
+            <Button variant="light" size="sm" className="font-bold text-[10px] uppercase" onPress={handleResetFilters}>
               Reset
             </Button>
             <Button

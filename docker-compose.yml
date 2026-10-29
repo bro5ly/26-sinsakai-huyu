@@ -1,14 +1,14 @@
 services:
-  web: 
+  web:
     # ビルドの起点とつなぐ場所はリポジトリ直下。workspacesのロックファイルとshared/が直下にあるため(2026-10-24 P3)
-    build: 
+    build:
       context: .
       dockerfile: front/Dockerfile
     container_name: sinsakai-huyu-front
     working_dir: /app/front
-    ports: 
+    ports:
       - "4545:4545"
-    volumes: 
+    volumes:
       - .:/app
       # node_modulesはコンテナの中の名前の無いボリュームに置き、Macの側と混ぜない
       - /app/node_modules
@@ -44,27 +44,26 @@ services:
       db:
         condition: service_healthy
 
-
   studio:
-      build:
-        context: .
-        dockerfile: back/Dockerfile
-      container_name: sinsakai-huyu-studio
-      working_dir: /app/back
-      ports:
-        - "5555:5555"
-      volumes:
-        - .:/app
-        - /app/node_modules
-        - /app/back/node_modules
-      env_file:
-        - .env
-      # アプリ（api）と同じDBを見るように設定
-      depends_on:
-        db:
-          condition: service_healthy
-      # ここで起動コマンドを上書きする
-      command: npx prisma studio --port 5555 --browser none
+    build:
+      context: .
+      dockerfile: back/Dockerfile
+    container_name: sinsakai-huyu-studio
+    working_dir: /app/back
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/back/node_modules
+    env_file:
+      - .env
+    # アプリ（api）と同じDBを見るように設定
+    depends_on:
+      db:
+        condition: service_healthy
+    # ここで起動コマンドを上書きする
+    command: npx prisma studio --port 5555 --browser none
 
   # 開発のときに認証コードのメールを受け取る(外には送らない)。届いたメールは http://localhost:8025 で見る。
   # コードはDBにハッシュでしか置かないので、DBを見ても分からないため(2026-10-29 S1)。
@@ -74,11 +73,11 @@ services:
     container_name: sinsakai-huyu-mailpit
     ports:
       - "127.0.0.1:8025:8025"
-      
-  db: 
+
+  db:
     image: postgres:16
     container_name: sinsakai-huyu-db
-    ports: 
+    ports:
       - "1919:5432"
     environment:
       POSTGRES_USER: postgres
@@ -86,12 +85,12 @@ services:
       POSTGRES_DB: sinsakai-huyu-db
     volumes:
       - pgdata:/var/lib/postgresql/data
-    
-    healthcheck:              # 追加：これがないとapiが起動に失敗します
+
+    healthcheck: # 追加：これがないとapiが起動に失敗します
       test: ["CMD-SHELL", "pg_isready -U postgres -d sinsakai-huyu-db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-volumes: 
+volumes:
   pgdata:

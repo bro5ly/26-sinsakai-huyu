@@ -5,14 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import type { ItemState } from "@sinsakai/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import { useItemType } from "@/hooks";
-import {
-  Card,
-  CardBody,
-  Button,
-  Chip,
-  Spinner,
-  Divider,
-} from "@heroui/react";
+import { Card, CardBody, Button, Chip, Spinner, Divider } from "@heroui/react";
 
 // 紛失・廃棄も含め、状態ごとに分けて出す(前は使える・貸出中以外をすべて「Maintenance」と出していた)
 const stateLabel: Record<ItemState, string> = {
@@ -73,9 +66,7 @@ export default function ItemDetailPage() {
             BACK
           </Button>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-default-300">
-              Item Details
-            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-default-300">Item Details</span>
           </div>
         </div>
       </header>
@@ -94,15 +85,9 @@ export default function ItemDetailPage() {
               <Card className="border-none bg-white p-2" shadow="sm">
                 <div className="aspect-square rounded-lg overflow-hidden bg-default-50 flex items-center justify-center">
                   {itemType.imageUrl ? (
-                    <img
-                      src={itemType.imageUrl}
-                      alt={itemType.title}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={itemType.imageUrl} alt={itemType.title} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-default-200 font-black text-4xl italic">
-                      NO IMAGE
-                    </span>
+                    <span className="text-default-200 font-black text-4xl italic">NO IMAGE</span>
                   )}
                 </div>
               </Card>
@@ -114,50 +99,32 @@ export default function ItemDetailPage() {
                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
                   {itemType.category.name} / {itemType.genre.name}
                 </p>
-                <h1 className="text-3xl font-black tracking-tighter leading-none">
-                  {itemType.title}
-                </h1>
+                <h1 className="text-3xl font-black tracking-tighter leading-none">{itemType.title}</h1>
               </div>
 
               <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                 <div className="border-l-2 border-default-100 pl-4">
-                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">
-                    Manufacturer
-                  </p>
-                  <p className="text-sm font-bold">
-                    {itemType.manufacturer || "N/A"}
-                  </p>
+                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">Manufacturer</p>
+                  <p className="text-sm font-bold">{itemType.manufacturer || "N/A"}</p>
                 </div>
                 <div className="border-l-2 border-default-100 pl-4">
-                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">
-                    Model
-                  </p>
+                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">Model</p>
                   <p className="text-sm font-bold">{itemType.model || "N/A"}</p>
                 </div>
                 <div className="border-l-2 border-default-100 pl-4">
-                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">
-                    Rental Period
-                  </p>
-                  <p className="text-sm font-bold">
-                    {itemType.rentalPeriodDays} Days
-                  </p>
+                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">Rental Period</p>
+                  <p className="text-sm font-bold">{itemType.rentalPeriodDays} Days</p>
                 </div>
                 <div className="border-l-2 border-default-100 pl-4">
-                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">
-                    Total Stock
-                  </p>
+                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider">Total Stock</p>
                   <p className="text-sm font-bold">{items.length} units</p>
                 </div>
               </div>
 
               {itemType.description && (
                 <div className="mt-8 pt-6 border-t border-default-100">
-                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider mb-2">
-                    Description
-                  </p>
-                  <p className="text-sm text-default-600 leading-relaxed max-w-md">
-                    {itemType.description}
-                  </p>
+                  <p className="text-[10px] text-default-400 font-bold uppercase tracking-wider mb-2">Description</p>
+                  <p className="text-sm text-default-600 leading-relaxed max-w-md">{itemType.description}</p>
                 </div>
               )}
             </div>
@@ -169,9 +136,7 @@ export default function ItemDetailPage() {
         {/* Inventory List */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-[11px] font-bold text-default-400 uppercase tracking-[0.2em]">
-              Inventory List
-            </h2>
+            <h2 className="text-[11px] font-bold text-default-400 uppercase tracking-[0.2em]">Inventory List</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
@@ -185,9 +150,7 @@ export default function ItemDetailPage() {
                   {/* バーコードは出さない。画面のバーコードで、実物を持たずに借りられてしまうため(2026-10-28 Ca5-B) */}
                   <div className="flex flex-col">
                     {item.location && (
-                      <span className="text-[10px] text-default-500 mt-1 uppercase">
-                        Loc: {item.location}
-                      </span>
+                      <span className="text-[10px] text-default-500 mt-1 uppercase">Loc: {item.location}</span>
                     )}
                   </div>
 
@@ -208,9 +171,7 @@ export default function ItemDetailPage() {
 
           {items.length === 0 && (
             <div className="py-20 text-center border-2 border-dashed border-default-100 rounded-2xl">
-              <p className="text-xs font-bold text-default-300 uppercase tracking-widest">
-                No inventory found
-              </p>
+              <p className="text-xs font-bold text-default-300 uppercase tracking-widest">No inventory found</p>
             </div>
           )}
         </section>
