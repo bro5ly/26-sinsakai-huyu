@@ -117,7 +117,7 @@
 - [x] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)。2026-10-29に、成功の応答はすべて`satisfies`で返していることを確かめた(失敗はエラー用のミドルウェアが`toProblem`の型で返す)
 - [x] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す(2026-10-29、ブランチ`refactor/shared-types`。手書きの型・古い呼び出し・`TabletContext`はどこからも読まれていなかったので消した。`as any`は、画面を作り直したときにもう無くなっていた)
 - [x] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる(2026-10-24。各コンテナは`npm ci -w back -w shared`のように要るワークスペースだけを入れる。P3)
-- [ ] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
+- [x] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(2026-10-29、ブランチ`refactor/shared-types`)(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
 - [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)

@@ -34,6 +34,8 @@
 
 ホストには`node_modules`が無い。**コマンドはDockerのコンテナの中で動かす**。
 
+よく使うものは、直下の`package.json`に呼び名がある(Macで`npm run <名前>`。中で`docker compose exec ...`を呼ぶ。2026-10-29 H1): `test`・`typecheck`(APIと画面)・`lint`・`build`・`check`(型チェック → テスト → ビルド → リントを順に。途中で失敗したら止まる)・`db:migrate`(`npm run db:migrate -- --name <内容>`)・`db:seed`・`logs`(APIのログの最後の50行)。Macに`npm`が要る
+
 | 目的 | コマンド |
 |---|---|
 | 起動 | `docker compose up -d`(web 4545 / api 5454 / db 1919 / Prisma Studio 5555 / 開発用のメールの受け口 Mailpit 8025。認証コードはDBにハッシュでしか無いので、届いたメールをMailpitで見る) |
