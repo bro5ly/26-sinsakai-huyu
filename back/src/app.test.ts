@@ -5,9 +5,10 @@ import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import { hashToken } from "@/lib/session-token.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
+import type { TabletDeviceRecord } from "@/features/tablet-devices/tablet-device.types.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
-import { categoriesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
+import { categoriesSchema, currentTabletDeviceSchema, tabletDeviceSchema, tabletDevicesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -21,6 +22,8 @@ beforeAll(async () => {
 const yamada = rosterEntry({ studentId: "20240001", name: "山田 太郎", email: "yamada@example.com", serialNumber: "IC-CARD-001", grade: "2年", major: "情報工学科" });
 const newcomer = rosterEntry({ studentId: "20260001", name: "テスト 太郎", email: "taro@example.com", serialNumber: "SN-001" });
 const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, role: "MEMBER" as const, isActive: true });
+const adminUser = () => ({ id: "admin-1", studentId: "90240001", passwordHash, role: "ADMIN" as const, isActive: true });
+const takahashi = rosterEntry({ studentId: "90240001", name: "高橋 先生", email: "admin@example.com", serialNumber: "IC-CARD-ADMIN", userType: "FACULTY" });
 
 const item = { id: "item-2", barcode: "MAC-002", name: "MacBook 2", status: "AVAILABLE", itemType: { title: "MacBook", rentalPeriodDays: 7 } };
 // カタログの種類。使える物が1つ、貸出中が1つ、廃棄済みが1つ
@@ -55,11 +58,22 @@ const EXPIRED_TOKEN = "expired-token-1";
 const TABLET_KIND_TOKEN = "tablet-kind-token-1";
 const REGISTRATION_TOKEN = "registration-token-1";
 const member = { id: "user-1", role: "MEMBER" as const, isActive: true };
+const ADMIN_WEB_TOKEN = "admin-web-token-1";
 const initialSessions = (): Map<string, SessionRecord> =>
     new Map([
         [hashToken(WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), user: member }],
         [hashToken(EXPIRED_TOKEN), { kind: "WEB", expiresAt: new Date("2000-01-01"), user: member }],
         [hashToken(TABLET_KIND_TOKEN), { kind: "TABLET", expiresAt: new Date("2099-01-01"), user: member }],
+        [hashToken(ADMIN_WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), user: { id: "admin-1", role: "ADMIN", isActive: true } }],
+    ]);
+
+// はじめからDBにあるタブレットの端末。登録されたものと、取り消したもの
+const DEVICE_TOKEN = "device-token-1";
+const REVOKED_DEVICE_TOKEN = "revoked-device-token-1";
+const initialDevices = (): Map<string, TabletDeviceRecord> =>
+    new Map([
+        [hashToken(DEVICE_TOKEN), { id: "device-1", name: "図書室入口", createdAt: new Date("2026-10-29T00:00:00Z"), lastUsedAt: null, revokedAt: null }],
+        [hashToken(REVOKED_DEVICE_TOKEN), { id: "device-2", name: "職員室前", createdAt: new Date("2026-10-28T00:00:00Z"), lastUsedAt: null, revokedAt: new Date("2026-10-29T00:00:00Z") }],
     ]);
 
 // 本物と同じ形の部品を偽物で作る。テストごとに一部だけ差し替える
@@ -68,11 +82,14 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     const sessions = initialSessions();
     const deletedSessionHashes: string[] = [];
     const savedPins: { userId: string; pinHash: string }[] = [];
+    const devices = initialDevices();
+    const createdDevices: { name: string; registeredById: string }[] = [];
+    const deviceById = (id: string) => [...devices.values()].find((d) => d.id === id) ?? null;
     const deps: Deps = {
         users: {
             create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
             findById: async (id) => (id === "user-1" ? registered() : null),
-            findByStudentId: async (studentId) => (studentId === "20240001" ? registered() : null),
+            findByStudentId: async (studentId) => (studentId === "20240001" ? registered() : studentId === "90240001" ? adminUser() : null),
         },
         auth: {
             saveTmpCode: async () => undefined as never,
@@ -97,7 +114,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
                 return undefined as never;
             },
         },
-        roster: new FakeRoster([yamada, newcomer]),
+        roster: new FakeRoster([yamada, newcomer, takahashi]),
         catalog: {
             findCategories: async () => [{ id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] }],
             findItemTypes: async () => [macbookType],
@@ -129,9 +146,28 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             saveCheckout: async () => rental as never,
             saveReturned: async () => ({ ...rental, returnedAt: new Date("2026-10-25T00:00:00Z") }) as never,
         },
+        devices: {
+            create: async ({ name, tokenHash, registeredById }) => {
+                const record = { id: `device-new-${devices.size}`, name, createdAt: new Date("2026-10-29T03:00:00Z"), lastUsedAt: null, revokedAt: null };
+                devices.set(tokenHash, record);
+                createdDevices.push({ name, registeredById });
+                return record;
+            },
+            findByTokenHash: async (hash) => devices.get(hash) ?? null,
+            findById: async (id) => deviceById(id),
+            findActive: async () => [...devices.values()].filter((d) => !d.revokedAt),
+            touch: async (id, now) => {
+                const device = deviceById(id);
+                if (device) device.lastUsedAt = now;
+            },
+            revoke: async (id, now) => {
+                const device = deviceById(id);
+                if (device) device.revokedAt = now;
+            },
+        },
         ...overrides,
     };
-    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins };
+    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices };
 };
 
 type App = ReturnType<typeof fakeDeps>["app"];
@@ -142,6 +178,10 @@ const webSession = sessionCookie(WEB_TOKEN);
 const sessionCookieOf = (res: request.Response) => ([] as string[]).concat(res.headers["set-cookie"] ?? []).find((c) => c.startsWith("session="));
 // 書き換えのリクエストは、画面のURLのOriginが無いと断られる(A8-7)。ブラウザと同じく付けて送る
 const post = (app: App, url: string) => request(app).post(url).set("Origin", frontendUrl);
+// タブレットのAPIは、登録された端末のCookieが要る(D5)
+const deviceCookie = (token: string) => ({ Cookie: `device=${token}` });
+const tabletPost = (app: App, url: string) => post(app, url).set(deviceCookie(DEVICE_TOKEN));
+const deviceCookieOf = (res: request.Response) => ([] as string[]).concat(res.headers["set-cookie"] ?? []).find((c) => c.startsWith("device="));
 
 const expectProblem = (res: request.Response, status: number, code: string) => {
     expect(res.status).toBe(status);
@@ -544,12 +584,131 @@ describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
     });
 });
 
+describe("タブレットの端末の登録(POST /api/tablet-devices。UC-20・D2)", () => {
+    const register = (app: App, body: object) => post(app, "/api/tablet-devices").send(body);
+
+    describe("正常系", () => {
+        it("H51 管理者の学籍番号とパスワードが合えば、201でTabletDeviceを返し、番号はHttpOnly・SameSite=Strict・400日のCookieにだけ入れる(R-A1・D3)", async () => {
+            const { app, createdDevices } = fakeDeps();
+
+            const res = await register(app, { studentId: "90240001", password: "password123", name: "図書室入口" });
+
+            expect(res.status).toBe(201);
+            expect(tabletDeviceSchema.parse(res.body)).toMatchObject({ name: "図書室入口", lastUsedAt: null });
+            expect(Object.keys(res.body).sort()).toEqual(["createdAt", "id", "lastUsedAt", "name"]);
+            const cookie = deviceCookieOf(res);
+            expect(cookie).toMatch(/HttpOnly/);
+            expect(cookie).toMatch(/SameSite=Strict/);
+            expect(cookie).toMatch(/Max-Age=34560000/);
+            expect(createdDevices).toEqual([{ name: "図書室入口", registeredById: "admin-1" }]);
+            // Webのセッションは作らない(D2)
+            expect(([] as string[]).concat(res.headers["set-cookie"] ?? []).some((c) => c.startsWith("session="))).toBe(false);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H52 管理者でなければ、パスワードが合っても403 FORBIDDENで、登録しない", async () => {
+            const { app, createdDevices } = fakeDeps();
+
+            expectProblem(await register(app, { studentId: "20240001", password: "password123", name: "図書室入口" }), 403, "FORBIDDEN");
+            expect(createdDevices).toEqual([]);
+        });
+
+        it("H53 パスワードが違えば、401 INVALID_CREDENTIALS", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await register(app, { studentId: "90240001", password: "wrong-password", name: "図書室入口" }), 401, "INVALID_CREDENTIALS");
+        });
+
+        it("H54 端末の名前が空なら、400 VALIDATION_ERRORで、errorsにnameを入れる", async () => {
+            const { app } = fakeDeps();
+
+            const res = await register(app, { studentId: "90240001", password: "password123", name: "  " });
+
+            expectProblem(res, 400, "VALIDATION_ERROR");
+            expect(res.body.errors.map((e: { path: string }) => e.path)).toEqual(["name"]);
+        });
+    });
+});
+
+describe("タブレットのAPIは、登録された端末からだけ(D5。R-A2・R-A3)", () => {
+    describe("正常系", () => {
+        it("H55 GET /api/tablet/deviceは、端末のCookieがあれば200で端末の名前を返し、最後に使った日時を書き換え、Cookieを付け直す(D3)", async () => {
+            const { app, devices } = fakeDeps();
+
+            const res = await request(app).get("/api/tablet/device").set(deviceCookie(DEVICE_TOKEN));
+
+            expect(res.status).toBe(200);
+            expect(currentTabletDeviceSchema.parse(res.body)).toEqual({ id: "device-1", name: "図書室入口" });
+            expect(devices.get(hashToken(DEVICE_TOKEN))?.lastUsedAt).toBeInstanceOf(Date);
+            expect(deviceCookieOf(res)).toMatch(/Max-Age=34560000/);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H56 端末のCookieが無ければ、どのタブレットのAPIも401 DEVICE_NOT_REGISTERED(カードの番号だけでは借りられない)", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await request(app).get("/api/tablet/device"), 401, "DEVICE_NOT_REGISTERED");
+            for (const url of ["/api/tablet/signin", "/api/tablet/checkout", "/api/tablet/return"]) {
+                expectProblem(await post(app, url).send({ serialNumber: "IC-CARD-001", barcode: "MAC-002" }), 401, "DEVICE_NOT_REGISTERED");
+            }
+        });
+
+        it("H57 取り消した端末なら、401 DEVICE_NOT_REGISTERED", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await request(app).get("/api/tablet/device").set(deviceCookie(REVOKED_DEVICE_TOKEN)), 401, "DEVICE_NOT_REGISTERED");
+        });
+    });
+});
+
+describe("管理者の端末の一覧と取り消し(/api/admin/tablet-devices。UC-20・D1)", () => {
+    const adminSession = sessionCookie(ADMIN_WEB_TOKEN);
+
+    describe("正常系", () => {
+        it("H58 管理者のWebのセッションなら、GETは200で取り消していない端末だけを返す", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).get("/api/admin/tablet-devices").set(adminSession);
+
+            expect(res.status).toBe(200);
+            expect(tabletDevicesSchema.parse(res.body).items.map((d) => d.name)).toEqual(["図書室入口"]);
+        });
+
+        it("H59 DELETEで取り消すと204で、その端末は次の呼び出しから401 DEVICE_NOT_REGISTERED(R-A3)", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).delete("/api/admin/tablet-devices/device-1").set("Origin", frontendUrl).set(adminSession);
+
+            expect(res.status).toBe(204);
+            expectProblem(await request(app).get("/api/tablet/device").set(deviceCookie(DEVICE_TOKEN)), 401, "DEVICE_NOT_REGISTERED");
+        });
+    });
+
+    describe("異常系", () => {
+        it("H60 管理者でないWebのセッションなら、403 FORBIDDEN。ログインしていなければ401 UNAUTHENTICATED(/api/adminの入口で止める)", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await request(app).get("/api/admin/tablet-devices").set(webSession), 403, "FORBIDDEN");
+            expectProblem(await request(app).delete("/api/admin/tablet-devices/device-1").set("Origin", frontendUrl).set(webSession), 403, "FORBIDDEN");
+            expectProblem(await request(app).get("/api/admin/tablet-devices"), 401, "UNAUTHENTICATED");
+        });
+
+        it("H61 無い端末を取り消そうとしたら、404 NOT_FOUND", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await request(app).delete("/api/admin/tablet-devices/device-x").set("Origin", frontendUrl).set(adminSession), 404, "NOT_FOUND");
+        });
+    });
+});
+
 describe("POST /api/tablet/signin(カードで本人確認)", () => {
     describe("正常系", () => {
         it("現状: H14 名簿にあり登録済みのカードなら、200でタブレット用トークンと利用者と借りている物を返す(R-17)", async () => {
             const { app } = fakeDeps();
 
-            const res = await post(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-001" });
+            const res = await tabletPost(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-001" });
 
             expect(res.status).toBe(200);
             expect(res.body).toEqual({
@@ -566,7 +725,7 @@ describe("POST /api/tablet/signin(カードで本人確認)", () => {
         it("H15 名簿に無いカードなら、401 INVALID_CARD_OR_PINを返す", async () => {
             const { app } = fakeDeps();
 
-            const res = await post(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-999" });
+            const res = await tabletPost(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-999" });
 
             expectProblem(res, 401, "INVALID_CARD_OR_PIN");
         });
@@ -578,7 +737,7 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
         it("現状: H16 タブレット用トークンがあれば、200で状態付きの貸し出しを返す(R-19)", async () => {
             const { app } = fakeDeps();
 
-            const res = await post(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
 
             expect(res.status).toBe(200);
             expect(res.body).toEqual({
@@ -594,7 +753,7 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
             // DBに触れたらテストが落ちるようにして、ミドルウェアで止まることを見る
             const { app } = fakeDeps({ rentals: { findUserWithActiveRentals: notUsed, findByBarcode: notUsed, saveCheckout: notUsed, saveReturned: notUsed } });
 
-            const res = await post(app, "/api/tablet/checkout").send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/checkout").send({ barcode: "MAC-002" });
 
             expectProblem(res, 401, "UNAUTHENTICATED");
         });
@@ -602,7 +761,7 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
         it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す", async () => {
             const { app } = fakeDeps();
 
-            const res = await post(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "NOPE-001" });
+            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "NOPE-001" });
 
             expectProblem(res, 404, "ITEM_NOT_FOUND");
         });
@@ -614,7 +773,7 @@ describe("POST /api/tablet/return(返却)", () => {
         it("現状: H19 タブレット用トークンがあれば、200で返却済みの状態付きの貸し出しを返す(R-21)", async () => {
             const { app } = fakeDeps();
 
-            const res = await post(app, "/api/tablet/return").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/return").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
 
             expect(res.status).toBe(200);
             expect(res.body).toMatchObject({ success: true, message: "返却が完了しました", data: { id: "rental-1", returnedAt: "2026-10-25T00:00:00.000Z", status: "RETURNED" } });

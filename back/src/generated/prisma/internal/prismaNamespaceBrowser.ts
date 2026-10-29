@@ -61,7 +61,8 @@ export const ModelName = {
   ItemTypeGenre: 'ItemTypeGenre',
   Item: 'Item',
   Rental: 'Rental',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  TabletDevice: 'TabletDevice'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -236,6 +237,19 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const TabletDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  tokenHash: 'tokenHash',
+  registeredById: 'registeredById',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt',
+  revokedAt: 'revokedAt'
+} as const
+
+export type TabletDeviceScalarFieldEnum = (typeof TabletDeviceScalarFieldEnum)[keyof typeof TabletDeviceScalarFieldEnum]
 
 
 export const SortOrder = {

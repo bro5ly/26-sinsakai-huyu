@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useTabletOperations } from "@/hooks/useTabletOperations";
+import { useTabletDevice } from "@/hooks/useTabletDevice";
+import { TabletDeviceRegistration } from "@/components/tablet/TabletDeviceRegistration";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import BarcodeInput from "@/components/BarcodeInput";
 import { Button, Chip, Spinner, Avatar, Switch, Divider } from "@heroui/react";
 
 export default function TabletPage() {
+  // 登録された端末か。登録されていなければ、受付の前に登録の画面を出す(UC-20・D5)
+  const tabletDevice = useTabletDevice();
   const {
     step,
     stepInfo,
@@ -21,9 +25,21 @@ export default function TabletPage() {
     selectReturn,
     backToActionSelect,
     resetInactivityTimer,
-  } = useTabletOperations();
+  } = useTabletOperations(tabletDevice.markUnregistered);
 
   const [isManualInput, setIsManualInput] = useState(false);
+
+  if (tabletDevice.status === "loading") {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#F8F9FB]">
+        <Spinner size="lg" color="current" />
+      </div>
+    );
+  }
+
+  if (tabletDevice.status === "unregistered") {
+    return <TabletDeviceRegistration onRegistered={tabletDevice.check} />;
+  }
 
   return (
     <div className="h-screen bg-[#F8F9FB] text-slate-900 flex overflow-hidden font-sans select-none">

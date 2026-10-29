@@ -60,9 +60,13 @@
 | `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える)、PINの状態(登録済みか・ロック中か) | 200 `Me` |
 | `GET /me/rentals` | Webのセッション | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
 | `PUT /me/pin` | Webのセッション | `{ pin, password }`。パスワードを入れ直し、タブレット用のPIN(4桁。推測しやすいものは400)を登録・変更する。失敗の回数とロックも解く。失敗は接続元ごとに15分で20回まで | 204、パスワード違いは403 `WRONG_PASSWORD` |
-| `POST /tablet/signin` | なし | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
-| `POST /tablet/checkout` | タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
-| `POST /tablet/return` | タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
+| `POST /tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }`。置くタブレットの上で端末を登録する(Webのセッションは作らない) | 201 `TabletDevice`(+Cookie`device`) |
+| `GET /admin/tablet-devices` | Webのセッション(管理者) | 取り消していない端末の一覧 | 200 `{ items: TabletDevice[] }` |
+| `DELETE /admin/tablet-devices/{id}` | Webのセッション(管理者) | 端末を取り消す(行は消さない) | 204 |
+| `GET /tablet/device` | 端末 | この端末が登録されているか | 200 `{ id, name }` |
+| `POST /tablet/signin` | 端末 | `{ serialNumber }`。カードで本人確認 | `success`, `message`, `session`(タブレット用トークン), `user`, `data: Rental[]` |
+| `POST /tablet/checkout` | 端末 + タブレット用トークン | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
+| `POST /tablet/return` | 端末 + タブレット用トークン | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
 
 登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/me`で取る(カードの番号は0.8で使い捨てのバーコードに替えるまで。Me1)。
 
@@ -74,10 +78,13 @@
 |---|---|---|---|---|
 | Webのセッション | 作ってから7日(延ばさない。A8-6) | `newToken()`(32バイトの乱数) | HttpOnly・`SameSite=Strict`のCookie`session`。DBの`session`には`hashToken()`(SHA-256)だけ | ログインが要るAPIすべて |
 | 登録用トークン | 15分・1回だけ | `newToken()` | 画面のメモリ。DBの`verification_codes.token_hash`にハッシュ | `/users` |
+| タブレットの端末の番号 | 400日(使うたびに付け直す。D3) | `newToken()` | HttpOnly・`SameSite=Strict`のCookie`device`。DBの`tablet_device`には`hashToken()`だけ | `/tablet/*`すべて |
 | タブレット用トークン | 3分 | JWT(`JWT_ACCESS_SECRET`) | `TabletContext`のメモリ →`Authorization: Bearer` | `/tablet/checkout`・`return`(0.8のeでセッションにする) |
 
 - `createAuthMiddleware`がCookieの番号をハッシュにしてDBで探し、`checkSession`(期限・種類が`WEB`か・`is_active`)で確かめてから`req.user`に入れる。毎回DBを見るので、ログアウト・取り消し・無効にした人は次のリクエストから止まる。名簿はログインのときだけ見る(A8-10)
 - 1人が何件でもセッションを持てる(端末ごと。Q9)。ログアウトはそのセッションだけを消す
+- `/admin`の入口で、`createAuthMiddleware`の後に`requireAdmin`が管理者かを確かめる(管理者でなければ403 `FORBIDDEN`。D1)
+- `/tablet`の入口で、`createDeviceMiddleware`が端末のCookieをDBで確かめる(無い・取り消し済みは401 `DEVICE_NOT_REGISTERED`)。最後に使った日時を書き換え、Cookieを付け直す(D3・D5)
 - 書き換えのリクエスト(GET・HEAD・OPTIONS以外)は、`Origin`が`FRONTEND_URL`と同じでなければ403 `FORBIDDEN_ORIGIN`(`createOriginCheck`。A8-7・A8-11)
 - タブレットのトークンはWebのAPIでは通らない(WebはCookieのセッションしか見ない)。Webのセッションもタブレットでは通らない
 
@@ -94,6 +101,7 @@ Category 1─* Genre 1─* ItemType 1─* Item 1─* Rental *─1 User 1─1 Ext
                   └──── ItemTypeGenre ───┘(多対多。今は未使用)  ├─* Session(Web・タブレット。端末ごと)
                                                                └─* Notification(未使用)
 VerificationCode(学籍番号ごとに1件の認証コード)
+TabletDevice *─1 User(登録した管理者)
 ```
 
 | テーブル | 中身 |
@@ -101,6 +109,7 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 | `external_user` | 学校の名簿の代わり。学籍番号・メール・シリアル番号(一意)・名前・学年・専攻・種別(学生/教職員/外部)。**名前などはここにだけ持つ** |
 | `user` | 登録した利用者。名簿の写しは持たず、`student_id`で名簿をたどる。パスワード・権限(`role`: 一般/管理者)・貸し出しの決まり(`can_borrow`・`max_items`初期値5・`suspended_until`・`suspension_reason`)・`is_active`・タブレット用のPIN(`pin_hash`はbcryptのハッシュ、`pin_failed_attempts`、`pin_locked_at`はロックした日時で、Webで登録し直すまで解けない) |
 | `verification_codes` | 登録の認証コード。主キーが学籍番号。コードが合ったら登録用トークンのハッシュと期限も入れ、登録したら行ごと消す |
+| `tablet_device` | 貸し出しを受け付けるタブレットの端末。名前(管理者が付ける)・番号のハッシュ(一意)・登録した管理者・最後に使った日時・取り消した日時(行は消さない) |
 | `session` | ログインのセッション。番号のハッシュ(一意)・利用者・種類(`WEB`・`TABLET`)・期限。利用者を消すと一緒に消える |
 | `category` / `genre` | 分類(例: 機材 > ノートパソコン) |
 | `item_type` | 物品の種類。書籍の項目(著者・出版社・ISBN)と機材の項目(メーカー・型番)を両方持つ。`rentalPeriodDays` |
@@ -126,5 +135,6 @@ VerificationCode(学籍番号ごとに1件の認証コード)
 | `/auth` | ログインと、3段階の新規登録 | `useAuthForm`、`components/auth/` |
 | `/dashboard` | 自分の情報・バーコード・借りている物・カタログ(検索・ジャンル・カテゴリの絞り込みは画面でする) | `useAuth`、`useMyRentals`、`useCatalog`、`components/dashboard/` |
 | `/items/[id]` | 種類の詳細(物品1つ1つの置き場所と状態) | `useItemType` |
-| `/tablet` | 受付端末の画面。カード → 操作の選択 → バーコード → 完了 | `useTabletOperations`、`TabletContext`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
+| `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → 操作の選択 → バーコード → 完了 | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`TabletContext`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
+| `/admin/tablets` | 管理者だけ。タブレットの端末の一覧と取り消し | `useAdminTabletDevices` |
 | `/barcodes` | テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き) | `react-barcode` |

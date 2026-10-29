@@ -394,7 +394,8 @@ export const ModelName = {
   ItemTypeGenre: 'ItemTypeGenre',
   Item: 'Item',
   Rental: 'Rental',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  TabletDevice: 'TabletDevice'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "externalUser" | "verificationCode" | "session" | "category" | "genre" | "itemType" | "itemTypeGenre" | "item" | "rental" | "notification"
+    modelProps: "user" | "externalUser" | "verificationCode" | "session" | "category" | "genre" | "itemType" | "itemTypeGenre" | "item" | "rental" | "notification" | "tabletDevice"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1228,6 +1229,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TabletDevice: {
+      payload: Prisma.$TabletDevicePayload<ExtArgs>
+      fields: Prisma.TabletDeviceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TabletDeviceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TabletDeviceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        findFirst: {
+          args: Prisma.TabletDeviceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TabletDeviceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        findMany: {
+          args: Prisma.TabletDeviceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>[]
+        }
+        create: {
+          args: Prisma.TabletDeviceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        createMany: {
+          args: Prisma.TabletDeviceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TabletDeviceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>[]
+        }
+        delete: {
+          args: Prisma.TabletDeviceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        update: {
+          args: Prisma.TabletDeviceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        deleteMany: {
+          args: Prisma.TabletDeviceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TabletDeviceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TabletDeviceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>[]
+        }
+        upsert: {
+          args: Prisma.TabletDeviceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabletDevicePayload>
+        }
+        aggregate: {
+          args: Prisma.TabletDeviceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTabletDevice>
+        }
+        groupBy: {
+          args: Prisma.TabletDeviceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TabletDeviceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TabletDeviceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TabletDeviceCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1423,6 +1498,19 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const TabletDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  tokenHash: 'tokenHash',
+  registeredById: 'registeredById',
+  createdAt: 'createdAt',
+  lastUsedAt: 'lastUsedAt',
+  revokedAt: 'revokedAt'
+} as const
+
+export type TabletDeviceScalarFieldEnum = (typeof TabletDeviceScalarFieldEnum)[keyof typeof TabletDeviceScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1693,6 +1781,7 @@ export type GlobalOmitConfig = {
   item?: Prisma.ItemOmit
   rental?: Prisma.RentalOmit
   notification?: Prisma.NotificationOmit
+  tabletDevice?: Prisma.TabletDeviceOmit
 }
 
 /* Types for Logging */

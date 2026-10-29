@@ -49,7 +49,8 @@ export class TabletUserData {
   }
 }
 
-export const useTabletOperations = () => {
+// onDeviceNotRegistered: 操作の途中で端末が取り消された・登録されていないと分かったときに呼ぶ(登録の画面へ戻す)
+export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
   const {
     token: sessionToken,
     user,
@@ -177,6 +178,12 @@ export const useTabletOperations = () => {
           setError("エラーが発生しました");
           return;
         }
+        // 端末が取り消されたら、受付をやめて登録の画面へ戻す(R-A3)
+        if (err.code === "DEVICE_NOT_REGISTERED") {
+          handleReset();
+          onDeviceNotRegistered?.();
+          return;
+        }
         // 401をすべてセッション切れにすると、カードの認証の失敗まで「時間切れ」と出てしまう。
         // セッションが切れた・使えないときだけ最初の画面に戻し、文言はサーバーのdetailを出す(R-26。2026-10-24 V1-A)
         if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
@@ -194,6 +201,7 @@ export const useTabletOperations = () => {
       returnItem,
       handleReset,
       resetInactivityTimer,
+      onDeviceNotRegistered,
     ]
   );
 
