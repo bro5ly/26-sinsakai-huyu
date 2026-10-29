@@ -46,12 +46,15 @@ export const rentalSchema = z.object({
         title: z.string(),
         genre: z.object({ id: z.string(), name: z.string() }),
     }),
-    item: z.object({ id: z.string(), barcode: z.string() }),
+    // 物品のバーコードは入れない。値が分かれば、実物を持たずにタブレットで返却できてしまうため(2026-10-29 BC1)
+    item: z.object({ id: z.string() }),
     rentedAt: z.iso.datetime(),
     dueDate: z.iso.datetime(),
     returnedAt: z.iso.datetime().nullable(),
     state: rentalStateSchema,
 });
+
+// POST /api/tablet/rentals・POST /api/tablet/returns → 201 Rental(2026-10-29)
 
 // GET /api/me/rentals → 200 { items: Rental[] }。今は借りている物だけ(返した物の履歴は後で。Me4)
 export const myRentalsSchema = z.object({ items: z.array(rentalSchema) });

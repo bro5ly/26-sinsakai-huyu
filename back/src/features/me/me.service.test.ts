@@ -20,7 +20,7 @@ const rental = (id: string, dueDate: Date): ActiveRentalRecord => ({
     rentedAt: new Date(dueDate.getTime() - 7 * day),
     dueDate,
     returnedAt: null,
-    item: { id: `item-${id}`, barcode: `MAC-${id}` },
+    item: { id: `item-${id}` },
     itemType: { id: "type-1", title: "MacBook Pro 16インチ", genre: { id: "genre-1", name: "ノートパソコン" } },
 });
 

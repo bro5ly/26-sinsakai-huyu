@@ -13,7 +13,7 @@ import { CardHolderRepository } from "@/features/tablet-sessions/card-holder.rep
 import type { CardHolderStore } from "@/features/tablet-sessions/tablet-session.types.js";
 import type { CodeStore, Mailer, SessionStore, UserStore } from "@/features/auth/auth.types.js";
 import type { CatalogStore } from "@/features/catalog/catalog.types.js";
-import type { RentalStore } from "@/features/rentals/rental.service.js";
+import type { RentalStore } from "@/features/rentals/rental.types.js";
 import type { Roster } from "@/features/roster/roster.js";
 import type { MeStore } from "@/features/me/me.types.js";
 import type { Config } from "@/config.js";

@@ -41,7 +41,6 @@ export class MeRepository implements MeStore {
                 item: {
                     select: {
                         id: true,
-                        barcode: true,
                         itemType: { select: { id: true, title: true, genre: { select: { id: true, name: true } } } },
                     },
                 },

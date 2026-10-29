@@ -46,7 +46,7 @@ const rental = (dueDate: Date): ActiveRentalRecord => ({
     rentedAt: new Date(dueDate.getTime() - 7 * day),
     dueDate,
     returnedAt: null,
-    item: { id: "item-1", barcode: "MAC-001" },
+    item: { id: "item-1" },
     itemType: { id: "type-1", title: "MacBook Pro", genre: { id: "genre-1", name: "ノートパソコン" } },
 });
 const rentals = (items: ActiveRentalRecord[] = []): ActiveRentalReader => ({ findActiveRentals: async () => items });
