@@ -9,6 +9,8 @@ import { PrismaRoster } from "@/features/roster/prisma-roster.js";
 import { MeRepository } from "@/features/me/me.repository.js";
 import { TabletDeviceRepository } from "@/features/tablet-devices/tablet-device.repository.js";
 import type { DeviceStore } from "@/features/tablet-devices/tablet-device.types.js";
+import { CardHolderRepository } from "@/features/tablet-sessions/card-holder.repository.js";
+import type { CardHolderStore } from "@/features/tablet-sessions/tablet-session.types.js";
 import type { CodeStore, Mailer, SessionStore, UserStore } from "@/features/auth/auth.types.js";
 import type { CatalogStore } from "@/features/catalog/catalog.types.js";
 import type { RentalStore } from "@/features/rentals/rental.service.js";
@@ -27,6 +29,7 @@ export type Deps = {
     me: MeStore;
     rentals: RentalStore;
     devices: DeviceStore;
+    cardHolders: CardHolderStore;
 };
 
 // 本物の部品を作るのはここだけ。学校の名簿の実装ができたら、rosterをここで差し替える(2026-10-24 D2)
@@ -42,5 +45,6 @@ export const buildDeps = (config: Config): Deps => {
     me: new MeRepository(prisma),
     rentals: new RentalRepository(prisma),
     devices: new TabletDeviceRepository(prisma),
+    cardHolders: new CardHolderRepository(prisma),
     };
 };

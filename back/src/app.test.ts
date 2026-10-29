@@ -2,21 +2,23 @@ import bcrypt from "bcrypt";
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
-import * as jwtLib from "@/lib/jwt.js";
 import { hashToken } from "@/lib/session-token.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
 import type { TabletDeviceRecord } from "@/features/tablet-devices/tablet-device.types.js";
+import type { CardHolderRecord } from "@/features/tablet-sessions/tablet-session.types.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
-import { categoriesSchema, currentTabletDeviceSchema, tabletDeviceSchema, tabletDevicesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";
+import { categoriesSchema, currentTabletDeviceSchema, tabletDeviceSchema, tabletDevicesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema, tabletSessionSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
 // 判断の細かい場合分けは各serviceのテストにあるので、ここは「つながっているか」と「形」だけを見る。
 // 名前に「現状:」が付いたものは、docs/api.md の形に移すときに変わると決まっている今の形({ success: true, ...data } など)
 let passwordHash = "";
+let pinHash = "";
 beforeAll(async () => {
     passwordHash = await bcrypt.hash("password123", 4);
+    pinHash = await bcrypt.hash("8068", 4);
 });
 
 const yamada = rosterEntry({ studentId: "20240001", name: "山田 太郎", email: "yamada@example.com", serialNumber: "IC-CARD-001", grade: "2年", major: "情報工学科" });
@@ -48,14 +50,16 @@ const macbookType = {
 };
 const rental = { id: "rental-1", itemId: "item-2", userId: "user-1", rentedAt: new Date("2026-10-24T00:00:00Z"), dueDate: new Date("2099-01-01T00:00:00Z"), returnedAt: null };
 
-// 設定はテストの中で決める。鍵は lib/jwt.ts が .env から読むものと同じにする(タブレットのトークンを作って渡すテストがあるため)
-const testConfig = loadConfig({ DATABASE_URL: "unused", JWT_ACCESS_SECRET: process.env["JWT_ACCESS_SECRET"] });
+// 設定はテストの中で決める(環境変数は読まない)
+const testConfig = loadConfig({ DATABASE_URL: "unused" });
 const frontendUrl = testConfig.frontendUrl;
 
 // はじめからDBにあるセッション。Webのログイン中・期限切れ・タブレット用(Webでは通らない)
 const WEB_TOKEN = "web-token-1";
 const EXPIRED_TOKEN = "expired-token-1";
+// タブレットのセッション。device-1 で作った、今使える物(Webでは通らない)と、無操作30秒を過ぎた物
 const TABLET_KIND_TOKEN = "tablet-kind-token-1";
+const IDLE_TABLET_TOKEN = "idle-tablet-token-1";
 const REGISTRATION_TOKEN = "registration-token-1";
 const member = { id: "user-1", role: "MEMBER" as const, isActive: true };
 const ADMIN_WEB_TOKEN = "admin-web-token-1";
@@ -63,7 +67,8 @@ const initialSessions = (): Map<string, SessionRecord> =>
     new Map([
         [hashToken(WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: null, lastUsedAt: null, user: member }],
         [hashToken(EXPIRED_TOKEN), { kind: "WEB", expiresAt: new Date("2000-01-01"), createdAt: new Date("1999-12-25"), deviceId: null, lastUsedAt: null, user: member }],
-        [hashToken(TABLET_KIND_TOKEN), { kind: "TABLET", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: "device-1", lastUsedAt: null, user: member }],
+        [hashToken(TABLET_KIND_TOKEN), { kind: "TABLET", expiresAt: new Date(Date.now() + 180_000), createdAt: new Date(), deviceId: "device-1", lastUsedAt: null, user: member }],
+        [hashToken(IDLE_TABLET_TOKEN), { kind: "TABLET", expiresAt: new Date(Date.now() + 180_000), createdAt: new Date(Date.now() - 60_000), deviceId: "device-1", lastUsedAt: new Date(Date.now() - 31_000), user: member }],
         [hashToken(ADMIN_WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: null, lastUsedAt: null, user: { id: "admin-1", role: "ADMIN", isActive: true } }],
     ]);
 
@@ -84,6 +89,8 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     const savedPins: { userId: string; pinHash: string }[] = [];
     const devices = initialDevices();
     const createdDevices: { name: string; registeredById: string }[] = [];
+    const cardHolder: CardHolderRecord = { id: "user-1", role: "MEMBER", isActive: true, pinHash, pinFailedAttempts: 0, pinLockedAt: null };
+    const pinAttempts: { userId: string; failedAttempts: number; lockedAt: Date | null }[] = [];
     const deviceById = (id: string) => [...devices.values()].find((d) => d.id === id) ?? null;
     const deps: Deps = {
         users: {
@@ -145,10 +152,16 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             },
         },
         rentals: {
-            findUserWithActiveRentals: async (studentId) => (studentId === "20240001" ? ({ id: "user-1", studentId, rentals: [] } as never) : null),
             findByBarcode: async (barcode) => (barcode === item.barcode ? (item as never) : null),
             saveCheckout: async () => rental as never,
             saveReturned: async () => ({ ...rental, returnedAt: new Date("2026-10-25T00:00:00Z") }) as never,
+        },
+        // 山田 太郎(IC-CARD-001)はPIN「8068」を登録済み。ほかの人はPIN未登録
+        cardHolders: {
+            findByStudentId: async (studentId) => (studentId === "20240001" ? cardHolder : null),
+            savePinAttempt: async (data) => {
+                pinAttempts.push(data);
+            },
         },
         devices: {
             create: async ({ name, tokenHash, registeredById }) => {
@@ -171,12 +184,11 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         ...overrides,
     };
-    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices };
+    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices, pinAttempts, sessions };
 };
 
 type App = ReturnType<typeof fakeDeps>["app"];
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
-const tabletToken = () => jwtLib.signTabletToken({ sub: "user-1", role: "TABLET_USER" });
 const sessionCookie = (token: string) => ({ Cookie: `session=${token}` });
 const webSession = sessionCookie(WEB_TOKEN);
 const sessionCookieOf = (res: request.Response) => ([] as string[]).concat(res.headers["set-cookie"] ?? []).find((c) => c.startsWith("session="));
@@ -353,7 +365,7 @@ describe("セッション(ログイン中・ログアウト)", () => {
         it("H42 アクセストークン(Authorization: Bearer)はもう受け付けない(A8-3)", async () => {
             const { app } = fakeDeps();
 
-            expectProblem(await request(app).get("/api/me").set(bearer(tabletToken())), 401, "UNAUTHENTICATED");
+            expectProblem(await request(app).get("/api/me").set(bearer(TABLET_KIND_TOKEN)), 401, "UNAUTHENTICATED");
         });
 
         it("H30 古いURL(/api/auth/...)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
@@ -654,8 +666,8 @@ describe("タブレットのAPIは、登録された端末からだけ(D5。R-A2
             const { app } = fakeDeps();
 
             expectProblem(await request(app).get("/api/tablet/device"), 401, "DEVICE_NOT_REGISTERED");
-            for (const url of ["/api/tablet/signin", "/api/tablet/checkout", "/api/tablet/return"]) {
-                expectProblem(await post(app, url).send({ serialNumber: "IC-CARD-001", barcode: "MAC-002" }), 401, "DEVICE_NOT_REGISTERED");
+            for (const url of ["/api/tablet/sessions", "/api/tablet/checkout", "/api/tablet/return"]) {
+                expectProblem(await post(app, url).send({ cardNumber: "IC-CARD-001", pin: "8068", barcode: "MAC-002" }), 401, "DEVICE_NOT_REGISTERED");
             }
         });
 
@@ -707,41 +719,85 @@ describe("管理者の端末の一覧と取り消し(/api/admin/tablet-devices�
     });
 });
 
-describe("POST /api/tablet/signin(カードで本人確認)", () => {
+describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判断表T)", () => {
+    const startSession = (app: App, body: object) => tabletPost(app, "/api/tablet/sessions").send(body);
+
     describe("正常系", () => {
-        it("現状: H14 名簿にあり登録済みのカードなら、200でタブレット用トークンと利用者と借りている物を返す(R-17)", async () => {
+        it("H62 カードとPINが合えば、201でセッションの番号と、表示用の名前と借りている物だけを返す(学籍番号・学年・専攻・IDは返さない。R-A13)", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-001" });
+            const res = await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({
-                success: true,
-                message: "認証に成功しました",
-                session: expect.any(String),
-                user: { id: "user-1", studentId: "20240001", name: "山田 太郎", grade: "2年", major: "情報工学科" },
-                data: [],
-            });
+            expect(res.status).toBe(201);
+            const body = tabletSessionSchema.parse(res.body);
+            expect(body.user).toEqual({ displayName: "山田 太郎" });
+            expect(Object.keys(res.body).sort()).toEqual(["expiresAt", "rentals", "token", "user"]);
+            expect(body.rentals).toEqual([{ title: "MacBook", dueDate: "2099-01-01T00:00:00.000Z", state: "RENTING" }]);
+            // 作ったセッションで、そのまま貸し出せる
+            expect((await tabletPost(app, "/api/tablet/checkout").set(bearer(body.token)).send({ barcode: "MAC-002" })).status).toBe(200);
         });
     });
 
     describe("異常系", () => {
-        it("H15 名簿に無いカードなら、401 INVALID_CARD_OR_PINを返す", async () => {
+        it("H63 PINが違う・名簿に無いカード・PIN未登録のカードは、どれも401 INVALID_CARD_OR_PIN(どれかは言わない。T2・T3・T5)", async () => {
+            const { app, pinAttempts } = fakeDeps();
+
+            expectProblem(await startSession(app, { cardNumber: "IC-CARD-001", pin: "1357" }), 401, "INVALID_CARD_OR_PIN");
+            expectProblem(await startSession(app, { cardNumber: "IC-CARD-999", pin: "8068" }), 401, "INVALID_CARD_OR_PIN");
+            expectProblem(await startSession(app, { cardNumber: "IC-CARD-ADMIN", pin: "8068" }), 401, "INVALID_CARD_OR_PIN");
+            expect(pinAttempts).toEqual([{ userId: "user-1", failedAttempts: 1, lockedAt: null }]);
+        });
+
+        it("H64 PINが4桁の数字でなければ、400 VALIDATION_ERROR", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-999" });
+            const res = await startSession(app, { cardNumber: "IC-CARD-001", pin: "12" });
 
-            expectProblem(res, 401, "INVALID_CARD_OR_PIN");
+            expectProblem(res, 400, "VALIDATION_ERROR");
+            expect(res.body.errors.map((e: { path: string }) => e.path)).toEqual(["pin"]);
+        });
+
+        it("H65 古いURL(POST /api/tablet/signin。カードだけで通っていた)は残さず、404 NOT_FOUND", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await tabletPost(app, "/api/tablet/signin").send({ serialNumber: "IC-CARD-001" }), 404, "NOT_FOUND");
+        });
+    });
+});
+
+describe("タブレットのセッション(終える・時間切れ。R-A9・R-A10)", () => {
+    describe("正常系", () => {
+        it("H66 DELETE /api/tablet/sessions/currentで終えると204で、そのセッションはもう通らない", async () => {
+            const { app } = fakeDeps();
+
+            const res = await request(app).delete("/api/tablet/sessions/current").set("Origin", frontendUrl).set(deviceCookie(DEVICE_TOKEN)).set(bearer(TABLET_KIND_TOKEN));
+
+            expect(res.status).toBe(204);
+            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
+        });
+    });
+
+    describe("異常系", () => {
+        it("H67 無操作30秒を過ぎたセッションなら、401 SESSION_EXPIRED(もう一度カードを読む)", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(IDLE_TABLET_TOKEN)).send({ barcode: "MAC-002" }), 401, "SESSION_EXPIRED");
+        });
+
+        it("H68 Webのセッションの番号は、タブレットでは通らない(R-A18)", async () => {
+            const { app } = fakeDeps();
+
+            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(WEB_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
         });
     });
 });
 
 describe("POST /api/tablet/checkout(貸し出し)", () => {
     describe("正常系", () => {
-        it("現状: H16 タブレット用トークンがあれば、200で状態付きの貸し出しを返す(R-19)", async () => {
+        it("現状: H16 タブレットのセッションがあれば、200で状態付きの貸し出しを返す(R-19。形はe2で変える)", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" });
 
             expect(res.status).toBe(200);
             expect(res.body).toEqual({
@@ -753,9 +809,9 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
     });
 
     describe("異常系", () => {
-        it("H17 タブレット用トークンが無ければ、401 UNAUTHENTICATEDを返し、貸し出さない", async () => {
+        it("H17 タブレットのセッションが無ければ、401 UNAUTHENTICATEDを返し、貸し出さない", async () => {
             // DBに触れたらテストが落ちるようにして、ミドルウェアで止まることを見る
-            const { app } = fakeDeps({ rentals: { findUserWithActiveRentals: notUsed, findByBarcode: notUsed, saveCheckout: notUsed, saveReturned: notUsed } });
+            const { app } = fakeDeps({ rentals: { findByBarcode: notUsed, saveCheckout: notUsed, saveReturned: notUsed } });
 
             const res = await tabletPost(app, "/api/tablet/checkout").send({ barcode: "MAC-002" });
 
@@ -765,7 +821,7 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
         it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(tabletToken())).send({ barcode: "NOPE-001" });
+            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "NOPE-001" });
 
             expectProblem(res, 404, "ITEM_NOT_FOUND");
         });
@@ -774,10 +830,10 @@ describe("POST /api/tablet/checkout(貸し出し)", () => {
 
 describe("POST /api/tablet/return(返却)", () => {
     describe("正常系", () => {
-        it("現状: H19 タブレット用トークンがあれば、200で返却済みの状態付きの貸し出しを返す(R-21)", async () => {
+        it("現状: H19 タブレットのセッションがあれば、200で返却済みの状態付きの貸し出しを返す(R-21)", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/return").set(bearer(tabletToken())).send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/return").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" });
 
             expect(res.status).toBe(200);
             expect(res.body).toMatchObject({ success: true, message: "返却が完了しました", data: { id: "rental-1", returnedAt: "2026-10-25T00:00:00.000Z", status: "RETURNED" } });

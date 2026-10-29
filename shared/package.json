@@ -11,7 +11,8 @@
     "./me": "./src/me.ts",
     "./catalog": "./src/catalog.ts",
     "./pin": "./src/pin.ts",
-    "./tablet-devices": "./src/tablet-devices.ts"
+    "./tablet-devices": "./src/tablet-devices.ts",
+    "./tablet": "./src/tablet.ts"
   },
   "dependencies": {
     "zod": "^4.3.6"
