@@ -55,7 +55,7 @@
 型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
 
 - 0.7の残りの順番(2026-10-24決定 S1-A): ①npm workspacesと`shared/`(両方のコンテナから`shared/`が見えるようにするDockerの作り直しも一緒に) → ②APIを1本ずつ新しいURLに移す(そのたびに、その機能の中の型T1〜T7もそろえる)。先に移すと、新しい形の型を`back`と`front`に別々に書いてから`shared/`へ移すことになり、同じ所を2回直すため
-- [ ] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる
+- [x] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる(2026-10-24、PR #11)
   - 決めたこと(2026-10-24 P1〜P5):
     - `shared/`はTypeScriptのまま使い、ビルドしない。サーバーの`tsx`もNext.jsもTypeScriptをそのまま読めるので、ビルドの手順と「ビルドし忘れ」を無くす(P1)
     - パッケージの名前は`@sinsakai/shared`(P2)
@@ -63,7 +63,7 @@
     - 画面のイメージを`node:20-alpine`から`node:24-bookworm-slim`にそろえる。同じ版のnpmでロックファイルを作るため。Node 20はサポートが切れている(P4)
     - 最初のPRは仕組みだけにし、`shared/`にはエラーの`code`の一覧とRFC 9457の形だけを移す。`back`と`front`の両方がそれを使う。APIの形は次から移す(P5)
     - `shared/`の中のファイルどうしは`@sinsakai/shared/x`で読み、`shared/package.json`の`exports`にファイルごとの入口を書く。`./x.js`と書くと、Next.jsのTurbopackが`x.ts`に読み替えず画面のビルドが落ちたため。`.ts`を付けて読む案(B)は、back・front・sharedの3つのtsconfigを変えるので選ばなかった(P6-A)
-- [ ] `shared/`を作り、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す(エラーの形は2026-10-24、登録・ログインは2026-10-25に移した)
+- [ ] `shared/`を作り(2026-10-24、PR #11)、`docs/api.md`で決めたAPIの入力と出力の形・エラーの形(RFC 9457)・`code`の一覧をZodのスキーマで書く(`z.infer`で型も作る)。今の`back/src/features/*/…schema.ts`の入力の検証もここに移す(エラーの形は2026-10-24、登録・ログイン・本人は2026-10-25、カタログは2026-10-28、PINは2026-10-28に移した。残りはタブレットで、0.8のeで作る)
 - [x] **エラーの扱いを作り直す(2026-10-24済み。0.7の最初にやる。workspacesと`shared/`より先に、サーバーの中だけで行う。`code`の一覧は依存の無いファイルに書き、`shared/`ができたら移す(2026-10-24、`shared/src/error-codes.ts`に移した)。2026-10-24決定 O1-A。新しいAPIは全部この形で作る。E1〜E4)**
   - 判断の関数(判断表C・T)は、Resultを返す(`{ ok: true }`か`{ ok: false, reason }`)。HTTPを知らない(E1)
   - serviceは、断るときに`throw new DomainError(code)`。持つのは`code`だけで、`code`は`docs/api.md`6章の一覧の型で縛る(一覧に無い値は型チェックで落ちる)
@@ -94,14 +94,14 @@
     - ④は済み(2026-10-24)。`config.ts`(N1〜N8)、`helmet`(H21・H22)、ログインの回数の制限(H23〜H25)
     - ④のJSONの大きさの上限は、Expressの既定と同じ100kbをはっきり書く(L1)。回数の制限は接続元を`req.ip`で見分け、今は`trust proxy`を設定しない。本番の置き方が決まったら見直す(L2)。版は`helmet` 8.3.0・`express-rate-limit` 8.7.1(C6)
     - 環境変数は`src/config.ts`の`loadConfig(env)`でZodで1回だけ検証し、足りなければ起動のときに止める(K3を変更)。④の最初にやる(G1)。`server.ts`で読み、`buildDeps(config)`・`createApp(deps, config)`に引数で渡す。`lib/jwt.ts`は0.8で作り直すので、今は`config.ts`から読むだけ(G2)。必須にするのは今の既定値が無いものだけで、`PORT`・`FRONTEND_URL`は今の既定値を残す(G3)
-- [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)
+- [ ] APIを`docs/api.md`の新しいURLと形に1本ずつ移す(画面も同じ変更で移し、古いURLは残さない)。タブレット以外は済んだ(PR #13・#14・#15。2026-10-28)
   - 順番は 登録・ログイン(6本) → 本人(`/api/me`) → カタログ(`/api/item-types`・`/api/categories`)。タブレットの3本は今は移さず、0.8で作り直すときに新しい形で作る(0.8で端末の登録・PIN・サーバーのセッションに変わり、今移すと2回直すため)。PRはまとまりごとに1つ(2026-10-25 M1-A・M2-A)
   - 登録・ログインの6本(2026-10-25 A1〜A4): リクエストの項目名は`password`・`token`にする(A1)。認証コードの`purpose`は今は`"signup"`だけ受け付け、パスワードの再設定は0.8で足す(A2)。ログアウト(`DELETE /api/sessions/current`)ではDBのリフレッシュトークンも消す(A3。ずれ8・R-15)。6本のリクエストと応答は`shared/src/auth.ts`にZodで書き、backの検証とfrontの型の両方に使う。`back/src/features/auth/auth.schema.ts`は消す(A4。C7)
   - ログインでは、パスワードの長さを確かめず、空でないことだけを確かめる。長さ(8文字以上)は登録のときだけ。短く打ち間違えた人だけ「入力内容が正しくありません」になり、文言が分かれていたため(2026-10-25 B1-A)
   - 本人(2026-10-25 Me1〜Me4): `GET /api/items/me`を`GET /api/me`(プロフィールと貸し出しの決まり)と`GET /api/me/rentals`(借りている物)に分ける。カードの番号は、0.8で使い捨てのバーコード(`POST /api/me/tablet-codes`)ができるまで`Me.cardNumber`として返し、そのときに外す(Me1。今もダッシュボードのバーコードに使っているため)。画面の`AuthContext`は`Me`だけを持ち、借りている物はダッシュボードがその都度取る(Me2。貸し出すたびに変わるため)。`Rental.itemType`にジャンル`genre: { id, name }`を足す(Me3。ダッシュボードが出している)。返し終わった物の履歴(`?state=all`)は、履歴の画面を作るときに足す(Me4)
   - カタログ(2026-10-28 Ca1〜Ca4): `GET /api/items`を`GET /api/categories`・`GET /api/item-types`・`GET /api/item-types/{id}`にする(ログイン必須。Q11)。詳細の画面のURLは種類の名前ではなくID(`/items/[id]`)にする(Ca1)。どこからもリンクされていない物品の一覧の画面(`/items`)は消す。物品1つ1つの一覧は在庫管理(5)で作る(Ca2)。検索・ジャンル・カテゴリの絞り込みは今は画面でし、種類が増えたら`?categoryId=&genreId=&q=`を足す(Ca3)。全数と詳細の物品の一覧には廃棄済み(`DISPOSED`)を入れない。修理中・紛失は入れて状態で見せる(Ca4)
   - 詳細の物品の一覧に、バーコードは入れない。画面にバーコードがあると、実物を持たずにタブレットで読めてしまい、棚にある物が「貸出中」と記録されるおそれがあるため。バーコードは実物に貼った物だけから読む(2026-10-28 Ca5-B、開発者の指摘)
-- [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**
+- [ ] **中の型をそろえる(各APIを移すときに、触る機能から順に。2026-10-24決定 T1〜T7)**。本人・カタログ(移したとき)、認証(2026-10-28 R8、PR #17)は済んだ。貸し出し(`rentals`)は0.8のe
   - 中の型は機能ごとの`<機能>.types.ts`に置く(APIの型は`shared/`へ移るので、ここは中だけになる)(T1)
   - repositoryの約束はインターフェース(`UserStore`など)で、記録の型(`UserRecord`など)も名前で書く。repositoryは`implements`し、テストの偽物も同じインターフェースを満たす。`Pick<…>`や`NonNullable<Awaited<ReturnType<…>>>`の推論はやめる(T2)
   - Prismaの型を使ってよいのはrepositoryの中だけ。serviceが見るのは名前の付いた記録の型だけ(T3)
