@@ -27,7 +27,7 @@
 
 | ファイル | 役目 |
 |---|---|
-| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → 返す」を書く(新しい形のAPIは`shared/`の形で包まずに、まだのAPIは`sendSuccess`で)。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
+| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → 返す」を書く(どのAPIも`shared/`の形で包まずに返す)。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
 | `*.service.ts` | 決まりごと(期限・重複・状態)。断るときは`DomainError(code)`を投げる。HTTPのステータスと文言は持たない |
 | `*.repository.ts` | Prismaでの読み書き。複数のテーブルにまたがる書き込みは`$transaction` |
 | `*.schema.ts` | Zodのスキーマ |
@@ -37,7 +37,7 @@
 
 画面と共通の形は`shared/`(`@sinsakai/shared`): `error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`problem.ts`(失敗の応答の形`problemSchema`)。
 
-共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`response-handler.ts`(成功は`{ success: true, ...data }`)、`session-token.ts`(推測できない番号とそのハッシュ)、`rate-limit.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
+共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`session-token.ts`(推測できない番号とそのハッシュ)、`rate-limit.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
 
 `user/`だけは`UserRepository.ts`・`UserService.ts`という古い名前で、routeを持たず`auth`から使われる。
 
@@ -45,7 +45,7 @@
 
 すべて`/api`の下。
 
-登録・ログインの6本・本人の2本・カタログの3本は`docs/api.md`の新しい形(包まない。形は`shared/src/auth.ts`・`me.ts`・`catalog.ts`。2026-10-25〜28)。タブレットの3本はまだ今の形(`{ success: true, ...data }`)で、0.8で作り直す。
+どのAPIも`docs/api.md`の新しい形(包まない。形は`shared/src/`の`auth.ts`・`me.ts`・`catalog.ts`・`tablet-devices.ts`・`tablet.ts`。2026-10-25〜29)。
 
 | メソッドとパス | 認証 | 内容 | 返すもの |
 |---|---|---|---|
@@ -66,8 +66,8 @@
 | `GET /tablet/device` | 端末 | この端末が登録されているか | 200 `{ id, name }` |
 | `POST /tablet/sessions` | 端末 | `{ cardNumber, pin }`。カードとPINで本人確認し、その端末でだけ使える3分のセッションを作る(判断表T。5回間違えるとロック) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }` |
 | `DELETE /tablet/sessions/current` | 端末 + タブレットのセッション | 「終わる」・完了の10秒・無操作でセッションを消す | 204 |
-| `POST /tablet/checkout` | 端末 + タブレットのセッション | `{ barcode }`。貸し出す | `success`, `message`, `data: Rental` |
-| `POST /tablet/return` | 端末 + タブレットのセッション | `{ barcode }`。返却する | `success`, `message`, `data: Rental` |
+| `POST /tablet/rentals` | 端末 + タブレットのセッション | `{ barcode }`。判断表C(物品の状態・止められている・停止期間・延滞・上限)で判断して貸し出す。借りた端末を記録する | 201 `Rental` |
+| `POST /tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }`。返却する(本人でなくてよい)。返した端末を記録する | 201 `Rental`(返却日時入り) |
 
 登録・ログインの`user`は`SessionUser`(`id, name, studentId, userType, role`)。学年・専攻・カードの番号は`/me`で取る(カードの番号は0.8で使い捨てのバーコードに替えるまで。Me1)。
 
@@ -80,7 +80,7 @@
 | Webのセッション | 作ってから7日(延ばさない。A8-6) | `newToken()`(32バイトの乱数) | HttpOnly・`SameSite=Strict`のCookie`session`。DBの`session`には`hashToken()`(SHA-256)だけ | ログインが要るAPIすべて |
 | 登録用トークン | 15分・1回だけ | `newToken()` | 画面のメモリ。DBの`verification_codes.token_hash`にハッシュ | `/users` |
 | タブレットの端末の番号 | 400日(使うたびに付け直す。D3) | `newToken()` | HttpOnly・`SameSite=Strict`のCookie`device`。DBの`tablet_device`には`hashToken()`だけ | `/tablet/*`すべて |
-| タブレットのセッション | 作ってから3分・無操作30秒(R-A9) | `newToken()` | 画面のメモリ →`Authorization: Bearer`。DBの`session`(種類`TABLET`、作った端末・最後に使った日時)には`hashToken()`だけ | `/tablet/checkout`・`return` |
+| タブレットのセッション | 作ってから3分・無操作30秒(R-A9) | `newToken()` | 画面のメモリ →`Authorization: Bearer`。DBの`session`(種類`TABLET`、作った端末・最後に使った日時)には`hashToken()`だけ | `/tablet/rentals` |
 
 - `createAuthMiddleware`がCookieの番号をハッシュにしてDBで探し、`checkSession`(期限・種類が`WEB`か・`is_active`)で確かめてから`req.user`に入れる。毎回DBを見るので、ログアウト・取り消し・無効にした人は次のリクエストから止まる。名簿はログインのときだけ見る(A8-10)
 - 1人が何件でもセッションを持てる(端末ごと。Q9)。ログアウトはそのセッションだけを消す
@@ -116,7 +116,7 @@ TabletDevice *─1 User(登録した管理者)
 | `category` / `genre` | 分類(例: 機材 > ノートパソコン) |
 | `item_type` | 物品の種類。書籍の項目(著者・出版社・ISBN)と機材の項目(メーカー・型番)を両方持つ。`rentalPeriodDays` |
 | `item` | 物品1つ。`barcode`(必須・一意)・`location`・`status`(物そのものの状態) |
-| `rental` | 貸し出しの記録。`rentedAt`・`dueDate`・`returnedAt`。状態の列は持たない |
+| `rental` | 貸し出しの記録。`rentedAt`・`dueDate`・`returnedAt`・借りた端末・返した端末。状態の列は持たない |
 | `notification` | 通知の予定(Slack用)。未使用 |
 
 **名簿は本番では学校のDBかAPIになる前提**(2026-10-23決定)。今の`external_user`表と、`user.student_id`の外部キー・JOINは仮の形で、名簿の窓口(`Roster`)に置き換える予定(`docs/backlog.md`の0.6)。新しく名簿を読むコードを書くときは、`externalUser`のJOINを増やさない。
@@ -139,4 +139,4 @@ TabletDevice *─1 User(登録した管理者)
 | `/items/[id]` | 種類の詳細(物品1つ1つの置き場所と状態) | `useItemType` |
 | `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → PIN → 操作の選択(名前と借りている物の名前・期限・延滞) → バーコード → 完了。無操作30秒・完了10秒・「終わる」で最初に戻る | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`TabletContext`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
 | `/admin/tablets` | 管理者だけ。タブレットの端末の一覧と取り消し | `useAdminTabletDevices` |
-| `/barcodes` | テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き) | `react-barcode` |
+| `/barcodes` | 開発のときだけ。テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き。`page.dev.tsx`で、本番のビルドには入らない) | `react-barcode` |

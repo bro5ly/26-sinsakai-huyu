@@ -115,7 +115,7 @@ docker compose exec api npm run db:seed             # テスト用のデータ�
 |---|---|
 | Webサイト | http://localhost:4545 |
 | タブレットの画面 | http://localhost:4545/tablet |
-| テスト用のバーコードの印刷 | http://localhost:4545/barcodes |
+| テスト用のバーコードの印刷(開発のときだけ) | http://localhost:4545/barcodes |
 | API | http://localhost:5454 |
 | DBを見る(Prisma Studio) | http://localhost:5555 |
 
