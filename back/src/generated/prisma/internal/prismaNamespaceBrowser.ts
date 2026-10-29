@@ -92,6 +92,9 @@ export const UserScalarFieldEnum = {
   suspendedUntil: 'suspendedUntil',
   suspensionReason: 'suspensionReason',
   isActive: 'isActive',
+  pinHash: 'pinHash',
+  pinFailedAttempts: 'pinFailedAttempts',
+  pinLockedAt: 'pinLockedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

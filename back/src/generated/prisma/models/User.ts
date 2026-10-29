@@ -28,10 +28,12 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   maxItems: number | null
+  pinFailedAttempts: number | null
 }
 
 export type UserSumAggregateOutputType = {
   maxItems: number | null
+  pinFailedAttempts: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -46,6 +48,9 @@ export type UserMinAggregateOutputType = {
   suspendedUntil: Date | null
   suspensionReason: string | null
   isActive: boolean | null
+  pinHash: string | null
+  pinFailedAttempts: number | null
+  pinLockedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +67,9 @@ export type UserMaxAggregateOutputType = {
   suspendedUntil: Date | null
   suspensionReason: string | null
   isActive: boolean | null
+  pinHash: string | null
+  pinFailedAttempts: number | null
+  pinLockedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -78,6 +86,9 @@ export type UserCountAggregateOutputType = {
   suspendedUntil: number
   suspensionReason: number
   isActive: number
+  pinHash: number
+  pinFailedAttempts: number
+  pinLockedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -86,10 +97,12 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   maxItems?: true
+  pinFailedAttempts?: true
 }
 
 export type UserSumAggregateInputType = {
   maxItems?: true
+  pinFailedAttempts?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -104,6 +117,9 @@ export type UserMinAggregateInputType = {
   suspendedUntil?: true
   suspensionReason?: true
   isActive?: true
+  pinHash?: true
+  pinFailedAttempts?: true
+  pinLockedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -120,6 +136,9 @@ export type UserMaxAggregateInputType = {
   suspendedUntil?: true
   suspensionReason?: true
   isActive?: true
+  pinHash?: true
+  pinFailedAttempts?: true
+  pinLockedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -136,6 +155,9 @@ export type UserCountAggregateInputType = {
   suspendedUntil?: true
   suspensionReason?: true
   isActive?: true
+  pinHash?: true
+  pinFailedAttempts?: true
+  pinLockedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -239,6 +261,9 @@ export type UserGroupByOutputType = {
   suspendedUntil: Date | null
   suspensionReason: string | null
   isActive: boolean
+  pinHash: string | null
+  pinFailedAttempts: number
+  pinLockedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -278,6 +303,9 @@ export type UserWhereInput = {
   suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  pinHash?: Prisma.StringNullableFilter<"User"> | string | null
+  pinFailedAttempts?: Prisma.IntFilter<"User"> | number
+  pinLockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   rentals?: Prisma.RentalListRelationFilter
@@ -297,6 +325,9 @@ export type UserOrderByWithRelationInput = {
   suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  pinHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   rentals?: Prisma.RentalOrderByRelationAggregateInput
@@ -319,6 +350,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   suspensionReason?: Prisma.StringNullableFilter<"User"> | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  pinHash?: Prisma.StringNullableFilter<"User"> | string | null
+  pinFailedAttempts?: Prisma.IntFilter<"User"> | number
+  pinLockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   rentals?: Prisma.RentalListRelationFilter
@@ -338,6 +372,9 @@ export type UserOrderByWithAggregationInput = {
   suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   suspensionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  pinHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -362,6 +399,9 @@ export type UserScalarWhereWithAggregatesInput = {
   suspendedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   suspensionReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  pinHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  pinFailedAttempts?: Prisma.IntWithAggregatesFilter<"User"> | number
+  pinLockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -378,6 +418,9 @@ export type UserCreateInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
@@ -397,6 +440,9 @@ export type UserUncheckedCreateInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
@@ -416,6 +462,9 @@ export type UserUpdateInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
@@ -435,6 +484,9 @@ export type UserUncheckedUpdateInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
@@ -454,6 +506,9 @@ export type UserCreateManyInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -470,6 +525,9 @@ export type UserUpdateManyMutationInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -486,6 +544,9 @@ export type UserUncheckedUpdateManyInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -502,12 +563,16 @@ export type UserCountOrderByAggregateInput = {
   suspendedUntil?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  pinHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
   maxItems?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -522,6 +587,9 @@ export type UserMaxOrderByAggregateInput = {
   suspendedUntil?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  pinHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -538,12 +606,16 @@ export type UserMinOrderByAggregateInput = {
   suspendedUntil?: Prisma.SortOrder
   suspensionReason?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  pinHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
   maxItems?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -637,6 +709,9 @@ export type UserCreateWithoutSessionsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
@@ -655,6 +730,9 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
@@ -689,6 +767,9 @@ export type UserUpdateWithoutSessionsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
@@ -707,6 +788,9 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
@@ -725,6 +809,9 @@ export type UserCreateWithoutRentalsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
@@ -743,6 +830,9 @@ export type UserUncheckedCreateWithoutRentalsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -777,6 +867,9 @@ export type UserUpdateWithoutRentalsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
@@ -795,6 +888,9 @@ export type UserUncheckedUpdateWithoutRentalsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -813,6 +909,9 @@ export type UserCreateWithoutNotificationsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalCreateNestedManyWithoutUserInput
@@ -831,6 +930,9 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   suspendedUntil?: Date | string | null
   suspensionReason?: string | null
   isActive?: boolean
+  pinHash?: string | null
+  pinFailedAttempts?: number
+  pinLockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   rentals?: Prisma.RentalUncheckedCreateNestedManyWithoutUserInput
@@ -865,6 +967,9 @@ export type UserUpdateWithoutNotificationsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUpdateManyWithoutUserNestedInput
@@ -883,6 +988,9 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   suspensionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pinHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rentals?: Prisma.RentalUncheckedUpdateManyWithoutUserNestedInput
@@ -950,6 +1058,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   suspendedUntil?: boolean
   suspensionReason?: boolean
   isActive?: boolean
+  pinHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
@@ -970,6 +1081,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   suspendedUntil?: boolean
   suspensionReason?: boolean
   isActive?: boolean
+  pinHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -986,6 +1100,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   suspendedUntil?: boolean
   suspensionReason?: boolean
   isActive?: boolean
+  pinHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1002,11 +1119,14 @@ export type UserSelectScalar = {
   suspendedUntil?: boolean
   suspensionReason?: boolean
   isActive?: boolean
+  pinHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "passwordHash" | "role" | "slackUserId" | "slackTeamId" | "canBorrow" | "maxItems" | "suspendedUntil" | "suspensionReason" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "passwordHash" | "role" | "slackUserId" | "slackTeamId" | "canBorrow" | "maxItems" | "suspendedUntil" | "suspensionReason" | "isActive" | "pinHash" | "pinFailedAttempts" | "pinLockedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rentals?: boolean | Prisma.User$rentalsArgs<ExtArgs>
   notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
@@ -1035,6 +1155,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     suspendedUntil: Date | null
     suspensionReason: string | null
     isActive: boolean
+    pinHash: string | null
+    pinFailedAttempts: number
+    pinLockedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1474,6 +1597,9 @@ export interface UserFieldRefs {
   readonly suspendedUntil: Prisma.FieldRef<"User", 'DateTime'>
   readonly suspensionReason: Prisma.FieldRef<"User", 'String'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly pinHash: Prisma.FieldRef<"User", 'String'>
+  readonly pinFailedAttempts: Prisma.FieldRef<"User", 'Int'>
+  readonly pinLockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
