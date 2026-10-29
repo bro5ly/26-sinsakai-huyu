@@ -5,65 +5,65 @@ import { route } from "./route.js";
 
 // route() はExpressを通さずに、受け取ったreq・resで直接呼ぶ。HTTPを通した形は app.test.ts が見る
 const call = async (handler: ReturnType<typeof route>, req: Partial<Request>) => {
-    await handler(req as Request, {} as Response, () => undefined);
+  await handler(req as Request, {} as Response, () => undefined);
 };
 const body = z.object({ barcode: z.string().min(1) });
 
 describe("route(入力を検証してから渡す)", () => {
-    describe("正常系", () => {
-        it("U1 bodyのスキーマに合えば、検証した値を渡す(余分な項目は落とす)", async () => {
-            let received: unknown;
-            const handler = route({ body }, async (ctx) => {
-                received = ctx.body;
-            });
+  describe("正常系", () => {
+    it("U1 bodyのスキーマに合えば、検証した値を渡す(余分な項目は落とす)", async () => {
+      let received: unknown;
+      const handler = route({ body }, async (ctx) => {
+        received = ctx.body;
+      });
 
-            await call(handler, { body: { barcode: "MAC-002", extra: "x" } });
+      await call(handler, { body: { barcode: "MAC-002", extra: "x" } });
 
-            expect(received).toEqual({ barcode: "MAC-002" });
-        });
-
-        it("U2 auth: true なら、ミドルウェアが入れたログイン中の利用者を渡す(R6)", async () => {
-            let received: unknown;
-            const handler = route({ auth: true }, async (ctx) => {
-                received = ctx.user;
-            });
-
-            await call(handler, { user: { id: "user-1", role: "MEMBER" } });
-
-            expect(received).toEqual({ id: "user-1", role: "MEMBER" });
-        });
-
-        it("U3 bodyのスキーマが無ければ、bodyを見ずにそのまま呼ぶ", async () => {
-            let called = false;
-            const handler = route({}, async () => {
-                called = true;
-            });
-
-            await call(handler, { body: undefined });
-
-            expect(called).toBe(true);
-        });
+      expect(received).toEqual({ barcode: "MAC-002" });
     });
 
-    describe("異常系", () => {
-        it("U4 bodyがスキーマに合わなければ、ZodErrorを投げて中身を呼ばない(エラー用のミドルウェアが400 VALIDATION_ERRORにする)", async () => {
-            let called = false;
-            const handler = route({ body }, async () => {
-                called = true;
-            });
+    it("U2 auth: true なら、ミドルウェアが入れたログイン中の利用者を渡す(R6)", async () => {
+      let received: unknown;
+      const handler = route({ auth: true }, async (ctx) => {
+        received = ctx.user;
+      });
 
-            await expect(call(handler, { body: { barcode: "" } })).rejects.toBeInstanceOf(z.ZodError);
-            expect(called).toBe(false);
-        });
+      await call(handler, { user: { id: "user-1", role: "MEMBER" } });
 
-        it("U5 auth: true でログイン中の利用者がいなければ、UNAUTHENTICATEDで断り中身を呼ばない(R6)", async () => {
-            let called = false;
-            const handler = route({ auth: true }, async () => {
-                called = true;
-            });
-
-            await expect(call(handler, {})).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
-            expect(called).toBe(false);
-        });
+      expect(received).toEqual({ id: "user-1", role: "MEMBER" });
     });
+
+    it("U3 bodyのスキーマが無ければ、bodyを見ずにそのまま呼ぶ", async () => {
+      let called = false;
+      const handler = route({}, async () => {
+        called = true;
+      });
+
+      await call(handler, { body: undefined });
+
+      expect(called).toBe(true);
+    });
+  });
+
+  describe("異常系", () => {
+    it("U4 bodyがスキーマに合わなければ、ZodErrorを投げて中身を呼ばない(エラー用のミドルウェアが400 VALIDATION_ERRORにする)", async () => {
+      let called = false;
+      const handler = route({ body }, async () => {
+        called = true;
+      });
+
+      await expect(call(handler, { body: { barcode: "" } })).rejects.toBeInstanceOf(z.ZodError);
+      expect(called).toBe(false);
+    });
+
+    it("U5 auth: true でログイン中の利用者がいなければ、UNAUTHENTICATEDで断り中身を呼ばない(R6)", async () => {
+      let called = false;
+      const handler = route({ auth: true }, async () => {
+        called = true;
+      });
+
+      await expect(call(handler, {})).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
+      expect(called).toBe(false);
+    });
+  });
 });

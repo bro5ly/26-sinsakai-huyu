@@ -3,8 +3,7 @@ import type { Category, ItemTypeDetail, ItemTypeSummary } from "@sinsakai/shared
 import { catalogService } from "@/services";
 import { ApiError } from "@/types";
 
-const messageOf = (err: unknown) =>
-  err instanceof ApiError ? err.message : "読み込みに失敗しました";
+const messageOf = (err: unknown) => (err instanceof ApiError ? err.message : "読み込みに失敗しました");
 
 // 種類の一覧と、絞り込みの選択肢(カテゴリとジャンル)を取る。enabled はログインを確かめ終えたか
 export const useCatalog = (enabled: boolean) => {
@@ -15,10 +14,7 @@ export const useCatalog = (enabled: boolean) => {
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    Promise.all([
-      catalogService.getItemTypes(),
-      catalogService.getCategories(),
-    ])
+    Promise.all([catalogService.getItemTypes(), catalogService.getCategories()])
       .then(([types, cats]) => {
         if (cancelled) return;
         setItemTypes(types.items);
@@ -40,7 +36,7 @@ export const useFilteredItemTypes = (
   itemTypes: ItemTypeSummary[] | null,
   searchQuery: string,
   genreFilter: string,
-  categoryFilter: string
+  categoryFilter: string,
 ) =>
   useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -48,7 +44,7 @@ export const useFilteredItemTypes = (
       (type) =>
         (q === "" || type.title.toLowerCase().includes(q)) &&
         (genreFilter === "ALL" || type.genre.name === genreFilter) &&
-        (categoryFilter === "ALL" || type.category.name === categoryFilter)
+        (categoryFilter === "ALL" || type.category.name === categoryFilter),
     );
   }, [itemTypes, searchQuery, genreFilter, categoryFilter]);
 

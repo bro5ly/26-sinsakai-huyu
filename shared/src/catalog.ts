@@ -14,26 +14,26 @@ export const itemStateSchema = z.enum(["AVAILABLE", "RENTED", "MAINTENANCE", "LO
 
 // GET /api/item-types → 200 { items: ItemTypeSummary[] }。種類ごと。全数に廃棄済みは入れない(2026-10-28 Ca4)
 export const itemTypeSummarySchema = z.object({
-    id: z.string(),
-    title: z.string(),
-    genre: namedSchema,
-    category: namedSchema,
-    imageUrl: z.string().nullable(),
-    rentalPeriodDays: z.number().int(),
-    availableCount: z.number().int(),
-    totalCount: z.number().int(),
+  id: z.string(),
+  title: z.string(),
+  genre: namedSchema,
+  category: namedSchema,
+  imageUrl: z.string().nullable(),
+  rentalPeriodDays: z.number().int(),
+  availableCount: z.number().int(),
+  totalCount: z.number().int(),
 });
 export const itemTypesSchema = z.object({ items: z.array(itemTypeSummarySchema) });
 
 // GET /api/item-types/{id} → 200 ItemTypeDetail。物品1つ1つの状態付き。廃棄済みの物品は入れない(Ca4)
 export const itemTypeDetailSchema = itemTypeSummarySchema.extend({
-    description: z.string().nullable(),
-    author: z.string().nullable(),
-    publisher: z.string().nullable(),
-    isbn: z.string().nullable(),
-    manufacturer: z.string().nullable(),
-    model: z.string().nullable(),
-    items: z.array(z.object({ id: z.string(), location: z.string().nullable(), state: itemStateSchema })),
+  description: z.string().nullable(),
+  author: z.string().nullable(),
+  publisher: z.string().nullable(),
+  isbn: z.string().nullable(),
+  manufacturer: z.string().nullable(),
+  model: z.string().nullable(),
+  items: z.array(z.object({ id: z.string(), location: z.string().nullable(), state: itemStateSchema })),
 });
 
 export type Category = z.infer<typeof categorySchema>;

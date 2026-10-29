@@ -7,21 +7,33 @@ import { CatalogService } from "./catalog.service.js";
 
 // カタログ(docs/api.md 4.3)。ログイン必須(docs/spec.md Q11)。資源ごとのURL(/categories・/item-types)を直下に持つ
 export const createCatalogRoutes = (deps: Deps) => {
-    const router = Router();
-    const catalog = new CatalogService(deps.catalog);
-    const authMiddleware = createAuthMiddleware(deps.sessions);
+  const router = Router();
+  const catalog = new CatalogService(deps.catalog);
+  const authMiddleware = createAuthMiddleware(deps.sessions);
 
-    router.get("/categories", authMiddleware, route({ auth: true }, async ({ res }) => {
-        return res.status(200).json({ items: await catalog.listCategories() } satisfies Categories);
-    }));
+  router.get(
+    "/categories",
+    authMiddleware,
+    route({ auth: true }, async ({ res }) => {
+      return res.status(200).json({ items: await catalog.listCategories() } satisfies Categories);
+    }),
+  );
 
-    router.get("/item-types", authMiddleware, route({ auth: true }, async ({ res }) => {
-        return res.status(200).json({ items: await catalog.listItemTypes() } satisfies ItemTypes);
-    }));
+  router.get(
+    "/item-types",
+    authMiddleware,
+    route({ auth: true }, async ({ res }) => {
+      return res.status(200).json({ items: await catalog.listItemTypes() } satisfies ItemTypes);
+    }),
+  );
 
-    router.get("/item-types/:id", authMiddleware, route({ auth: true }, async ({ req, res }) => {
-        return res.status(200).json((await catalog.getItemType(String(req.params.id))) satisfies ItemTypeDetail);
-    }));
+  router.get(
+    "/item-types/:id",
+    authMiddleware,
+    route({ auth: true }, async ({ req, res }) => {
+      return res.status(200).json((await catalog.getItemType(String(req.params.id))) satisfies ItemTypeDetail);
+    }),
+  );
 
-    return router;
+  return router;
 };

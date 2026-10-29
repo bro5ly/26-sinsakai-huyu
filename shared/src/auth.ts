@@ -4,9 +4,9 @@ import { z } from "zod";
 
 // 学籍番号は数字だけ。カードの番号(英字を含む)と取り違えないため
 export const studentIdSchema = z
-    .string()
-    .min(1, "学籍番号を入力してください")
-    .regex(/^\d+$/, "数字のみで入力してください");
+  .string()
+  .min(1, "学籍番号を入力してください")
+  .regex(/^\d+$/, "数字のみで入力してください");
 
 const passwordSchema = z.string().min(8, "パスワードは8文字以上必要です");
 
@@ -15,47 +15,47 @@ const purposeSchema = z.literal("signup");
 
 // POST /api/verification-codes → 202(本文なし。名簿にいてもいなくても同じ)
 export const verificationCodeRequestSchema = z.object({
-    studentId: studentIdSchema,
-    purpose: purposeSchema,
+  studentId: studentIdSchema,
+  purpose: purposeSchema,
 });
 
 // POST /api/verification-tokens → 201 VerificationToken
 export const verificationTokenRequestSchema = z.object({
-    studentId: studentIdSchema,
-    purpose: purposeSchema,
-    code: z.string().length(6, "認証コードは6桁で入力してください").regex(/^\d+$/, "数字のみで入力してください"),
+  studentId: studentIdSchema,
+  purpose: purposeSchema,
+  code: z.string().length(6, "認証コードは6桁で入力してください").regex(/^\d+$/, "数字のみで入力してください"),
 });
 export const verificationTokenSchema = z.object({
-    token: z.string(),
-    expiresAt: z.iso.datetime(),
+  token: z.string(),
+  expiresAt: z.iso.datetime(),
 });
 
 // POST /api/users → 201 Session
 export const createUserRequestSchema = z.object({
-    token: z.string().min(1, "手続きの期限が切れました。最初からやり直してください"),
-    password: passwordSchema,
+  token: z.string().min(1, "手続きの期限が切れました。最初からやり直してください"),
+  password: passwordSchema,
 });
 
 // POST /api/sessions → 201 Session
 // パスワードの長さは登録のときだけ確かめる。ログインで確かめると、短く打ち間違えた人だけ
 // 「入力内容が正しくありません」になり、ほかの間違いと文言が分かれるため(2026-10-25 B1-A)
 export const createSessionRequestSchema = z.object({
-    studentId: studentIdSchema,
-    password: z.string().min(1, "パスワードを入力してください"),
+  studentId: studentIdSchema,
+  password: z.string().min(1, "パスワードを入力してください"),
 });
 
 // ログイン中の利用者。学年・専攻・カードの番号は入れない(本人の情報は /api/me で取る)
 export const sessionUserSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    studentId: z.string(),
-    userType: z.enum(["STUDENT", "FACULTY", "EXTERNAL"]),
-    role: z.enum(["MEMBER", "ADMIN"]),
+  id: z.string(),
+  name: z.string(),
+  studentId: z.string(),
+  userType: z.enum(["STUDENT", "FACULTY", "EXTERNAL"]),
+  role: z.enum(["MEMBER", "ADMIN"]),
 });
 
 // POST /api/users・POST /api/sessions(201)。セッションの番号は本文に入れず、HttpOnly Cookieにだけ入れる(JSに渡さない。A8-3)
 export const sessionSchema = z.object({
-    user: sessionUserSchema,
+  user: sessionUserSchema,
 });
 
 export type VerificationCodeRequest = z.infer<typeof verificationCodeRequestSchema>;

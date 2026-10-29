@@ -10,10 +10,7 @@ export class ApiService {
     this.baseUrl = baseUrl;
   }
 
-  protected async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  protected async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     // Webのセッションの番号はHttpOnlyのCookieにあるので、どの呼び出しにもCookieを付ける(A8-3)。
     // 書き換えのリクエストにはブラウザがOriginを付け、サーバーはそれを確かめる(A8-7)
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -38,7 +35,7 @@ export class ApiService {
       throw new ApiError(
         problem.success ? problem.data.detail : data.message || "リクエストに失敗しました",
         response.status,
-        problem.success ? problem.data.code : undefined
+        problem.success ? problem.data.code : undefined,
       );
     }
 
@@ -62,11 +59,7 @@ export class ApiService {
     return this.request<T>(endpoint, { method: "DELETE", headers: ApiService.authorization(options.bearer) });
   }
 
-  public async post<T>(
-    endpoint: string,
-    body?: unknown,
-    options: { bearer?: string } = {}
-  ): Promise<T> {
+  public async post<T>(endpoint: string, body?: unknown, options: { bearer?: string } = {}): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,

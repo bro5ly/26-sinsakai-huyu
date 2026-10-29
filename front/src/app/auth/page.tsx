@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AuthLayout,
-  LoginForm,
-  SignupRequestForm,
-  SignupVerifyForm,
-  SignupPasswordForm,
-} from "@/components";
+import { AuthLayout, LoginForm, SignupRequestForm, SignupVerifyForm, SignupPasswordForm } from "@/components";
 import { useAuthForm } from "@/hooks/useAuthForm";
 
 export default function AuthPage() {
@@ -53,12 +47,7 @@ export default function AuthPage() {
       )}
 
       {mode === "signup-verify" && (
-        <SignupVerifyForm
-          code={code}
-          loading={loading}
-          onCodeChange={setCode}
-          onSubmit={handleVerifyCode}
-        />
+        <SignupVerifyForm code={code} loading={loading} onCodeChange={setCode} onSubmit={handleVerifyCode} />
       )}
 
       {mode === "signup-password" && (

@@ -12,7 +12,7 @@ export const hashToken = (token: string): string => createHash("sha256").update(
 
 // hashToken()どうしを比べる。比べ終わるまでの時間で、どこまで合っていたかを知られないようにする(docs/auth.md 4.6)
 export const sameHash = (a: string, b: string): boolean => {
-    const left = Buffer.from(a, "hex");
-    const right = Buffer.from(b, "hex");
-    return left.length === right.length && timingSafeEqual(left, right);
+  const left = Buffer.from(a, "hex");
+  const right = Buffer.from(b, "hex");
+  return left.length === right.length && timingSafeEqual(left, right);
 };

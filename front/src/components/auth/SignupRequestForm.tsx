@@ -32,12 +32,7 @@ export const SignupRequestForm = ({
         isRequired
       />
 
-      <Button
-        type="submit"
-        color="primary"
-        className="w-full font-bold"
-        isLoading={loading}
-      >
+      <Button type="submit" color="primary" className="w-full font-bold" isLoading={loading}>
         Send Code
       </Button>
 

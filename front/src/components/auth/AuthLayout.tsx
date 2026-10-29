@@ -19,18 +19,11 @@ export const AuthLayout = ({ children, error, success }: AuthLayoutProps) => {
           <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl">
             M
           </div>
-          <h1 className="text-xl font-black tracking-tighter uppercase italic">
-            貸し出し管理
-          </h1>
-          <p className="text-[10px] font-bold text-default-400 tracking-[0.3em] uppercase mt-1">
-            Institutional Access
-          </p>
+          <h1 className="text-xl font-black tracking-tighter uppercase italic">貸し出し管理</h1>
+          <p className="text-[10px] font-bold text-default-400 tracking-[0.3em] uppercase mt-1">Institutional Access</p>
         </div>
 
-        <Card
-          className="border-none bg-white/80 backdrop-blur-xl shadow-2xl shadow-gray-200/50"
-          radius="lg"
-        >
+        <Card className="border-none bg-white/80 backdrop-blur-xl shadow-2xl shadow-gray-200/50" radius="lg">
           <CardBody className="p-8">
             {/* Status Messages */}
             {error && (

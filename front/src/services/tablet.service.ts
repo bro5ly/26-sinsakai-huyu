@@ -1,4 +1,11 @@
-import type { CreateTabletSessionRequest, CurrentTabletDevice, RegisterTabletDeviceRequest, Rental, TabletDevice, TabletSession } from "@sinsakai/shared";
+import type {
+  CreateTabletSessionRequest,
+  CurrentTabletDevice,
+  RegisterTabletDeviceRequest,
+  Rental,
+  TabletDevice,
+  TabletSession,
+} from "@sinsakai/shared";
 import { ApiService } from "./api.service";
 
 class TabletService extends ApiService {

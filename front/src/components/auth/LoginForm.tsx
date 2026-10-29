@@ -23,9 +23,7 @@ export const LoginForm = ({
     <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-1">
         <h2 className="text-lg font-bold">Sign In</h2>
-        <p className="text-xs text-default-400">
-          Enter your credentials to continue.
-        </p>
+        <p className="text-xs text-default-400">Enter your credentials to continue.</p>
       </div>
 
       <div className="space-y-4">

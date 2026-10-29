@@ -11,44 +11,53 @@ import type { TabletDeviceRecord } from "./tablet-device.types.js";
 
 // 日付は中ではDate、APIの境目でISOの文字列にする(T5)
 const toTabletDevice = (device: TabletDeviceRecord): TabletDevice => ({
-    id: device.id,
-    name: device.name,
-    createdAt: device.createdAt.toISOString(),
-    lastUsedAt: device.lastUsedAt?.toISOString() ?? null,
+  id: device.id,
+  name: device.name,
+  createdAt: device.createdAt.toISOString(),
+  lastUsedAt: device.lastUsedAt?.toISOString() ?? null,
 });
 
-export const createTabletDeviceService = (deps: Deps) =>
-    new TabletDeviceService(deps.devices, createAuthService(deps));
+export const createTabletDeviceService = (deps: Deps) => new TabletDeviceService(deps.devices, createAuthService(deps));
 
 // 置くタブレットの上での登録(UC-20)。管理者のWebのセッションは使わず、本文の学籍番号とパスワードでその場で確かめるので、
 // /api/admin(Webのセッションのある管理者だけ)の外に置く(2026-10-29 D1・D2)
 export const createTabletDeviceRoutes = (deps: Deps, config: Config) => {
-    const router = Router();
-    const devices = createTabletDeviceService(deps);
+  const router = Router();
+  const devices = createTabletDeviceService(deps);
 
-    router.post("/tablet-devices", createPasswordFailureLimiter(), route({ body: registerTabletDeviceRequestSchema }, async ({ body, res }) => {
-        const { device, token } = await devices.register(body, new Date());
-        // 番号はCookieにだけ入れ、本文には入れない
-        res.cookie(DEVICE_COOKIE, token, deviceCookieOptions(config));
-        return res.status(201).json(toTabletDevice(device) satisfies TabletDevice);
-    }));
+  router.post(
+    "/tablet-devices",
+    createPasswordFailureLimiter(),
+    route({ body: registerTabletDeviceRequestSchema }, async ({ body, res }) => {
+      const { device, token } = await devices.register(body, new Date());
+      // 番号はCookieにだけ入れ、本文には入れない
+      res.cookie(DEVICE_COOKIE, token, deviceCookieOptions(config));
+      return res.status(201).json(toTabletDevice(device) satisfies TabletDevice);
+    }),
+  );
 
-    return router;
+  return router;
 };
 
 // 管理者がWebで使う一覧と取り消し(UC-20)。/api/admin の入口で、Webのセッションと管理者かを確かめてある(D1)
 export const createAdminTabletDeviceRoutes = (deps: Deps) => {
-    const router = Router();
-    const devices = createTabletDeviceService(deps);
+  const router = Router();
+  const devices = createTabletDeviceService(deps);
 
-    router.get("/tablet-devices", route({}, async ({ res }) => {
-        return res.status(200).json({ items: (await devices.list()).map(toTabletDevice) } satisfies TabletDevices);
-    }));
+  router.get(
+    "/tablet-devices",
+    route({}, async ({ res }) => {
+      return res.status(200).json({ items: (await devices.list()).map(toTabletDevice) } satisfies TabletDevices);
+    }),
+  );
 
-    router.delete("/tablet-devices/:id", route({}, async ({ req, res }) => {
-        await devices.revoke(String(req.params.id), new Date());
-        return res.status(204).end();
-    }));
+  router.delete(
+    "/tablet-devices/:id",
+    route({}, async ({ req, res }) => {
+      await devices.revoke(String(req.params.id), new Date());
+      return res.status(204).end();
+    }),
+  );
 
-    return router;
+  return router;
 };

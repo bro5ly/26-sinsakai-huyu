@@ -9,9 +9,9 @@ export const DEVICE_COOKIE = "device";
 const DEVICE_COOKIE_MAX_AGE = 400 * 24 * 60 * 60 * 1000;
 
 export const deviceCookieOptions = (config: Config): CookieOptions => ({
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: DEVICE_COOKIE_MAX_AGE,
+  httpOnly: true,
+  secure: config.nodeEnv === "production",
+  sameSite: "strict",
+  path: "/",
+  maxAge: DEVICE_COOKIE_MAX_AGE,
 });

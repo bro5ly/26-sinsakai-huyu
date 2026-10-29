@@ -87,35 +87,22 @@ export default function TabletPage() {
           <div
             className={`w-3 h-3 rounded-full ${loading ? "bg-amber-400 animate-bounce" : "bg-green-500 animate-pulse"}`}
           />
-          <span className="text-[10px] font-black tracking-widest uppercase text-slate-500">
-            System Ready
-          </span>
+          <span className="text-[10px] font-black tracking-widest uppercase text-slate-500">System Ready</span>
         </div>
       </div>
 
       {/* --- RIGHT: Control Panel --- */}
       <div className="w-[40%] h-full bg-[#FBFBFC] p-12 flex flex-col justify-between overflow-y-auto relative">
         <header className="space-y-8">
-          <div
-            className="flex justify-between items-center"
-            onClick={resetInactivityTimer}
-          >
+          <div className="flex justify-between items-center" onClick={resetInactivityTimer}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black">
                 T
               </div>
-              <h1 className="text-xl font-black italic tracking-tighter uppercase leading-none">
-                Vantan
-              </h1>
+              <h1 className="text-xl font-black italic tracking-tighter uppercase leading-none">Vantan</h1>
             </div>
-            <Switch
-              size="sm"
-              isSelected={isManualInput}
-              onValueChange={setIsManualInput}
-            >
-              <span className="text-[9px] font-black uppercase text-slate-400">
-                Manual
-              </span>
+            <Switch size="sm" isSelected={isManualInput} onValueChange={setIsManualInput}>
+              <span className="text-[9px] font-black uppercase text-slate-400">Manual</span>
             </Switch>
           </div>
 
@@ -123,28 +110,21 @@ export default function TabletPage() {
 
           {userData && (
             <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-4 animate-appearance-in">
-              <Avatar
-                name={userData.displayName}
-                size="sm"
-                className="bg-blue-50 text-blue-600 font-black"
-              />
+              <Avatar name={userData.displayName} size="sm" className="bg-blue-50 text-blue-600 font-black" />
               <div className="flex-grow">
-                <p className="text-sm font-black text-slate-800 leading-none">
-                  {userData.displayName}
-                </p>
+                <p className="text-sm font-black text-slate-800 leading-none">{userData.displayName}</p>
                 {/* 借りている物の名前・期限・延滞だけを出す(学籍番号などはAPIが返さない。R-A13) */}
                 {userData.rentals.map((rental, i) => (
-                  <p key={i} className={`text-[10px] font-bold mt-1 ${rental.state === "OVERDUE" ? "text-danger" : "text-slate-400"}`}>
-                    {rental.title}・{new Date(rental.dueDate).toLocaleDateString("ja-JP")}まで{rental.state === "OVERDUE" ? "(延滞)" : ""}
+                  <p
+                    key={i}
+                    className={`text-[10px] font-bold mt-1 ${rental.state === "OVERDUE" ? "text-danger" : "text-slate-400"}`}
+                  >
+                    {rental.title}・{new Date(rental.dueDate).toLocaleDateString("ja-JP")}まで
+                    {rental.state === "OVERDUE" ? "(延滞)" : ""}
                   </p>
                 ))}
               </div>
-              <Chip
-                size="sm"
-                color="primary"
-                variant="flat"
-                className="font-black"
-              >
+              <Chip size="sm" color="primary" variant="flat" className="font-black">
                 {userData.rentals.length} Items
               </Chip>
             </div>
@@ -154,9 +134,7 @@ export default function TabletPage() {
         <div className="flex-grow flex flex-col justify-center py-10">
           {error && (
             <div className="mb-8 p-6 bg-red-50 border-2 border-red-100 rounded-[2.5rem] text-red-600 animate-shake">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-                Error
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">Error</p>
               <p className="text-sm font-bold">{error}</p>
             </div>
           )}
@@ -169,9 +147,7 @@ export default function TabletPage() {
                 >
                   {stepInfo.title}
                 </h2>
-                <p className="text-sm font-medium text-slate-400">
-                  {stepInfo.sub}
-                </p>
+                <p className="text-sm font-medium text-slate-400">{stepInfo.sub}</p>
               </div>
               {isManualInput && (
                 <div className="pt-4">
@@ -203,7 +179,11 @@ export default function TabletPage() {
           {step === "pin" && (
             <div className="space-y-8 animate-appearance-in">
               <div className="space-y-3">
-                <h2 className={`text-6xl font-black tracking-tighter uppercase italic leading-[0.85] ${stepInfo.color}`}>{stepInfo.title}</h2>
+                <h2
+                  className={`text-6xl font-black tracking-tighter uppercase italic leading-[0.85] ${stepInfo.color}`}
+                >
+                  {stepInfo.title}
+                </h2>
                 <p className="text-sm font-medium text-slate-400">{stepInfo.sub}</p>
               </div>
               <TabletPinInput loading={loading} onSubmit={submitPin} onCancel={handleReset} />
@@ -244,18 +224,12 @@ export default function TabletPage() {
                 <h2 className="text-6xl font-black tracking-tighter uppercase italic text-emerald-500 leading-none">
                   Success
                 </h2>
-                <p className="text-sm font-medium text-slate-500">
-                  {successMessage}
-                </p>
+                <p className="text-sm font-medium text-slate-500">{successMessage}</p>
               </div>
               {completedItem && (
                 <div className="p-8 bg-white border border-slate-100 rounded-[3rem] shadow-sm">
-                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-3">
-                    Target Item
-                  </p>
-                  <p className="font-black text-2xl text-slate-800 tracking-tight">
-                    {completedItem.title}
-                  </p>
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-3">Target Item</p>
+                  <p className="font-black text-2xl text-slate-800 tracking-tight">{completedItem.title}</p>
                 </div>
               )}
               <div className="grid grid-cols-1 gap-4 pt-6">
