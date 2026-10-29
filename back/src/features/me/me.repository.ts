@@ -38,7 +38,7 @@ export class MeRepository implements MeStore {
     });
   }
 
-  async findActiveRentals(userId: string): Promise<ActiveRentalRecord[]> {
+  async findActiveRentalsByUserId(userId: string): Promise<ActiveRentalRecord[]> {
     const rows = await this.db.rental.findMany({
       where: { userId, returnedAt: null },
       orderBy: { rentedAt: "desc" },

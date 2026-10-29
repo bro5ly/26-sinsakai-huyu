@@ -34,7 +34,7 @@ const rental = (id: string, dueDate: Date): ActiveRentalRecord => ({
 
 const store = (overrides: Partial<MeStore> = {}): MeStore => ({
   findUser: async (userId) => (userId === user.id ? user : null),
-  findActiveRentals: async () => [],
+  findActiveRentalsByUserId: async () => [],
   findPasswordHash: async (userId) => (userId === user.id ? passwordHash : null),
   savePin: notUsed,
   ...overrides,
@@ -74,7 +74,10 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
 
     it("ME2 借りている数と、延滞があるかを数えて返す(画面で数えない。R-30)", async () => {
       const rentals = [rental("1", new Date(now.getTime() + day)), rental("2", new Date(now.getTime() - day))];
-      const service = new MeService(store({ findActiveRentals: async () => rentals }), new FakeRoster([rosterEntry()]));
+      const service = new MeService(
+        store({ findActiveRentalsByUserId: async () => rentals }),
+        new FakeRoster([rosterEntry()]),
+      );
 
       const me = await service.getMe("user-3", now);
 
@@ -90,7 +93,7 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
     });
 
     it("ME4 名簿から消えていれば、登録が残っていても断る(UNAUTHENTICATED。Q13)", async () => {
-      const service = new MeService(store({ findActiveRentals: notUsed }), new FakeRoster([]));
+      const service = new MeService(store({ findActiveRentalsByUserId: notUsed }), new FakeRoster([]));
 
       await expect(service.getMe("user-3", now)).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
     });
@@ -99,7 +102,7 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
   describe("境界値", () => {
     it("ME5 返却期限ちょうどの物は、まだ延滞にしない(期限を過ぎてから延滞。R-30)", async () => {
       const service = new MeService(
-        store({ findActiveRentals: async () => [rental("1", now)] }),
+        store({ findActiveRentalsByUserId: async () => [rental("1", now)] }),
         new FakeRoster([rosterEntry()]),
       );
 
@@ -114,7 +117,10 @@ describe("getMyRentals(本人が借りている物)", () => {
   describe("正常系", () => {
     it("MR1 借りている物を、返却期限から決めた状態(期限内はRENTING、過ぎたらOVERDUE)付きで返す(R-17・R-30)", async () => {
       const rentals = [rental("1", new Date(now.getTime() + day)), rental("2", new Date(now.getTime() - day))];
-      const service = new MeService(store({ findActiveRentals: async () => rentals }), new FakeRoster([rosterEntry()]));
+      const service = new MeService(
+        store({ findActiveRentalsByUserId: async () => rentals }),
+        new FakeRoster([rosterEntry()]),
+      );
 
       const result = await service.getMyRentals("user-3", now);
 
@@ -127,7 +133,7 @@ describe("getMyRentals(本人が借りている物)", () => {
 
   describe("異常系", () => {
     it("MR2 本人がDBにいなければ、断る(UNAUTHENTICATED)", async () => {
-      const service = new MeService(store({ findActiveRentals: notUsed }), new FakeRoster([rosterEntry()]));
+      const service = new MeService(store({ findActiveRentalsByUserId: notUsed }), new FakeRoster([rosterEntry()]));
 
       await expect(service.getMyRentals("user-x", now)).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
     });

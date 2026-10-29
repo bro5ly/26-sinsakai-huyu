@@ -13,6 +13,6 @@ export const createTabletSessionMiddleware =
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : undefined;
 
-    req.user = await sessions.authenticate(token || undefined, device.id, new Date());
+    req.user = await sessions.authenticate({ token: token || undefined, deviceId: device.id }, new Date());
     next();
   };

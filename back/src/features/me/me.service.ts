@@ -17,7 +17,7 @@ export class MeService {
     const entry = await this.roster.findByStudentId(user.studentId);
     if (!entry) throw new DomainError("UNAUTHENTICATED");
 
-    const rentals = await this.store.findActiveRentals(user.id);
+    const rentals = await this.store.findActiveRentalsByUserId(user.id);
     return {
       id: user.id,
       name: entry.name,
@@ -40,7 +40,7 @@ export class MeService {
 
   async getMyRentals(userId: string, now: Date): Promise<RentalView[]> {
     const user = await this.findUser(userId);
-    const rentals = await this.store.findActiveRentals(user.id);
+    const rentals = await this.store.findActiveRentalsByUserId(user.id);
     return rentals.map((rental) => ({ ...rental, state: rentalStatus(rental, now) }));
   }
 

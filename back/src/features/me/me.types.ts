@@ -27,7 +27,7 @@ export interface ActiveRentalRecord {
 export interface MeStore {
   findUser(userId: string): Promise<MeUserRecord | null>;
   // 返却されていない貸し出しを、借りた日の新しい順で
-  findActiveRentals(userId: string): Promise<ActiveRentalRecord[]>;
+  findActiveRentalsByUserId(userId: string): Promise<ActiveRentalRecord[]>;
   // PINを変える前に、パスワードを入れ直させて確かめる(P1)
   findPasswordHash(userId: string): Promise<string | null>;
   // PINを保存し、失敗の回数を0に戻してロックを解く(R-A7)

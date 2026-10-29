@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { registerTabletDeviceRequestSchema, type TabletDevice, type TabletDevices } from "@sinsakai/shared";
+import {
+  registerTabletDeviceRequestSchema,
+  type CurrentTabletDevice,
+  type TabletDevice,
+  type TabletDevices,
+} from "@sinsakai/shared";
 import { route } from "@/lib/route.js";
 import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
 import { createAuthService } from "@/features/auth/auth.routes.js";
@@ -58,6 +63,23 @@ export const createAdminTabletDeviceRoutes = (deps: Deps) => {
     route({}, async ({ req, res }) => {
       await devices.revoke(String(req.params.id), new Date());
       return res.status(204).end();
+    }),
+  );
+
+  return router;
+};
+
+// /api/tablet の下。タブレットの画面が開いたときに、登録された端末か(と名前)を確かめる。
+// 入口の createDeviceMiddleware が先に確かめてあり、登録されていなければ401 DEVICE_NOT_REGISTERED(routes/index.ts。D5)
+export const createCurrentTabletDeviceRoutes = (): Router => {
+  const router = Router();
+
+  router.get(
+    "/device",
+    route({}, async ({ req, res }) => {
+      const device = req.device;
+      if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない");
+      return res.status(200).json({ id: device.id, name: device.name } satisfies CurrentTabletDevice);
     }),
   );
 

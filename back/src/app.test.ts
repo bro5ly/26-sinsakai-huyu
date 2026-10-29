@@ -287,7 +287,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
               pin: { registered: true, locked: false },
             }
           : null,
-      findActiveRentals: async () => [
+      findActiveRentalsByUserId: async () => [
         {
           id: "rental-1",
           rentedAt: rental.rentedAt,
@@ -328,7 +328,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     },
     // 山田 太郎(IC-CARD-001)はPIN「8068」を登録済み。ほかの人はPIN未登録
     cardHolders: {
-      findByStudentId: async (studentId) => (studentId === "20240001" ? cardHolder : null),
+      findCardHolderByStudentId: async (studentId) => (studentId === "20240001" ? cardHolder : null),
       savePinAttempt: async (data) => {
         pinAttempts.push(data);
       },
