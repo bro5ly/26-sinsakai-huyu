@@ -17,7 +17,9 @@ const toTabletDevice = (device: TabletDeviceRecord): TabletDevice => ({
   lastUsedAt: device.lastUsedAt?.toISOString() ?? null,
 });
 
-export const createTabletDeviceService = (deps: Deps) => new TabletDeviceService(deps.devices, createAuthService(deps));
+// 別の機能(タブレットのAPIの入口)でも同じ組み立てを使う
+export const createTabletDeviceService = (deps: Deps): TabletDeviceService =>
+  new TabletDeviceService({ devices: deps.devices, credentials: createAuthService(deps), secrets: deps.secrets });
 
 // 置くタブレットの上での登録(UC-20)。管理者のWebのセッションは使わず、本文の学籍番号とパスワードでその場で確かめるので、
 // /api/admin(Webのセッションのある管理者だけ)の外に置く(2026-10-29 D1・D2)

@@ -334,7 +334,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
       },
     },
     devices: {
-      create: async ({ name, tokenHash, registeredById }) => {
+      createDevice: async ({ name, tokenHash, registeredById }) => {
         const record = {
           id: `device-new-${devices.size}`,
           name,
@@ -346,14 +346,14 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         createdDevices.push({ name, registeredById });
         return record;
       },
-      findByTokenHash: async (hash) => devices.get(hash) ?? null,
-      findById: async (id) => deviceById(id),
-      findActive: async () => [...devices.values()].filter((d) => !d.revokedAt),
-      touch: async (id, now) => {
+      findDeviceByTokenHash: async (hash) => devices.get(hash) ?? null,
+      findDeviceById: async (id) => deviceById(id),
+      findActiveDevices: async () => [...devices.values()].filter((d) => !d.revokedAt),
+      saveDeviceLastUsedAt: async (id, now) => {
         const device = deviceById(id);
         if (device) device.lastUsedAt = now;
       },
-      revoke: async (id, now) => {
+      saveDeviceRevokedAt: async (id, now) => {
         const device = deviceById(id);
         if (device) device.revokedAt = now;
       },

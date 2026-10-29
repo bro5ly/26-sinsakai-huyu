@@ -19,7 +19,7 @@ import type { Config } from "@/config.js";
 const SESSION_COOKIE_MAX_AGE = WEB_SESSION_DAYS * 24 * 60 * 60 * 1000;
 
 // 端末の登録(管理者の確かめ。D2)でも同じ組み立てを使う
-export const createAuthService = (deps: Deps) =>
+export const createAuthService = (deps: Deps): AuthService =>
   new AuthService({
     users: deps.users,
     verificationCodes: deps.verificationCodes,
