@@ -39,6 +39,7 @@ const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession
         created.push(data);
     },
     findByTokenHash: notUsed,
+    touch: notUsed,
     deleteByTokenHash: notUsed,
     ...overrides,
 });

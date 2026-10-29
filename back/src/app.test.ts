@@ -61,10 +61,10 @@ const member = { id: "user-1", role: "MEMBER" as const, isActive: true };
 const ADMIN_WEB_TOKEN = "admin-web-token-1";
 const initialSessions = (): Map<string, SessionRecord> =>
     new Map([
-        [hashToken(WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), user: member }],
-        [hashToken(EXPIRED_TOKEN), { kind: "WEB", expiresAt: new Date("2000-01-01"), user: member }],
-        [hashToken(TABLET_KIND_TOKEN), { kind: "TABLET", expiresAt: new Date("2099-01-01"), user: member }],
-        [hashToken(ADMIN_WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), user: { id: "admin-1", role: "ADMIN", isActive: true } }],
+        [hashToken(WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: null, lastUsedAt: null, user: member }],
+        [hashToken(EXPIRED_TOKEN), { kind: "WEB", expiresAt: new Date("2000-01-01"), createdAt: new Date("1999-12-25"), deviceId: null, lastUsedAt: null, user: member }],
+        [hashToken(TABLET_KIND_TOKEN), { kind: "TABLET", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: "device-1", lastUsedAt: null, user: member }],
+        [hashToken(ADMIN_WEB_TOKEN), { kind: "WEB", expiresAt: new Date("2099-01-01"), createdAt: new Date("2026-10-29"), deviceId: null, lastUsedAt: null, user: { id: "admin-1", role: "ADMIN", isActive: true } }],
     ]);
 
 // はじめからDBにあるタブレットの端末。登録されたものと、取り消したもの
@@ -99,8 +99,12 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
             findByRegistrationTokenHash: async (hash) => (hash === hashToken(REGISTRATION_TOKEN) ? { studentId: "20260001", tokenExpiresAt: new Date("2099-01-01") } : null),
         },
         sessions: {
-            create: async ({ tokenHash, userId, kind, expiresAt }) => {
-                sessions.set(tokenHash, { kind, expiresAt, user: { ...member, id: userId } });
+            create: async ({ tokenHash, userId, kind, expiresAt, deviceId }) => {
+                sessions.set(tokenHash, { kind, expiresAt, createdAt: new Date(), deviceId: deviceId ?? null, lastUsedAt: null, user: { ...member, id: userId } });
+            },
+            touch: async (hash, now) => {
+                const session = sessions.get(hash);
+                if (session) session.lastUsedAt = now;
             },
             findByTokenHash: async (hash) => sessions.get(hash) ?? null,
             deleteByTokenHash: async (hash) => {
@@ -373,7 +377,7 @@ describe("CSRFの対策(書き換えのリクエストはOriginを確かめる�
 
     describe("異常系", () => {
         it("H44 Originが無い書き換えのリクエストは、Cookieがあっても、403 FORBIDDEN_ORIGINで断り、中身を見ない", async () => {
-            const { app } = fakeDeps({ sessions: { create: notUsed, findByTokenHash: notUsed, deleteByTokenHash: notUsed } });
+            const { app } = fakeDeps({ sessions: { create: notUsed, findByTokenHash: notUsed, touch: notUsed, deleteByTokenHash: notUsed } });
 
             expectProblem(await request(app).delete("/api/sessions/current").set(webSession), 403, "FORBIDDEN_ORIGIN");
             expectProblem(await request(app).post("/api/sessions").send({ studentId: "20240001", password: "password123" }), 403, "FORBIDDEN_ORIGIN");
