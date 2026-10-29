@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sessionUserSchema } from "@sinsakai/shared/auth";
+import { isGuessablePin } from "@sinsakai/shared/pin";
 
 // 本人(Web)のAPIの応答の形(docs/api.md 4.2・5章)
 
@@ -18,6 +19,21 @@ export const meSchema = sessionUserSchema.extend({
         activeCount: z.number().int(),
         hasOverdue: z.boolean(),
     }),
+    // タブレット用のPIN。登録済みか・ロック中か(5回間違えるとロックし、Webで登録し直すまで解けない)だけを出す(2026-10-28 P3)
+    pin: z.object({
+        registered: z.boolean(),
+        locked: z.boolean(),
+    }),
+});
+
+// PUT /api/me/pin → 204。PINを変えるときはパスワードを入れ直す(P1)。推測しやすいPINは断る(P2)
+export const setPinRequestSchema = z.object({
+    pin: z
+        .string()
+        // 4桁の数字でなければ、推測しやすいかは見ない(「123」に2つの注意が出ないように)
+        .regex(/^\d{4}$/, { error: "PINは4桁の数字で入力してください", abort: true })
+        .refine((pin) => !isGuessablePin(pin), "同じ数字の並びや、連続した数字(1234など)は使えません"),
+    password: z.string().min(1, "パスワードを入力してください"),
 });
 
 // 貸し出しの状態。DBには無く、返却期限と返却日時から決める(back/src/features/rentals/rental.status.ts)
@@ -44,3 +60,4 @@ export type Me = z.infer<typeof meSchema>;
 export type RentalState = z.infer<typeof rentalStateSchema>;
 export type Rental = z.infer<typeof rentalSchema>;
 export type MyRentals = z.infer<typeof myRentalsSchema>;
+export type SetPinRequest = z.infer<typeof setPinRequestSchema>;

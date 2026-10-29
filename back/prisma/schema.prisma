@@ -66,6 +66,12 @@ model User {
   suspendedUntil   DateTime? @map("suspended_until")
   suspensionReason String?   @map("suspension_reason")
   isActive         Boolean   @default(true) @map("is_active")
+  // タブレット用のPIN(数字4桁)。bcryptのハッシュだけを持つ。無ければ未登録(docs/auth.md R-A5)
+  pinHash           String?   @map("pin_hash")
+  // タブレットで続けて間違えた回数。5回でロックし、Webで登録し直すまで解かない(R-A7)。数えるのは0.8のe
+  pinFailedAttempts Int       @default(0) @map("pin_failed_attempts")
+  // ロックした日時。無ければロックしていない。時間では解けないので「いつまで」は持たない(P4)
+  pinLockedAt       DateTime? @map("pin_locked_at")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 

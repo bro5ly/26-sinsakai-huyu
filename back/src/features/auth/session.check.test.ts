@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkSession, type SessionRecord } from "./session.check.js";
+import { checkSession } from "./session.check.js";
+import type { SessionRecord } from "./auth.types.js";
 
 const now = new Date("2026-10-28T03:00:00Z");
 

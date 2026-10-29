@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Avatar, Button } from "@heroui/react";
 import Barcode from "react-barcode";
 import type { Me } from "@sinsakai/shared";
+import { PinSettingModal } from "./PinSettingModal";
 
 interface UserProfileProps {
   user: Me;
   onLogout: () => void;
+  // PINを保存したあとに、本人(PINの状態)を取り直す
+  onPinSaved: () => Promise<void> | void;
 }
 
 const BarcodeIcon = () => (
@@ -27,10 +30,21 @@ const BarcodeIcon = () => (
   </svg>
 );
 
+// PINの状態の文言。ロック中はタブレットで借りられないので、目立たせる(R-A7)
+const pinStatus = (pin: Me["pin"]) =>
+  pin.locked
+    ? { text: "PINがロックされています。登録し直してください", className: "text-danger" }
+    : pin.registered
+      ? { text: "PINは登録済みです", className: "text-slate-400" }
+      : { text: "タブレットで借りるには、PINの登録が必要です", className: "text-warning-600" };
+
 export const UserProfile = ({
   user,
+  onPinSaved,
 }: UserProfileProps) => {
   const [showBarcode, setShowBarcode] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const status = pinStatus(user.pin);
 
   return (
     <section className="px-6 pb-12">
@@ -106,6 +120,25 @@ export const UserProfile = ({
             </div>
           </div>
         )}
+
+        {/* タブレット用のPIN(UC-7) */}
+        <div className="flex items-center justify-between w-full px-4 gap-3">
+          <p className={`text-xs font-medium ${status.className}`}>{status.text}</p>
+          <Button
+            size="sm"
+            variant="flat"
+            color={user.pin.registered && !user.pin.locked ? "default" : "primary"}
+            className="h-8 font-bold text-[10px] px-4 rounded-md flex-shrink-0"
+            onPress={() => setIsPinModalOpen(true)}
+          >
+            {user.pin.registered ? "PINを変える" : "PINを登録"}
+          </Button>
+        </div>
+        <PinSettingModal
+          isOpen={isPinModalOpen}
+          onClose={() => setIsPinModalOpen(false)}
+          onSaved={onPinSaved}
+        />
 
         {/* スタッツ情報 */}
         <div className="flex items-center justify-between w-full px-4 py-6 rounded-2xl border-slate-100">

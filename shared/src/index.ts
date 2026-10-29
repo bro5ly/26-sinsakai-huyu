@@ -22,11 +22,14 @@ export {
     myRentalsSchema,
     rentalSchema,
     rentalStateSchema,
+    setPinRequestSchema,
     type Me,
     type MyRentals,
     type Rental,
     type RentalState,
+    type SetPinRequest,
 } from "@sinsakai/shared/me";
+export { isGuessablePin } from "@sinsakai/shared/pin";
 export {
     categoriesSchema,
     categorySchema,

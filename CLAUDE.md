@@ -17,13 +17,13 @@
 | `back/prisma/` | `schema.prisma`・マイグレーション・`seed.ts`(テスト用の名簿・利用者・物品) |
 | `back/src/generated/prisma/` | Prismaが生成したクライアント。**手で書き換えない**(`npm run db:generate`で作り直す) |
 | `front/` | Next.js 16(App Router)+ React 19 + HeroUI + Tailwind 4。`/auth`・`/dashboard`・`/items/[id]`(種類の詳細)・`/tablet`・`/barcodes` |
-| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)、RFC 9457の形(`problem.ts`の`problemSchema`)、登録・ログインのリクエストと応答(`auth.ts`)、本人の`Me`と`Rental`(`me.ts`)、カタログ(`catalog.ts`)。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
+| `shared/` | 画面とサーバーの共通の形(`@sinsakai/shared`)。今はエラーの`code`の表(`error-codes.ts`)、RFC 9457の形(`problem.ts`の`problemSchema`)、登録・ログインのリクエストと応答(`auth.ts`)、本人の`Me`と`Rental`とPINの登録(`me.ts`)、推測しやすいPINの判断(`pin.ts`)、カタログ(`catalog.ts`)。`shared/`のテストは`back`のVitestで走る。ビルドせずTypeScriptのまま使う。直下の`package.json`がnpm workspaces(`back`・`front`・`shared`)で、ロックファイルは直下の1つ |
 | `docs/` | 要件定義・仕組み(下の「ドキュメント」) |
 | `photo/` | READMEの画面写真 |
 
 ## 全体で守ること
 
-- **APIの成功レスポンスは、`docs/api.md`の新しい形に移す途中**。移したAPI(今は登録・ログインの6本、本人の`/api/me`・`/api/me/rentals`、カタログの`/api/categories`・`/api/item-types`)は包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。まだのAPI(`/api/tablet/*`。0.8で作り直す)は`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される(`data`で包まれない)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
+- **APIの成功レスポンスは、`docs/api.md`の新しい形に移す途中**。移したAPI(今は登録・ログインの6本、本人の`/api/me`・`/api/me/rentals`・`/api/me/pin`、カタログの`/api/categories`・`/api/item-types`)は包まずに`shared/`の形で返す(`res.status(201).json({ ... } satisfies Session)`)。まだのAPI(`/api/tablet/*`。0.8で作り直す)は`sendSuccess(res, data)`で`{ success: true, ...data }`に展開される(`data`で包まれない)。**失敗はRFC 9457の形**(`application/problem+json`の`{ type, title, status, code, detail, errors? }`)で、返すのは`middleware/error.middleware.ts`だけ。フロントの型(`front/src/types/`)とずれると画面が壊れる。過去に何度もここで不具合が出た(`REFACTORING_PROGRESS.md`)
 - **バックエンドで返す項目を足すときは、repositoryの`select`・serviceの組み立て・types・フロントの型の4か所を揃える**(`serialNumber`は`select`の漏れで2回直した)
 - **業務の決まりで断るときは、serviceで`throw new DomainError('CODE')`**。`code`は`shared/src/error-codes.ts`の表(`docs/api.md`6章)にあるものだけで、ステータスと文言はその表で決まる(serviceはHTTPのステータスも文言も書かない)。判断の関数(判断表)は`{ ok: false, reason }`を返し、serviceがそれを`DomainError`にして投げる。routeに`try/catch`は書かない(Express 5がthrowをエラー用のミドルウェアに渡す)。Zod・Prisma・想定外のエラーも、`lib/problem.ts`の`toProblem`が変換する
 - 認証: Webはサーバーのセッション(番号をHttpOnly・`SameSite=Strict`のCookie`session`に入れ、DBの`session`にはSHA-256のハッシュだけ。7日で切れる。1人が何件でも持てる)。書き換えのリクエストは`Origin`が画面のURLでないと403 `FORBIDDEN_ORIGIN`。登録用トークン(15分)もDBのハッシュで1回だけ。タブレットだけ、まだ3分のJWT(`Authorization: Bearer`。0.8のeでセッションにする)。仕組みと理由は`docs/auth.md`の2章(2026-10-28 A8-3〜A8-11)
@@ -89,7 +89,8 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 6. 途中で予定と違うことが起きたら(テストは緑なのにAPIが違う、など)、先に進まず報告する
 7. **聞いた質問に答えが無かったら、実装に入る前に聞き直す**。「おすすめどおりだろう」と決めつけない(2026-10-24、開発者の希望。H2・H3・H8を答えなしで進めてしまったため)。「基本的に叩き台どおり」と言われたときも、条件付きの叩き台(「〜なら B」など)や、開発者にしか分からないことは聞き直す。**ただし、返事から読み取れることは聞き直さない**(1つの返事が複数の質問の答えになっていることもある。しつこくしない)
 8. **仕様書・決まり(`docs/`・`CLAUDE.md`・`.claude/rules/`・README)を更新するときは、古い記述と食い違いが残らないように、同じことを書いている所をすべて探して直す**(`grep`でファイルの名前・関数の名前・番号を探す。2026-10-24、開発者の希望)
-9. **確認なしで進めてよいと自分で判断したこと(文書・決まりの直しなど)も、後で「確認せずに直したもの」としてまとめて見せる**(2026-10-24、開発者の希望。CLAUDE.mdと`.claude/rules/`を確認なしで直したため。直したこと自体はよかった)
+9. **作業に入る前に、触る範囲の仕様と決まりを読み直す**: `docs/backlog.md`の関係する節(とくに「○○するときに」「触る機能から順に」のような、条件が付いた決め事)、`.claude/rules/`、`docs/`の関係する章。予定を見せるときに、当てはまる決め事を番号で挙げる(2026-10-28、開発者の希望。認証のAPIを移すときに0.7のT2(中の型をそろえる)を見落とし、Webのセッションで`Pick`の型を増やしてしまったため)
+10. **確認なしで進めてよいと自分で判断したこと(文書・決まりの直しなど)も、後で「確認せずに直したもの」としてまとめて見せる**(2026-10-24、開発者の希望。CLAUDE.mdと`.claude/rules/`を確認なしで直したため。直したこと自体はよかった)
 
 ## ドキュメント
 

@@ -23,6 +23,7 @@ APIの一覧と認証の流れは`docs/architecture.md`。
 - 新しい`code`が要るときは、`shared/src/error-codes.ts`の表と`docs/api.md`6章の両方に足す。`code`ごとに文言は1つ。違う文言を出したいなら、別の`code`にする(2026-10-24 H5)
 - ミドルウェアでも`throw new DomainError(...)`でよい(`next(err)`は要らない)。想定外のエラーのログに、リクエストの中身(学籍番号・パスワードなど)を出さない
 - 推測されると困る番号(セッション・登録用トークン・端末)は`lib/session-token.ts`の`newToken()`で作り、DBには`hashToken()`のハッシュだけを置く。通してよいかの判断は`features/auth/session.check.ts`の`checkSession`(期限・種類・無効な人)。JWTを新しく使わない(残りはタブレットの今のトークンだけで、0.8のeで消す。2026-10-28 A8-3・A8-8)
+- パスワードを受け取るAPI(ログイン・PINの変更)には`lib/rate-limit.ts`の`createPasswordFailureLimiter()`を付ける(接続元ごとに、失敗を15分で20回まで。P6)
 - 書き換えのリクエストは`app.ts`の`createOriginCheck`が`Origin`を確かめる(CSRFの対策。A8-7)。テストで書き換えのリクエストを送るときは`Origin`に`config.frontendUrl`を付ける
 - 名前・メール・カードの番号は名簿(今は`ExternalUser`)にだけある。本番の名簿は学校のDBかAPIになるので、**名簿を読むJOIN(`externalUser`)を新しく増やさない**。名簿の窓口(`Roster`)ができたらそこを通す(`docs/backlog.md`の0.6)
 - 貸し出しの状態と物品の「貸出中」はDBに無い。`rental.status.ts`の`rentalStatus`・`itemAvailability`で組み立てて返す

@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { DomainError } from "@/lib/domain-error.js";
 import type { Roster } from "../roster/roster.js";
 import { rentalStatus } from "../rentals/rental.status.js";
@@ -31,6 +32,7 @@ export class MeService {
                 activeCount: rentals.length,
                 hasOverdue: rentals.some((rental) => rentalStatus(rental, now) === "OVERDUE"),
             },
+            pin: user.pin,
         };
     }
 
@@ -38,6 +40,17 @@ export class MeService {
         const user = await this.findUser(userId);
         const rentals = await this.store.findActiveRentals(user.id);
         return rentals.map((rental) => ({ ...rental, state: rentalStatus(rental, now) }));
+    }
+
+    // PINは本人だと示すものなので、変える前にパスワードで本人を確かめ直す(共用のPCでログインしたまま離れた人のPINを、他人が変えられないように。P1)。
+    // 推測しやすいPIN・4桁でないPINは、入力の検証(shared/src/me.ts)で先に断っている
+    async setPin(userId: string, input: { pin: string; password: string }): Promise<void> {
+        const passwordHash = await this.store.findPasswordHash(userId);
+        if (!passwordHash) throw new DomainError("UNAUTHENTICATED");
+        if (!(await bcrypt.compare(input.password, passwordHash))) throw new DomainError("WRONG_PASSWORD");
+
+        // 4桁は1万通りしかなく、DBが漏れればハッシュから総当たりで分かる。守りはタブレットでのロックと端末の登録(docs/auth.md R-A5)
+        await this.store.savePin({ userId, pinHash: await bcrypt.hash(input.pin, 10) });
     }
 
     // トークンは正しくても、利用者が消されていることがある

@@ -1,19 +1,8 @@
 import bcrypt from "bcrypt"
-import type { UserRepository } from "../user/UserRepository.js"
 import type { Roster, RosterEntry } from "../roster/roster.js"
-import type { AuthRepository } from "./auth.repository.js"
-import type { SessionRepository } from "./session.repository.js"
-import type { MailService } from "@/lib/mail.js"
 import { DomainError } from "@/lib/domain-error.js"
 import { hashToken, newToken } from "@/lib/session-token.js"
-import type { AuthResult, VerifyCodeResult } from "./auth.types.js"
-
-// テストで偽物を渡せるように、使うメソッドだけに絞った型で受け取る
-export type UserStore = Pick<UserRepository, "create" | "findById" | "findByStudentId">
-export type CodeStore = Pick<AuthRepository, "saveTmpCode" | "checkTmpCode" | "deleteTmpCode" | "saveRegistrationToken" | "findByRegistrationTokenHash">
-export type SessionStore = Pick<SessionRepository, "create" | "findByTokenHash" | "deleteByTokenHash">
-export type Mailer = Pick<MailService, "sendCode">
-type User = NonNullable<Awaited<ReturnType<UserStore["findById"]>>>
+import type { AuthResult, CodeStore, Mailer, SessionStore, UserRecord, UserStore, VerifyCodeResult } from "./auth.types.js"
 
 // 登録用トークンの期限。応答の expiresAt もこれから作る
 const REGISTRATION_TOKEN_MINUTES = 15
@@ -37,7 +26,7 @@ export class AuthService {
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiredAt = new Date()
         expiredAt.setMinutes(expiredAt.getMinutes() + 15)
-        await this.authRepository.saveTmpCode({verificationCode,studentId: student.studentId,expiredAt});
+        await this.authRepository.saveTmpCode({code: verificationCode, studentId: student.studentId, expiresAt: expiredAt});
         await this.mailService.sendCode(student.email,verificationCode)
        
     }
@@ -113,7 +102,7 @@ export class AuthService {
     }
 
     // 番号そのものはCookieにだけ入れ、DBにはハッシュだけを置く。ログインのたびに別のセッションを作る(ほかの端末のログインは切らない。Q9)
-    private async createSession(user: User, profile: RosterEntry): Promise<AuthResult> {
+    private async createSession(user: UserRecord, profile: RosterEntry): Promise<AuthResult> {
         const sessionToken = newToken()
         await this.sessions.create({
             tokenHash: hashToken(sessionToken),

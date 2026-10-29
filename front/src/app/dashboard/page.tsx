@@ -14,7 +14,7 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { status, user, logout } = useAuth();
+  const { status, user, logout, loadMe } = useAuth();
   const authenticated = status === "authenticated";
   const { itemTypes, categories: categoryList, loading: itemsLoading } = useCatalog(authenticated);
   const rentals = useMyRentals(authenticated);
@@ -54,7 +54,7 @@ export default function DashboardPage() {
       <Header onLogout={logout} showLogout />
 
       <main className="w-full max-w-xl pt-10 pb-20">
-        <UserProfile user={user} onLogout={logout} />
+        <UserProfile user={user} onLogout={logout} onPinSaved={loadMe} />
 
         <RentalsList rentals={rentals} maxItems={user.borrowing.maxItems} />
 

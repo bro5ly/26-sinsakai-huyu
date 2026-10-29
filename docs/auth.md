@@ -58,7 +58,7 @@
 
 ### 4.2 カードの番号 + PIN(サイト内で登録する暗証番号)
 
-- **R-A5** 利用者は、Webでログインして、タブレット用のPIN(数字)を登録・変更できる。PINはbcryptのハッシュだけを保存する
+- **R-A5** 利用者は、Webでログインして、タブレット用のPIN(数字4桁)を登録・変更できる。登録・変更のときはパスワードを入れ直させる(P1)。同じ数字の並び・連続した数字は断る(P2)。PINはbcryptのハッシュだけを保存する。ただし4桁は1万通りしかなく、DBが漏れればハッシュから総当たりで分かる。守りはタブレットでのロック(R-A7)と端末の登録(R-A1〜A3)にある(2026-10-28)
 - **R-A6** タブレットで借りるときは、カードの番号を読んだあとにPINを入力する。PINを登録していない人には「Webで先にPINを登録してください」と出し、借りさせない
 - **R-A7** もしPINを続けて5回間違えたら、そのカードのタブレットでの認証を止め、Webでログインし直してPINを再設定するまで止めておく
 - **返却はカード・PINを要らない**(返却は本人でなくてよいと決めた。Q3)。登録された端末であれば、物品のバーコードを読むだけで返却できる(A-Q4)
@@ -131,7 +131,7 @@ T2とT3は、PINを入れる前に答えを変えると「カードが有効か�
 
 ## 7. 変える場所(要件が決まってから)
 
-- DB: `tablet_device`(端末)、セッションの表(Webとタブレットの本人確認。種類の列で分ける。`refresh_tokens`は無くす。A8-3)、`user`に`pin_hash`・`pin_failed_attempts`・`pin_locked_until`・`login_failed_attempts`・`login_locked_until`、`verification_codes`に`attempts`と用途(登録・パスワードの再設定。`docs/spec.md` R-36)
+- DB: `tablet_device`(端末)、セッションの表(Webとタブレットの本人確認。種類の列で分ける。`refresh_tokens`は無くす。A8-3)、`user`に`pin_hash`・`pin_failed_attempts`・`pin_locked_at`(P4)・`login_failed_attempts`・`login_locked_until`、`verification_codes`に`attempts`と用途(登録・パスワードの再設定。`docs/spec.md` R-36)
 - API: `/api/tablet/*`の作り直し(端末の確認 → カード → PIN → セッション)、`/api/me/pin`(PINの登録)、`/api/admin/tablets`(端末の登録・取り消し)
 - 画面: タブレットにPINの入力と端末の登録画面、ダッシュボードにPINの設定と使い捨てのバーコード
 - 環境変数: `JWT_REGISTRATION_SECRET`は足さない(A8-8)。Webのセッションにした後は`JWT_REFRESH_SECRET`が、タブレットのセッション(e)の後は`JWT_ACCESS_SECRET`も要らなくなる
