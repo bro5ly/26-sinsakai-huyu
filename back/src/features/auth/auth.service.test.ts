@@ -2,7 +2,8 @@ import bcrypt from "bcrypt";
 import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import { hashToken } from "@/lib/session-token.js";
-import { AuthService, type CodeStore, type Mailer, type SessionStore, type UserStore } from "./auth.service.js";
+import { AuthService } from "./auth.service.js";
+import type { CodeStore, Mailer, SessionStore, UserRecord, UserStore } from "./auth.types.js";
 
 let passwordHash = "";
 beforeAll(async () => {
@@ -61,7 +62,7 @@ const sessionUser = {
 describe("requestVerification(登録の認証コードを送る)", () => {
     describe("正常系", () => {
         it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る(R-4)", async () => {
-            const saved: { verificationCode: string; studentId: string }[] = [];
+            const saved: { code: string; studentId: string }[] = [];
             const sent: { to: string; code: string }[] = [];
             const service = new AuthService(
                 users(),
@@ -75,8 +76,8 @@ describe("requestVerification(登録の認証コードを送る)", () => {
 
             expect(result).toBeUndefined();
             expect(saved[0]?.studentId).toBe("20260001");
-            expect(saved[0]?.verificationCode).toMatch(/^\d{6}$/);
-            expect(sent).toEqual([{ to: "taro@example.com", code: saved[0]?.verificationCode }]);
+            expect(saved[0]?.code).toMatch(/^\d{6}$/);
+            expect(sent).toEqual([{ to: "taro@example.com", code: saved[0]?.code }]);
         });
     });
 
@@ -163,7 +164,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
         tokenExpiresAt: new Date(Date.now() + 10 * minute),
         ...overrides,
     });
-    const newUser = async (data: { studentId: string; passwordHash: string }) => ({ id: "user-9", studentId: data.studentId, passwordHash: data.passwordHash, role: "MEMBER" as const, isActive: true });
+    const newUser = async (data: { studentId: string; passwordHash: string }): Promise<UserRecord> => ({ id: "user-9", studentId: data.studentId, passwordHash: data.passwordHash, role: "MEMBER" as const, isActive: true });
 
     describe("正常系", () => {
         it("A4 登録用トークンがDBにあれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す(R-9・R-10)", async () => {

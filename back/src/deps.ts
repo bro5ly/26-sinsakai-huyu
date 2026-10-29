@@ -7,7 +7,7 @@ import { CatalogRepository } from "@/features/catalog/catalog.repository.js";
 import { RentalRepository } from "@/features/rentals/rental.repository.js";
 import { PrismaRoster } from "@/features/roster/prisma-roster.js";
 import { MeRepository } from "@/features/me/me.repository.js";
-import type { CodeStore, Mailer, SessionStore, UserStore } from "@/features/auth/auth.service.js";
+import type { CodeStore, Mailer, SessionStore, UserStore } from "@/features/auth/auth.types.js";
 import type { CatalogStore } from "@/features/catalog/catalog.types.js";
 import type { RentalStore } from "@/features/rentals/rental.service.js";
 import type { Roster } from "@/features/roster/roster.js";

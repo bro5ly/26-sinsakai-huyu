@@ -1,12 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client.js";
-import type { SessionKind } from "@/generated/prisma/enums.js";
-import type { SessionRecord } from "./session.check.js";
+import type { SessionRecord, SessionStore } from "./auth.types.js";
 
 // セッションの行を読み書きするだけ。通してよいかの判断は session.check.ts
-export class SessionRepository {
+export class SessionRepository implements SessionStore {
     constructor(private readonly db: PrismaClient) {}
 
-    async create(data: { tokenHash: string; userId: string; kind: SessionKind; expiresAt: Date }): Promise<void> {
+    async create(data: { tokenHash: string; userId: string; kind: SessionRecord["kind"]; expiresAt: Date }): Promise<void> {
         await this.db.session.create({ data });
     }
 

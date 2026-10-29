@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import * as jwtLib from "@/lib/jwt.js";
 import { hashToken } from "@/lib/session-token.js";
-import type { SessionRecord } from "@/features/auth/session.check.js";
+import type { SessionRecord } from "@/features/auth/auth.types.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
 import { categoriesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema } from "@sinsakai/shared";

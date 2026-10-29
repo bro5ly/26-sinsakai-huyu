@@ -16,7 +16,7 @@ export class MailService {
     });
   }
 
-  async sendCode(email: string, code: string) {
+  async sendCode(email: string, code: string): Promise<void> {
     const mailOptions = {
       from: this.mail.from,
       to: email,
@@ -32,6 +32,6 @@ export class MailService {
       `,
     };
 
-    return await this.transporter.sendMail(mailOptions);
+    await this.transporter.sendMail(mailOptions);
   }
 }
