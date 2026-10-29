@@ -88,7 +88,6 @@ flowchart LR
 
 | 課題 | どうするか |
 |---|---|
-| 画面の一部に、手で書いた型と古いAPIの呼び出しが残っている(APIはすべて[docs/api.md](docs/api.md)の新しい形に移し、形は`shared/`にまとめた) | 画面も`shared/`の型だけにし、古い呼び出しを消す(残タスク0.7) |
 | 物品の追加・編集(在庫管理)の画面が無い | 要件を決めてから作る(残タスク5) |
 | 返却期限が近い・過ぎたことの通知が無い | Slackで知らせる(残タスク6) |
 | 画面のテストと、HTTPを通すテストが無い | APIを作り直すときに足す |
@@ -133,6 +132,8 @@ docker compose exec api npm test           # APIのテスト
 docker compose exec api npx tsc --noEmit   # 型チェック
 docker compose exec web npm run build      # 画面のビルド
 ```
+
+Macに`npm`があれば、`npm run check`(型チェック → テスト → 画面のビルド → リント)でまとめて確かめられます(呼び名は直下の`package.json`)。
 
 ## ドキュメント
 

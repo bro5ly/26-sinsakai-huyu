@@ -57,7 +57,7 @@
 
 ## 0.7 APIの形を`shared/`にまとめる(2026-10-23決定)
 
-型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。
+型を4か所(`back`の各`*.types.ts`、`front/src/types/`、`front/src/lib/api.ts`、`front/src/lib/auth-api.ts`)で別々に書いていて、中身がずれている(`docs/spec.md`の現状とのずれ17)。0.8でタブレットの応答の形が大きく変わるので、その前に1か所にする。→ 2026-10-29に`shared/`の1か所になった(ずれ17は消した)
 
 - 0.7の残りの順番(2026-10-24決定 S1-A): ①npm workspacesと`shared/`(両方のコンテナから`shared/`が見えるようにするDockerの作り直しも一緒に) → ②APIを1本ずつ新しいURLに移す(そのたびに、その機能の中の型T1〜T7もそろえる)。先に移すと、新しい形の型を`back`と`front`に別々に書いてから`shared/`へ移すことになり、同じ所を2回直すため
 - [x] npm workspacesにする(直下の`package.json`に`back`・`front`・`shared`)。ロックファイルを1つにまとめる(2026-10-24、PR #11)
@@ -114,11 +114,11 @@
   - 日付は中では`Date`、APIの境目(`shared/`のスキーマ)でISOの文字列にする(T5)
   - ID・学籍番号・カードの番号に別の型を付けること(branded type)は今は入れない。取り違えはテストで見る(T6)
   - 使われていない型(`ItemWithDetail`・`RentalWithDetails`・`RentalBasic`・`SignupInput`・`loginInput`、画面の`TabletContext`など)はそのとき消す(T7)
-- [ ] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)
-- [ ] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す
+- [x] サーバーは、返す形がスキーマに合うことを型で確かめる(`satisfies`)。2026-10-29に、成功の応答はすべて`satisfies`で返していることを確かめた(失敗はエラー用のミドルウェアが`toProblem`の型で返す)
+- [x] 画面は手書きの型を消して`shared/`の型を使う。`lib/api.ts`・`lib/auth-api.ts`を消す。`as any`でずれを隠している所を直す(2026-10-29、ブランチ`refactor/shared-types`。手書きの型・古い呼び出し・`TabletContext`はどこからも読まれていなかったので消した。`as any`は、画面を作り直したときにもう無くなっていた)
 - [x] Dockerの作り直し: ビルドの起点をリポジトリ直下にし、webとapiの両方のコンテナから`shared/`が見えるようにする。`node_modules`のボリュームも合わせる(2026-10-24。各コンテナは`npm ci -w back -w shared`のように要るワークスペースだけを入れる。P3)
-- [ ] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
-- [ ] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)
+- [x] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(2026-10-29、ブランチ`refactor/shared-types`)(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
+- [x] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)。2026-10-29、クラウドの一時的なPostgreSQLとAPI・画面で通した: テスト248件・型チェック・ビルドは緑(リントは前からの2件)。受け入れ基準はA1〜A5・A10を`curl`で、A7〜A9をPlaywrightで画面から確かめた(A6の3分は`tablet-session.check.test.ts`のテストだけ)。Macでの確かめは最後にまとめて行う(X1)
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
 
@@ -209,7 +209,7 @@
 
 - [x] 利用者の情報を出す`console.log`を消す(ずれ5)。2026-10-28に、もう残っていないことを確かめた(残りはサーバーの起動の1行だけ)
 - [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
-- (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`の整理は、0.7でやる)
+- (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`は、0.7で消した。2026-10-29)
 - [x] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11。2026-10-28、カタログを新しいAPIに移すときに`item.service.ts`ごと消した)
 - [ ] 画面のリントのエラーを直す(2026-10-24に7件見つけた。2026-10-29には2件。`npm run lint`が落ちる): `components/BarcodeScanner.tsx`の宣言より前に使っている変数(2件)。警告も3件ある(2026-10-29)。`items/page.tsx`・`dashboard/page.tsx`・`contexts/AuthContext.tsx`・`barcodes/page.tsx`の分は、その所を作り直したときに消えた
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする

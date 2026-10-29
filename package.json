@@ -5,5 +5,15 @@
     "back",
     "front",
     "shared"
-  ]
+  ],
+  "scripts": {
+    "test": "docker compose exec api npm test",
+    "typecheck": "docker compose exec api npx tsc --noEmit && docker compose exec web npx tsc --noEmit",
+    "lint": "docker compose exec web npm run lint",
+    "build": "docker compose exec web npm run build",
+    "check": "npm run typecheck && npm test && npm run build && npm run lint",
+    "db:migrate": "docker compose exec api npm run db:migrate --",
+    "db:seed": "docker compose exec api npm run db:seed",
+    "logs": "docker compose logs --tail 50 api"
+  }
 }
