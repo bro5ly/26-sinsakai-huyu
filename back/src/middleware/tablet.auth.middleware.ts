@@ -1,14 +1,16 @@
 import type { RequestHandler } from "express";
-import { verifyTabletToken } from "@/lib/jwt.js";
 import { DomainError } from "@/lib/domain-error.js";
+import type { TabletSessionService } from "@/features/tablet-sessions/tablet-session.service.js";
 
-// タブレット用のトークンを確かめ、req.user に入れる。期限切れはSESSION_EXPIRED、それ以外はUNAUTHENTICATED(verifyTabletTokenが投げる)
-export const tabletMiddleware: RequestHandler = (req, _res, next) => {
+// タブレットのセッション(カード + PINで作ったもの)を Authorization: Bearer で受け取り、DBで確かめて req.user に入れる。
+// 端末の確かめ(createDeviceMiddleware)の後に付ける。作った端末でだけ、無操作30秒・3分まで通す(docs/auth.md R-A8・R-A9)。
+// 時間切れは SESSION_EXPIRED、それ以外は UNAUTHENTICATED
+export const createTabletSessionMiddleware = (sessions: TabletSessionService): RequestHandler => async (req, _res, next) => {
+    const device = req.device;
+    if (!device) throw new DomainError("DEVICE_NOT_REGISTERED");
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
-    if (!token) throw new DomainError("UNAUTHENTICATED");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : undefined;
 
-    const decoded = verifyTabletToken(token) as { sub: string; role: string };
-    req.user = { id: decoded.sub, role: decoded.role };
+    req.user = await sessions.authenticate(token || undefined, device.id, new Date());
     next();
 };

@@ -24,10 +24,14 @@ export interface RegistrationTokenRecord {
     tokenExpiresAt: Date | null;
 }
 
-// 通してよいかの判断(session.check.ts)に要る分だけ
+// 通してよいかの判断(session.check.ts・tablet-session.check.ts)に要る分だけ
 export interface SessionRecord {
     kind: "WEB" | "TABLET";
     expiresAt: Date;
+    createdAt: Date;
+    // タブレットのセッションだけ: 作った端末と、最後に使った日時(R-A8・R-A9)。Webでは null
+    deviceId: string | null;
+    lastUsedAt: Date | null;
     user: { id: string; role: "MEMBER" | "ADMIN"; isActive: boolean };
 }
 
@@ -46,8 +50,10 @@ export interface CodeStore {
 }
 
 export interface SessionStore {
-    create(data: { tokenHash: string; userId: string; kind: SessionRecord["kind"]; expiresAt: Date }): Promise<void>;
+    create(data: { tokenHash: string; userId: string; kind: SessionRecord["kind"]; expiresAt: Date; deviceId?: string }): Promise<void>;
     findByTokenHash(tokenHash: string): Promise<SessionRecord | null>;
+    // タブレットのセッションを使うたびに、最後に使った日時を書き換える(無操作30秒を数えるため)
+    touch(tokenHash: string, now: Date): Promise<void>;
     // 無い番号(ログアウト済みなど)でも失敗させない。何度ログアウトしてもよいように
     deleteByTokenHash(tokenHash: string): Promise<void>;
 }

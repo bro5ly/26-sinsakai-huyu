@@ -5,27 +5,6 @@ import type { PrismaClient } from "@/generated/prisma/client.js";
 
 export class RentalRepository {
     constructor (private readonly db: PrismaClient){}
-    async findUserWithActiveRentals(studentId: string){
-        return await this.db.user.findUnique({
-            where: {studentId},
-            select:{
-                id: true,
-                studentId: true,
-                rentals:{
-                    where: {returnedAt: null},
-                    include:{
-                        item: {
-                            include:{
-                                itemType: true
-                            }
-                        }
-                    }
-                }
-            },
-        })
-    }
-
-
     async findByBarcode(barcode: string) {
         return await this.db.item.findFirst({
             where: {barcode},

@@ -31,6 +31,8 @@ export type SessionMinAggregateOutputType = {
   kind: $Enums.SessionKind | null
   expiresAt: Date | null
   createdAt: Date | null
+  deviceId: string | null
+  lastUsedAt: Date | null
 }
 
 export type SessionMaxAggregateOutputType = {
@@ -40,6 +42,8 @@ export type SessionMaxAggregateOutputType = {
   kind: $Enums.SessionKind | null
   expiresAt: Date | null
   createdAt: Date | null
+  deviceId: string | null
+  lastUsedAt: Date | null
 }
 
 export type SessionCountAggregateOutputType = {
@@ -49,6 +53,8 @@ export type SessionCountAggregateOutputType = {
   kind: number
   expiresAt: number
   createdAt: number
+  deviceId: number
+  lastUsedAt: number
   _all: number
 }
 
@@ -60,6 +66,8 @@ export type SessionMinAggregateInputType = {
   kind?: true
   expiresAt?: true
   createdAt?: true
+  deviceId?: true
+  lastUsedAt?: true
 }
 
 export type SessionMaxAggregateInputType = {
@@ -69,6 +77,8 @@ export type SessionMaxAggregateInputType = {
   kind?: true
   expiresAt?: true
   createdAt?: true
+  deviceId?: true
+  lastUsedAt?: true
 }
 
 export type SessionCountAggregateInputType = {
@@ -78,6 +88,8 @@ export type SessionCountAggregateInputType = {
   kind?: true
   expiresAt?: true
   createdAt?: true
+  deviceId?: true
+  lastUsedAt?: true
   _all?: true
 }
 
@@ -160,6 +172,8 @@ export type SessionGroupByOutputType = {
   kind: $Enums.SessionKind
   expiresAt: Date
   createdAt: Date
+  deviceId: string | null
+  lastUsedAt: Date | null
   _count: SessionCountAggregateOutputType | null
   _min: SessionMinAggregateOutputType | null
   _max: SessionMaxAggregateOutputType | null
@@ -190,7 +204,10 @@ export type SessionWhereInput = {
   kind?: Prisma.EnumSessionKindFilter<"Session"> | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  deviceId?: Prisma.StringNullableFilter<"Session"> | string | null
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  device?: Prisma.XOR<Prisma.TabletDeviceNullableScalarRelationFilter, Prisma.TabletDeviceWhereInput> | null
 }
 
 export type SessionOrderByWithRelationInput = {
@@ -200,7 +217,10 @@ export type SessionOrderByWithRelationInput = {
   kind?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  device?: Prisma.TabletDeviceOrderByWithRelationInput
 }
 
 export type SessionWhereUniqueInput = Prisma.AtLeast<{
@@ -213,7 +233,10 @@ export type SessionWhereUniqueInput = Prisma.AtLeast<{
   kind?: Prisma.EnumSessionKindFilter<"Session"> | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  deviceId?: Prisma.StringNullableFilter<"Session"> | string | null
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  device?: Prisma.XOR<Prisma.TabletDeviceNullableScalarRelationFilter, Prisma.TabletDeviceWhereInput> | null
 }, "id" | "tokenHash">
 
 export type SessionOrderByWithAggregationInput = {
@@ -223,6 +246,8 @@ export type SessionOrderByWithAggregationInput = {
   kind?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SessionCountOrderByAggregateInput
   _max?: Prisma.SessionMaxOrderByAggregateInput
   _min?: Prisma.SessionMinOrderByAggregateInput
@@ -238,6 +263,8 @@ export type SessionScalarWhereWithAggregatesInput = {
   kind?: Prisma.EnumSessionKindWithAggregatesFilter<"Session"> | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Session"> | Date | string
+  deviceId?: Prisma.StringNullableWithAggregatesFilter<"Session"> | string | null
+  lastUsedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
 }
 
 export type SessionCreateInput = {
@@ -246,7 +273,9 @@ export type SessionCreateInput = {
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  lastUsedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutSessionsInput
+  device?: Prisma.TabletDeviceCreateNestedOneWithoutSessionsInput
 }
 
 export type SessionUncheckedCreateInput = {
@@ -256,6 +285,8 @@ export type SessionUncheckedCreateInput = {
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  deviceId?: string | null
+  lastUsedAt?: Date | string | null
 }
 
 export type SessionUpdateInput = {
@@ -264,7 +295,9 @@ export type SessionUpdateInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutSessionsNestedInput
+  device?: Prisma.TabletDeviceUpdateOneWithoutSessionsNestedInput
 }
 
 export type SessionUncheckedUpdateInput = {
@@ -274,6 +307,8 @@ export type SessionUncheckedUpdateInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type SessionCreateManyInput = {
@@ -283,6 +318,8 @@ export type SessionCreateManyInput = {
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  deviceId?: string | null
+  lastUsedAt?: Date | string | null
 }
 
 export type SessionUpdateManyMutationInput = {
@@ -291,6 +328,7 @@ export type SessionUpdateManyMutationInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type SessionUncheckedUpdateManyInput = {
@@ -300,6 +338,8 @@ export type SessionUncheckedUpdateManyInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type SessionListRelationFilter = {
@@ -319,6 +359,8 @@ export type SessionCountOrderByAggregateInput = {
   kind?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
 }
 
 export type SessionMaxOrderByAggregateInput = {
@@ -328,6 +370,8 @@ export type SessionMaxOrderByAggregateInput = {
   kind?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
 }
 
 export type SessionMinOrderByAggregateInput = {
@@ -337,6 +381,8 @@ export type SessionMinOrderByAggregateInput = {
   kind?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deviceId?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
 }
 
 export type SessionCreateNestedManyWithoutUserInput = {
@@ -385,12 +431,56 @@ export type EnumSessionKindFieldUpdateOperationsInput = {
   set?: $Enums.SessionKind
 }
 
+export type SessionCreateNestedManyWithoutDeviceInput = {
+  create?: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput> | Prisma.SessionCreateWithoutDeviceInput[] | Prisma.SessionUncheckedCreateWithoutDeviceInput[]
+  connectOrCreate?: Prisma.SessionCreateOrConnectWithoutDeviceInput | Prisma.SessionCreateOrConnectWithoutDeviceInput[]
+  createMany?: Prisma.SessionCreateManyDeviceInputEnvelope
+  connect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+}
+
+export type SessionUncheckedCreateNestedManyWithoutDeviceInput = {
+  create?: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput> | Prisma.SessionCreateWithoutDeviceInput[] | Prisma.SessionUncheckedCreateWithoutDeviceInput[]
+  connectOrCreate?: Prisma.SessionCreateOrConnectWithoutDeviceInput | Prisma.SessionCreateOrConnectWithoutDeviceInput[]
+  createMany?: Prisma.SessionCreateManyDeviceInputEnvelope
+  connect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+}
+
+export type SessionUpdateManyWithoutDeviceNestedInput = {
+  create?: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput> | Prisma.SessionCreateWithoutDeviceInput[] | Prisma.SessionUncheckedCreateWithoutDeviceInput[]
+  connectOrCreate?: Prisma.SessionCreateOrConnectWithoutDeviceInput | Prisma.SessionCreateOrConnectWithoutDeviceInput[]
+  upsert?: Prisma.SessionUpsertWithWhereUniqueWithoutDeviceInput | Prisma.SessionUpsertWithWhereUniqueWithoutDeviceInput[]
+  createMany?: Prisma.SessionCreateManyDeviceInputEnvelope
+  set?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  disconnect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  delete?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  connect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  update?: Prisma.SessionUpdateWithWhereUniqueWithoutDeviceInput | Prisma.SessionUpdateWithWhereUniqueWithoutDeviceInput[]
+  updateMany?: Prisma.SessionUpdateManyWithWhereWithoutDeviceInput | Prisma.SessionUpdateManyWithWhereWithoutDeviceInput[]
+  deleteMany?: Prisma.SessionScalarWhereInput | Prisma.SessionScalarWhereInput[]
+}
+
+export type SessionUncheckedUpdateManyWithoutDeviceNestedInput = {
+  create?: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput> | Prisma.SessionCreateWithoutDeviceInput[] | Prisma.SessionUncheckedCreateWithoutDeviceInput[]
+  connectOrCreate?: Prisma.SessionCreateOrConnectWithoutDeviceInput | Prisma.SessionCreateOrConnectWithoutDeviceInput[]
+  upsert?: Prisma.SessionUpsertWithWhereUniqueWithoutDeviceInput | Prisma.SessionUpsertWithWhereUniqueWithoutDeviceInput[]
+  createMany?: Prisma.SessionCreateManyDeviceInputEnvelope
+  set?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  disconnect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  delete?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  connect?: Prisma.SessionWhereUniqueInput | Prisma.SessionWhereUniqueInput[]
+  update?: Prisma.SessionUpdateWithWhereUniqueWithoutDeviceInput | Prisma.SessionUpdateWithWhereUniqueWithoutDeviceInput[]
+  updateMany?: Prisma.SessionUpdateManyWithWhereWithoutDeviceInput | Prisma.SessionUpdateManyWithWhereWithoutDeviceInput[]
+  deleteMany?: Prisma.SessionScalarWhereInput | Prisma.SessionScalarWhereInput[]
+}
+
 export type SessionCreateWithoutUserInput = {
   id?: string
   tokenHash: string
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+  device?: Prisma.TabletDeviceCreateNestedOneWithoutSessionsInput
 }
 
 export type SessionUncheckedCreateWithoutUserInput = {
@@ -399,6 +489,8 @@ export type SessionUncheckedCreateWithoutUserInput = {
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  deviceId?: string | null
+  lastUsedAt?: Date | string | null
 }
 
 export type SessionCreateOrConnectWithoutUserInput = {
@@ -437,6 +529,54 @@ export type SessionScalarWhereInput = {
   kind?: Prisma.EnumSessionKindFilter<"Session"> | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFilter<"Session"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Session"> | Date | string
+  deviceId?: Prisma.StringNullableFilter<"Session"> | string | null
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"Session"> | Date | string | null
+}
+
+export type SessionCreateWithoutDeviceInput = {
+  id?: string
+  tokenHash: string
+  kind: $Enums.SessionKind
+  expiresAt: Date | string
+  createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+  user: Prisma.UserCreateNestedOneWithoutSessionsInput
+}
+
+export type SessionUncheckedCreateWithoutDeviceInput = {
+  id?: string
+  tokenHash: string
+  userId: string
+  kind: $Enums.SessionKind
+  expiresAt: Date | string
+  createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+}
+
+export type SessionCreateOrConnectWithoutDeviceInput = {
+  where: Prisma.SessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput>
+}
+
+export type SessionCreateManyDeviceInputEnvelope = {
+  data: Prisma.SessionCreateManyDeviceInput | Prisma.SessionCreateManyDeviceInput[]
+  skipDuplicates?: boolean
+}
+
+export type SessionUpsertWithWhereUniqueWithoutDeviceInput = {
+  where: Prisma.SessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.SessionUpdateWithoutDeviceInput, Prisma.SessionUncheckedUpdateWithoutDeviceInput>
+  create: Prisma.XOR<Prisma.SessionCreateWithoutDeviceInput, Prisma.SessionUncheckedCreateWithoutDeviceInput>
+}
+
+export type SessionUpdateWithWhereUniqueWithoutDeviceInput = {
+  where: Prisma.SessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.SessionUpdateWithoutDeviceInput, Prisma.SessionUncheckedUpdateWithoutDeviceInput>
+}
+
+export type SessionUpdateManyWithWhereWithoutDeviceInput = {
+  where: Prisma.SessionScalarWhereInput
+  data: Prisma.XOR<Prisma.SessionUpdateManyMutationInput, Prisma.SessionUncheckedUpdateManyWithoutDeviceInput>
 }
 
 export type SessionCreateManyUserInput = {
@@ -445,6 +585,8 @@ export type SessionCreateManyUserInput = {
   kind: $Enums.SessionKind
   expiresAt: Date | string
   createdAt?: Date | string
+  deviceId?: string | null
+  lastUsedAt?: Date | string | null
 }
 
 export type SessionUpdateWithoutUserInput = {
@@ -453,6 +595,8 @@ export type SessionUpdateWithoutUserInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  device?: Prisma.TabletDeviceUpdateOneWithoutSessionsNestedInput
 }
 
 export type SessionUncheckedUpdateWithoutUserInput = {
@@ -461,6 +605,8 @@ export type SessionUncheckedUpdateWithoutUserInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type SessionUncheckedUpdateManyWithoutUserInput = {
@@ -469,6 +615,48 @@ export type SessionUncheckedUpdateManyWithoutUserInput = {
   kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type SessionCreateManyDeviceInput = {
+  id?: string
+  tokenHash: string
+  userId: string
+  kind: $Enums.SessionKind
+  expiresAt: Date | string
+  createdAt?: Date | string
+  lastUsedAt?: Date | string | null
+}
+
+export type SessionUpdateWithoutDeviceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  user?: Prisma.UserUpdateOneRequiredWithoutSessionsNestedInput
+}
+
+export type SessionUncheckedUpdateWithoutDeviceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type SessionUncheckedUpdateManyWithoutDeviceInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenHash?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumSessionKindFieldUpdateOperationsInput | $Enums.SessionKind
+  expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -480,7 +668,10 @@ export type SessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   kind?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  deviceId?: boolean
+  lastUsedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }, ExtArgs["result"]["session"]>
 
 export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -490,7 +681,10 @@ export type SessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   kind?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  deviceId?: boolean
+  lastUsedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }, ExtArgs["result"]["session"]>
 
 export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -500,7 +694,10 @@ export type SessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   kind?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  deviceId?: boolean
+  lastUsedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }, ExtArgs["result"]["session"]>
 
 export type SessionSelectScalar = {
@@ -510,23 +707,29 @@ export type SessionSelectScalar = {
   kind?: boolean
   expiresAt?: boolean
   createdAt?: boolean
+  deviceId?: boolean
+  lastUsedAt?: boolean
 }
 
-export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tokenHash" | "userId" | "kind" | "expiresAt" | "createdAt", ExtArgs["result"]["session"]>
+export type SessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tokenHash" | "userId" | "kind" | "expiresAt" | "createdAt" | "deviceId" | "lastUsedAt", ExtArgs["result"]["session"]>
 export type SessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }
 export type SessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }
 export type SessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  device?: boolean | Prisma.Session$deviceArgs<ExtArgs>
 }
 
 export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Session"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
+    device: Prisma.$TabletDevicePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -535,6 +738,8 @@ export type $SessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     kind: $Enums.SessionKind
     expiresAt: Date
     createdAt: Date
+    deviceId: string | null
+    lastUsedAt: Date | null
   }, ExtArgs["result"]["session"]>
   composites: {}
 }
@@ -930,6 +1135,7 @@ readonly fields: SessionFieldRefs;
 export interface Prisma__SessionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  device<T extends Prisma.Session$deviceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Session$deviceArgs<ExtArgs>>): Prisma.Prisma__TabletDeviceClient<runtime.Types.Result.GetResult<Prisma.$TabletDevicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -965,6 +1171,8 @@ export interface SessionFieldRefs {
   readonly kind: Prisma.FieldRef<"Session", 'SessionKind'>
   readonly expiresAt: Prisma.FieldRef<"Session", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Session", 'DateTime'>
+  readonly deviceId: Prisma.FieldRef<"Session", 'String'>
+  readonly lastUsedAt: Prisma.FieldRef<"Session", 'DateTime'>
 }
     
 
@@ -1358,6 +1566,25 @@ export type SessionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Sessions to delete.
    */
   limit?: number
+}
+
+/**
+ * Session.device
+ */
+export type Session$deviceArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TabletDevice
+   */
+  select?: Prisma.TabletDeviceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TabletDevice
+   */
+  omit?: Prisma.TabletDeviceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TabletDeviceInclude<ExtArgs> | null
+  where?: Prisma.TabletDeviceWhereInput
 }
 
 /**

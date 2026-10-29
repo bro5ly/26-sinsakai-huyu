@@ -7,6 +7,9 @@ const now = new Date("2026-10-28T03:00:00Z");
 const session = (overrides: Partial<SessionRecord> = {}, user: Partial<SessionRecord["user"]> = {}): SessionRecord => ({
     kind: "WEB",
     expiresAt: new Date(now.getTime() + 60_000),
+    createdAt: new Date(now.getTime() - 60_000),
+    deviceId: null,
+    lastUsedAt: null,
     ...overrides,
     user: { id: "user-1", role: "MEMBER", isActive: true, ...user },
 });

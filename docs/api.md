@@ -19,7 +19,7 @@
 
 | # | 問題 | 例 | 直したか |
 |---|---|---|---|
-| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 一部(タブレットの3本だけ残っている。0.8) |
+| P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 一部(`signin`は2026-10-29に`/tablet/sessions`にした。`checkout`・`return`は0.8のe2) |
 | P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | 一部(登録・ログインは2026-10-25) |
 | P3 | 置き場所がずれている | 自分の情報が`/items/me`。`/tablet/*`は資源でなく端末でまとめている | 一部(本人は2026-10-25に`/api/me`へ) |
 | P4 | 物品の種類のAPIが無い | カタログの詳細は、全件を取って画面でタイトルで絞り込んでいる | 済み(2026-10-28) |
@@ -143,8 +143,8 @@
 |---|---|---|---|---|---|
 | `POST /api/tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }` | 201 `TabletDevice` + Cookie`device`(400日) | 401 `INVALID_CREDENTIALS`・403 `FORBIDDEN`(管理者でない)・400・429 | UC-20 |
 | `GET /api/tablet/device` | 端末 | — | 200 `{ id, name }`(画面が開いたときに確かめる) | 401 `DEVICE_NOT_REGISTERED` | UC-8・UC-20 |
-| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }` または `{ tabletCode, pin }` | 201 `{ token, expiresAt, user: { displayName }, rentals: Rental[] }` | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429 | UC-8・UC-10 |
-| `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204 | — | UC-8・UC-31 |
+| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。`{ tabletCode, pin }`は使い捨てのバーコード(g)で足す) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429 | UC-8・UC-10 |
+| `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204(切れていても204。2026-10-29に作った) | — | UC-8・UC-31 |
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental` | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
 | `POST /api/tablet/returns` | 端末だけ | `{ barcode }` | 201 `Rental`(返却日時入り) | 404 `ACTIVE_RENTAL_NOT_FOUND` | UC-9 |
 
@@ -204,10 +204,10 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `INVALID_CREDENTIALS` | 401 | 学籍番号かパスワードが違う(どちらかは言わない) |
 | `INVALID_CODE` | 401 | 認証コードが違う・期限切れ・使えなくなった |
 | `INVALID_TOKEN` | 401 | 登録用・再設定用のトークンが違う・期限切れ |
-| `UNAUTHENTICATED` | 401 | Webのセッションが無い・期限切れ・無効な人、タブレット用トークンが無い・壊れている |
+| `UNAUTHENTICATED` | 401 | Webのセッションが無い・期限切れ・無効な人、タブレットのセッションが無い・別の端末で作ったもの・無効な人 |
 | `DEVICE_NOT_REGISTERED` | 401 | タブレットの端末が登録されていない・取り消された |
 | `INVALID_CARD_OR_PIN` | 401 | カードかPINが違う・PIN未登録・無効な人(どれかは言わない) |
-| `SESSION_EXPIRED` | 401 | タブレットの本人確認のセッションが切れた |
+| `SESSION_EXPIRED` | 401 | タブレットの本人確認のセッションが切れた(無操作30秒・作ってから3分) |
 | `PIN_LOCKED` | 423 | PINを5回間違えた(API-Q6) |
 | `WRONG_PASSWORD` | 403 | PINの変更などで入れ直したパスワードが違う(ログイン中なので「学籍番号か」とは言わない。2026-10-28 P5) |
 | `FORBIDDEN_ORIGIN` | 403 | 書き換えのリクエストの`Origin`が画面のURLでない・無い(CSRFの対策。2026-10-28 A8-11) |
@@ -238,7 +238,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/auth/logout` | `DELETE /api/sessions/current` (2026-10-25 移した) |
 | `GET /api/items` | `GET /api/item-types`(と`GET /api/categories`)(2026-10-28 移した) |
 | `GET /api/items/me` | `GET /api/me`・`GET /api/me/rentals`(2026-10-25 移した) |
-| `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き) |
+| `POST /api/tablet/signin` | `POST /api/tablet/sessions`(PIN付き。2026-10-29に移した) |
 | `POST /api/tablet/checkout` | `POST /api/tablet/rentals` |
 | `POST /api/tablet/return` | `POST /api/tablet/returns` |
 | (無し) | `PUT /api/me/pin`(2026-10-28に作った)・タブレットの端末(2026-10-29に作った)・パスワードの再設定・使い捨てのバーコード・在庫管理・`/api/health` |

@@ -4,7 +4,6 @@ import { loadConfig } from "./config.js";
 // 本物の process.env は使わず、テストごとに環境変数の組を渡す
 const required = {
     DATABASE_URL: "postgresql://postgres:postgres@db:5432/test",
-    JWT_ACCESS_SECRET: "access-secret-for-test",
 };
 
 describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => {
@@ -27,7 +26,6 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
                 port: 8080,
                 frontendUrl: "https://example.com",
                 databaseUrl: required.DATABASE_URL,
-                jwt: { accessSecret: required.JWT_ACCESS_SECRET },
                 mail: { host: "smtp.example.com", port: 587, user: "user", pass: "pass", from: "テスト <test@example.com>" },
             });
         });
@@ -46,13 +44,13 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
 
     describe("異常系", () => {
         it("N3 必須の値が無ければ、足りない名前をすべて挙げて投げる(サーバーを立ち上げない)", () => {
-            expect(() => loadConfig({})).toThrow(/DATABASE_URL[\s\S]*JWT_ACCESS_SECRET/);
+            expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
         });
 
         it("N4 投げるときに、環境変数の値(秘密の鍵など)を文に出さない", () => {
             const secret = "do-not-leak-this-secret";
 
-            expect(() => loadConfig({ ...required, JWT_ACCESS_SECRET: secret, PORT: "not-a-number" })).toThrow(
+            expect(() => loadConfig({ ...required, DATABASE_URL: secret, PORT: "not-a-number" })).toThrow(
                 expect.objectContaining({ message: expect.not.stringContaining(secret) }),
             );
         });
@@ -67,8 +65,8 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
     });
 
     describe("境界値", () => {
-        it("N7 必須の値が空の文字列なら、無いのと同じに扱って投げる(.env.example の「JWT_ACCESS_SECRET=」のまま)", () => {
-            expect(() => loadConfig({ ...required, JWT_ACCESS_SECRET: "" })).toThrow(/JWT_ACCESS_SECRET/);
+        it("N7 必須の値が空の文字列なら、無いのと同じに扱って投げる(.env.example の「DATABASE_URL=」のまま)", () => {
+            expect(() => loadConfig({ ...required, DATABASE_URL: "" })).toThrow(/DATABASE_URL/);
         });
 
         it("N8 メールの値が空の文字列なら、無いのと同じに扱う(空のままでも起動できる。.env.example)", () => {

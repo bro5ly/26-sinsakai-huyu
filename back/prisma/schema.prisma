@@ -123,6 +123,10 @@ model Session {
   kind      SessionKind
   expiresAt DateTime    @map("expires_at")
   createdAt DateTime    @default(now()) @map("created_at")
+  // タブレットのセッションだけ: 作った端末(その端末でだけ使える。R-A8)と、最後に使った日時(無操作30秒で切る。R-A9)
+  deviceId   String?       @map("device_id")
+  device     TabletDevice? @relation(fields: [deviceId], references: [id])
+  lastUsedAt DateTime?     @map("last_used_at")
 
   @@index([userId])
   @@map("session")
@@ -254,6 +258,8 @@ model TabletDevice {
   lastUsedAt     DateTime? @map("last_used_at")
   // 取り消した日時。あれば、次の呼び出しから断る(R-A3)
   revokedAt      DateTime? @map("revoked_at")
+  // この端末で作ったタブレットのセッション
+  sessions       Session[]
 
   @@map("tablet_device")
 }
