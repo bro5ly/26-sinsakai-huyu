@@ -178,6 +178,15 @@ export default function TabletPage() {
                   <BarcodeInput onSubmit={handleScan} buttonText="Proceed" />
                 </div>
               )}
+              {/* カード無しで返す(返すのは本人でなくてよい。A-Q4・E7) */}
+              {step === "signin" && (
+                <Button
+                  onPress={selectReturn}
+                  className="h-20 bg-emerald-500 text-white font-black italic text-2xl rounded-[2rem] shadow-xl shadow-emerald-200"
+                >
+                  返す(カード不要)
+                </Button>
+              )}
               {step !== "signin" && (
                 <Button
                   variant="flat"
@@ -245,7 +254,7 @@ export default function TabletPage() {
                     Target Item
                   </p>
                   <p className="font-black text-2xl text-slate-800 tracking-tight">
-                    {completedItem.item?.itemType?.title || "Unknown Item"}
+                    {completedItem.title}
                   </p>
                 </div>
               )}

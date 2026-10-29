@@ -1,6 +1,5 @@
-import type { CreateTabletSessionRequest, CurrentTabletDevice, RegisterTabletDeviceRequest, TabletDevice, TabletSession } from "@sinsakai/shared";
+import type { CreateTabletSessionRequest, CurrentTabletDevice, RegisterTabletDeviceRequest, Rental, TabletDevice, TabletSession } from "@sinsakai/shared";
 import { ApiService } from "./api.service";
-import { CheckoutResponse, ReturnResponse } from "@/types";
 
 class TabletService extends ApiService {
   // この端末が登録されているか(と名前)。されていなければ ApiError(code: DEVICE_NOT_REGISTERED)
@@ -23,20 +22,14 @@ class TabletService extends ApiService {
     await this.delete<void>("/api/tablet/sessions/current", { bearer: token });
   }
 
-  async checkout(barcode: string, token: string): Promise<CheckoutResponse> {
-    return this.post<CheckoutResponse>(
-      "/api/tablet/checkout",
-      { barcode },
-      { bearer: token }
-    );
+  // 本人確認したセッションで借りる(判断表C)
+  async rentItem(barcode: string, token: string): Promise<Rental> {
+    return this.post<Rental>("/api/tablet/rentals", { barcode }, { bearer: token });
   }
 
-  async returnItem(barcode: string, token: string): Promise<ReturnResponse> {
-    return this.post<ReturnResponse>(
-      "/api/tablet/return",
-      { barcode },
-      { bearer: token }
-    );
+  // 返却は、登録された端末ならカードもPINも要らない(A-Q4・E7)
+  async returnItem(barcode: string): Promise<Rental> {
+    return this.post<Rental>("/api/tablet/returns", { barcode });
   }
 }
 

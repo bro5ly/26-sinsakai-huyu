@@ -1,5 +1,4 @@
 import type { ErrorCode } from "@sinsakai/shared";
-import { Rental } from "./rental.types";
 
 export class ApiError extends Error {
   constructor(
@@ -11,30 +10,4 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
   }
-}
-
-// Base API Response
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  message?: string;
-  data?: T;
-}
-
-// 登録・ログインの応答の型は shared/(@sinsakai/shared)の Session・VerificationToken を使う
-
-
-// Tablet API Responses
-export interface CheckoutResponse extends ApiResponse {
-  data: Rental;
-}
-
-export interface ReturnResponse extends ApiResponse {
-  data: Rental;
-}
-
-// Barcode types
-export interface BarcodeItem {
-  code: string;
-  name: string;
-  type: string;
 }
