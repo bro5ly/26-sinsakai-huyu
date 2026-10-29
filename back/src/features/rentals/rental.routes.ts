@@ -4,12 +4,12 @@ import { rentalSchema } from "./rental.schema.js";
 import { createTabletSessionMiddleware } from "@/middleware/tablet.auth.middleware.js";
 import { TabletSessionService } from "@/features/tablet-sessions/tablet-session.service.js";
 import { route } from "@/lib/route.js";
-import { sendSuccess } from "@/lib/response-handler.js";
 import type { Deps } from "@/deps.js";
 import type { Config } from "@/config.js";
 import { createDeviceMiddleware } from "@/middleware/device.middleware.js";
 import { createTabletDeviceService } from "@/features/tablet-devices/tablet-device.routes.js";
-import { createTabletSessionRequestSchema, type CurrentTabletDevice, type TabletSession } from "@sinsakai/shared";
+import { createTabletSessionRequestSchema, type CurrentTabletDevice, type Rental, type TabletSession } from "@sinsakai/shared";
+import { toRentalResponse } from "./rental.response.js";
 
 // 失敗は throw するだけでよい(Express 5が middleware/error.middleware.ts に渡す)
 export const createTabletRoutes = (deps: Deps, config: Config) => {
@@ -49,14 +49,20 @@ export const createTabletRoutes = (deps: Deps, config: Config) => {
         res.status(204).end()
     })
 
-    router.post('/checkout', tabletMiddleware, route({ body: rentalSchema.itemAction, auth: true }, async ({ body, user, res }) => {
-        const result = await rentals.checkoutItem(user.id, body.barcode)
-        return sendSuccess(res, result, 200)
+    // 本人確認したセッションで借りる(UC-8・判断表C)。借りた端末を記録する(E3)
+    router.post('/rentals', tabletMiddleware, route({ body: rentalSchema.itemAction, auth: true }, async ({ req, body, user, res }) => {
+        const device = req.device
+        if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない")
+        const rental = await rentals.checkout({ userId: user.id, barcode: body.barcode, deviceId: device.id }, new Date())
+        return res.status(201).json(toRentalResponse(rental) satisfies Rental)
     }))
 
-    router.post('/return', tabletMiddleware, route({ body: rentalSchema.itemAction }, async ({ body, res }) => {
-        const result = await rentals.returnItem(body.barcode)
-        return sendSuccess(res, result, 200)
+    // 返却は、登録された端末であれば、カードもPINも要らない(返すのは本人でなくてよい。A-Q4・E7)。返した端末を記録する(E3)
+    router.post('/returns', route({ body: rentalSchema.itemAction }, async ({ req, body, res }) => {
+        const device = req.device
+        if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない")
+        const rental = await rentals.returnItem({ barcode: body.barcode, deviceId: device.id }, new Date())
+        return res.status(201).json(toRentalResponse(rental) satisfies Rental)
     }))
 
     return router

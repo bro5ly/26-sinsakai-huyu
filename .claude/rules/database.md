@@ -20,4 +20,4 @@ paths:
 - スキーマを変えたら`docker compose exec api npm run db:migrate -- --name <内容>`。マイグレーションのSQLと`src/generated/prisma/`の両方をコミットする
 - 作成済みのマイグレーション(`prisma/migrations/`)は書き換えない。直すときは新しいマイグレーションを足す
 - `seed.ts`は全テーブルを消してから入れ直す。新しいテーブルを足したら、外部キーの逆順で`deleteMany`に加える
-- seedのバーコード・カード番号は`front/src/app/barcodes/page.tsx`の印刷用データと揃っている。片方を変えたらもう片方も直す
+- seedのバーコード・カード番号は`front/src/app/barcodes/page.dev.tsx`の印刷用データと揃っている。片方を変えたらもう片方も直す

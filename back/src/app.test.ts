@@ -8,7 +8,7 @@ import type { TabletDeviceRecord } from "@/features/tablet-devices/tablet-device
 import type { CardHolderRecord } from "@/features/tablet-sessions/tablet-session.types.js";
 import type { Deps } from "@/deps.js";
 import { loadConfig } from "@/config.js";
-import { categoriesSchema, currentTabletDeviceSchema, tabletDeviceSchema, tabletDevicesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema, tabletSessionSchema } from "@sinsakai/shared";
+import { categoriesSchema, currentTabletDeviceSchema, tabletDeviceSchema, tabletDevicesSchema, itemTypeDetailSchema, itemTypesSchema, meSchema, myRentalsSchema, sessionSchema, verificationTokenSchema, tabletSessionSchema, rentalSchema } from "@sinsakai/shared";
 import { createApp } from "./app.js";
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
@@ -27,7 +27,6 @@ const registered = () => ({ id: "user-1", studentId: "20240001", passwordHash, r
 const adminUser = () => ({ id: "admin-1", studentId: "90240001", passwordHash, role: "ADMIN" as const, isActive: true });
 const takahashi = rosterEntry({ studentId: "90240001", name: "高橋 先生", email: "admin@example.com", serialNumber: "IC-CARD-ADMIN", userType: "FACULTY" });
 
-const item = { id: "item-2", barcode: "MAC-002", name: "MacBook 2", status: "AVAILABLE", itemType: { title: "MacBook", rentalPeriodDays: 7 } };
 // カタログの種類。使える物が1つ、貸出中が1つ、廃棄済みが1つ
 const macbookType = {
     id: "type-1",
@@ -48,7 +47,8 @@ const macbookType = {
         { id: "item-9", location: null, status: "DISPOSED" as const, hasActiveRental: false },
     ],
 };
-const rental = { id: "rental-1", itemId: "item-2", userId: "user-1", rentedAt: new Date("2026-10-24T00:00:00Z"), dueDate: new Date("2099-01-01T00:00:00Z"), returnedAt: null };
+const rental = { id: "rental-1", rentedAt: new Date("2026-10-24T00:00:00Z"), dueDate: new Date("2099-01-01T00:00:00Z"), returnedAt: null };
+const rentalItemType = { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } };
 
 // 設定はテストの中で決める(環境変数は読まない)
 const testConfig = loadConfig({ DATABASE_URL: "unused" });
@@ -91,6 +91,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     const createdDevices: { name: string; registeredById: string }[] = [];
     const cardHolder: CardHolderRecord = { id: "user-1", role: "MEMBER", isActive: true, pinHash, pinFailedAttempts: 0, pinLockedAt: null };
     const pinAttempts: { userId: string; failedAttempts: number; lockedAt: Date | null }[] = [];
+    const rentalWrites: { kind: "rent" | "return"; deviceId: string }[] = [];
     const deviceById = (id: string) => [...devices.values()].find((d) => d.id === id) ?? null;
     const deps: Deps = {
         users: {
@@ -142,7 +143,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
                     rentedAt: rental.rentedAt,
                     dueDate: rental.dueDate,
                     returnedAt: null,
-                    item: { id: "item-2", barcode: "MAC-002" },
+                    item: { id: "item-2" },
                     itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
                 },
             ],
@@ -151,10 +152,19 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
                 savedPins.push(data);
             },
         },
+        // MAC-002 は貸し出せる。MAC-001 は山田さんが借りている(返却の確かめ用)
         rentals: {
-            findByBarcode: async (barcode) => (barcode === item.barcode ? (item as never) : null),
-            saveCheckout: async () => rental as never,
-            saveReturned: async () => ({ ...rental, returnedAt: new Date("2026-10-25T00:00:00Z") }) as never,
+            findItemForCheckout: async (barcode) => (barcode === "MAC-002" ? { id: "item-2", status: "AVAILABLE", hasActiveRental: false, rentalPeriodDays: 7 } : null),
+            findBorrower: async (userId) => (userId === "user-1" ? { canBorrow: true, maxItems: 3, suspendedUntil: null, activeDueDates: [] } : null),
+            createRental: async (data) => {
+                rentalWrites.push({ kind: "rent", deviceId: data.deviceId });
+                return { ...rental, rentedAt: data.rentedAt, dueDate: data.dueDate, item: { id: data.itemId }, itemType: rentalItemType };
+            },
+            returnByBarcode: async (data) => {
+                if (data.barcode !== "MAC-001") return null;
+                rentalWrites.push({ kind: "return", deviceId: data.deviceId });
+                return { ...rental, returnedAt: data.returnedAt, item: { id: "item-1" }, itemType: rentalItemType };
+            },
         },
         // 山田 太郎(IC-CARD-001)はPIN「8068」を登録済み。ほかの人はPIN未登録
         cardHolders: {
@@ -184,7 +194,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         },
         ...overrides,
     };
-    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices, pinAttempts, sessions };
+    return { app: createApp(deps, testConfig), sentMails, deletedSessionHashes, savedPins, devices, createdDevices, pinAttempts, sessions, rentalWrites };
 };
 
 type App = ReturnType<typeof fakeDeps>["app"];
@@ -511,7 +521,7 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
                     {
                         id: "rental-1",
                         itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
-                        item: { id: "item-2", barcode: "MAC-002" },
+                        item: { id: "item-2" },
                         rentedAt: "2026-10-24T00:00:00.000Z",
                         dueDate: "2099-01-01T00:00:00.000Z",
                         returnedAt: null,
@@ -666,7 +676,7 @@ describe("タブレットのAPIは、登録された端末からだけ(D5。R-A2
             const { app } = fakeDeps();
 
             expectProblem(await request(app).get("/api/tablet/device"), 401, "DEVICE_NOT_REGISTERED");
-            for (const url of ["/api/tablet/sessions", "/api/tablet/checkout", "/api/tablet/return"]) {
+            for (const url of ["/api/tablet/sessions", "/api/tablet/rentals", "/api/tablet/returns"]) {
                 expectProblem(await post(app, url).send({ cardNumber: "IC-CARD-001", pin: "8068", barcode: "MAC-002" }), 401, "DEVICE_NOT_REGISTERED");
             }
         });
@@ -734,7 +744,7 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
             expect(Object.keys(res.body).sort()).toEqual(["expiresAt", "rentals", "token", "user"]);
             expect(body.rentals).toEqual([{ title: "MacBook", dueDate: "2099-01-01T00:00:00.000Z", state: "RENTING" }]);
             // 作ったセッションで、そのまま貸し出せる
-            expect((await tabletPost(app, "/api/tablet/checkout").set(bearer(body.token)).send({ barcode: "MAC-002" })).status).toBe(200);
+            expect((await tabletPost(app, "/api/tablet/rentals").set(bearer(body.token)).send({ barcode: "MAC-002" })).status).toBe(201);
         });
     });
 
@@ -773,7 +783,7 @@ describe("タブレットのセッション(終える・時間切れ。R-A9・R-
             const res = await request(app).delete("/api/tablet/sessions/current").set("Origin", frontendUrl).set(deviceCookie(DEVICE_TOKEN)).set(bearer(TABLET_KIND_TOKEN));
 
             expect(res.status).toBe(204);
-            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
+            expectProblem(await tabletPost(app, "/api/tablet/rentals").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
         });
     });
 
@@ -781,62 +791,93 @@ describe("タブレットのセッション(終える・時間切れ。R-A9・R-
         it("H67 無操作30秒を過ぎたセッションなら、401 SESSION_EXPIRED(もう一度カードを読む)", async () => {
             const { app } = fakeDeps();
 
-            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(IDLE_TABLET_TOKEN)).send({ barcode: "MAC-002" }), 401, "SESSION_EXPIRED");
+            expectProblem(await tabletPost(app, "/api/tablet/rentals").set(bearer(IDLE_TABLET_TOKEN)).send({ barcode: "MAC-002" }), 401, "SESSION_EXPIRED");
         });
 
         it("H68 Webのセッションの番号は、タブレットでは通らない(R-A18)", async () => {
             const { app } = fakeDeps();
 
-            expectProblem(await tabletPost(app, "/api/tablet/checkout").set(bearer(WEB_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
+            expectProblem(await tabletPost(app, "/api/tablet/rentals").set(bearer(WEB_TOKEN)).send({ barcode: "MAC-002" }), 401, "UNAUTHENTICATED");
         });
     });
 });
 
-describe("POST /api/tablet/checkout(貸し出し)", () => {
+describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
     describe("正常系", () => {
-        it("現状: H16 タブレットのセッションがあれば、200で状態付きの貸し出しを返す(R-19。形はe2で変える)", async () => {
-            const { app } = fakeDeps();
+        it("H16 タブレットのセッションがあれば、201でRentalの形(状態付き・バーコード無し)を返し、借りた端末を記録する(R-19・E3・BC1)", async () => {
+            const { app, rentalWrites } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/rentals").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({
-                success: true,
-                message: "貸し出しが完了しました",
-                data: { ...rental, rentedAt: rental.rentedAt.toISOString(), dueDate: rental.dueDate.toISOString(), status: "RENTING" },
-            });
+            expect(res.status).toBe(201);
+            const body = rentalSchema.parse(res.body);
+            expect(body).toMatchObject({ item: { id: "item-2" }, itemType: { title: "MacBook" }, state: "RENTING", returnedAt: null });
+            expect(res.body.item).not.toHaveProperty("barcode");
+            expect(res.body).not.toHaveProperty("success");
+            expect(rentalWrites).toEqual([{ kind: "rent", deviceId: "device-1" }]);
         });
     });
 
     describe("異常系", () => {
         it("H17 タブレットのセッションが無ければ、401 UNAUTHENTICATEDを返し、貸し出さない", async () => {
             // DBに触れたらテストが落ちるようにして、ミドルウェアで止まることを見る
-            const { app } = fakeDeps({ rentals: { findByBarcode: notUsed, saveCheckout: notUsed, saveReturned: notUsed } });
+            const { app } = fakeDeps({ rentals: { findItemForCheckout: notUsed, findBorrower: notUsed, createRental: notUsed, returnByBarcode: notUsed } });
 
-            const res = await tabletPost(app, "/api/tablet/checkout").send({ barcode: "MAC-002" });
+            const res = await tabletPost(app, "/api/tablet/rentals").send({ barcode: "MAC-002" });
 
             expectProblem(res, 401, "UNAUTHENTICATED");
         });
 
-        it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す", async () => {
+        it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す(C1)", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/checkout").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "NOPE-001" });
+            const res = await tabletPost(app, "/api/tablet/rentals").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "NOPE-001" });
 
             expectProblem(res, 404, "ITEM_NOT_FOUND");
+        });
+
+        it("H69 延滞がある人なら、409 HAS_OVERDUEを返す(C6。判断表Cの細かい場合分けは rental.check.test.ts)", async () => {
+            const { app } = fakeDeps({
+                rentals: {
+                    findItemForCheckout: async () => ({ id: "item-2", status: "AVAILABLE", hasActiveRental: false, rentalPeriodDays: 7 }),
+                    findBorrower: async () => ({ canBorrow: true, maxItems: 3, suspendedUntil: null, activeDueDates: [new Date("2000-01-01")] }),
+                    createRental: notUsed,
+                    returnByBarcode: notUsed,
+                },
+            });
+
+            expectProblem(await tabletPost(app, "/api/tablet/rentals").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" }), 409, "HAS_OVERDUE");
         });
     });
 });
 
-describe("POST /api/tablet/return(返却)", () => {
+describe("POST /api/tablet/returns(返す。UC-9)", () => {
     describe("正常系", () => {
-        it("現状: H19 タブレットのセッションがあれば、200で返却済みの状態付きの貸し出しを返す(R-21)", async () => {
+        it("H19 登録された端末なら、カードもセッションも無しで201、返却日時入りのRentalを返し、返した端末を記録する(A-Q4・E3・E7)", async () => {
+            const { app, rentalWrites } = fakeDeps();
+
+            const res = await tabletPost(app, "/api/tablet/returns").send({ barcode: "MAC-001" });
+
+            expect(res.status).toBe(201);
+            expect(rentalSchema.parse(res.body)).toMatchObject({ state: "RETURNED", returnedAt: expect.any(String) });
+            expect(res.body.item).not.toHaveProperty("barcode");
+            expect(rentalWrites).toEqual([{ kind: "return", deviceId: "device-1" }]);
+        });
+    });
+
+    describe("異常系", () => {
+        it("H70 その物品の返していない貸し出しが無ければ、404 ACTIVE_RENTAL_NOT_FOUND(R-23)", async () => {
             const { app } = fakeDeps();
 
-            const res = await tabletPost(app, "/api/tablet/return").set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" });
+            expectProblem(await tabletPost(app, "/api/tablet/returns").send({ barcode: "MAC-003" }), 404, "ACTIVE_RENTAL_NOT_FOUND");
+        });
 
-            expect(res.status).toBe(200);
-            expect(res.body).toMatchObject({ success: true, message: "返却が完了しました", data: { id: "rental-1", returnedAt: "2026-10-25T00:00:00.000Z", status: "RETURNED" } });
+        it("H71 古いURL(POST /api/tablet/checkout・return)は残さず、404 NOT_FOUND", async () => {
+            const { app } = fakeDeps();
+
+            for (const url of ["/api/tablet/checkout", "/api/tablet/return"]) {
+                expectProblem(await tabletPost(app, url).set(bearer(TABLET_KIND_TOKEN)).send({ barcode: "MAC-002" }), 404, "NOT_FOUND");
+            }
         });
     });
 });

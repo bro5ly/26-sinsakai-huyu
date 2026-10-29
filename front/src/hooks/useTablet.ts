@@ -30,15 +30,10 @@ export const useTablet = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await tabletService.checkout(barcode, session.token);
+        const rental = await tabletService.rentItem(barcode, session.token);
         // 借りた物を、借りている物の一覧に足す(画面に出すのは名前・期限・延滞だけ。R-A13)
-        setSession((prev) =>
-          prev && {
-            ...prev,
-            rentals: [...prev.rentals, { title: response.data.item?.itemType?.title ?? "", dueDate: String(response.data.dueDate), state: "RENTING" }],
-          }
-        );
-        return response;
+        setSession((prev) => prev && { ...prev, rentals: [...prev.rentals, { title: rental.itemType.title, dueDate: rental.dueDate, state: rental.state }] });
+        return rental;
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "貸出に失敗しました");
         throw err;
@@ -49,22 +44,19 @@ export const useTablet = () => {
     [session]
   );
 
-  const returnItem = useCallback(
-    async (barcode: string) => {
-      if (!session) throw new Error("認証されていません");
-      setLoading(true);
-      setError(null);
-      try {
-        return await tabletService.returnItem(barcode, session.token);
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : "返却に失敗しました");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [session]
-  );
+  // 返却はカードもPINも要らない(返すのは本人でなくてよい。A-Q4・E7)ので、セッションが無くても呼べる
+  const returnItem = useCallback(async (barcode: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      return await tabletService.returnItem(barcode);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "返却に失敗しました");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // 画面を最初に戻すときは、サーバーのセッションも無効にする(立ち去った人の名前で次の人が借りられないように。R-A10)。
   // すでに切れていても気にしない

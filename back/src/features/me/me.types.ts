@@ -19,7 +19,8 @@ export interface ActiveRentalRecord {
     rentedAt: Date;
     dueDate: Date;
     returnedAt: Date | null;
-    item: { id: string; barcode: string };
+    // 物品のバーコードは画面に出さないので読まない(BC1)
+    item: { id: string };
     itemType: { id: string; title: string; genre: { id: string; name: string } };
 }
 

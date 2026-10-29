@@ -11,12 +11,9 @@ export interface StepInfo {
   color: string;
 }
 
+// 完了の画面に出す、借りた・返した物の名前
 export interface CompletedItem {
-  item: {
-    itemType: {
-      title: string;
-    };
-  };
+  title: string;
 }
 
 // 画面に出す本人の情報。表示用の名前と、借りている物の名前・期限・延滞だけ(学籍番号などは受け取らない。R-A13)
@@ -124,13 +121,14 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
       }
       try {
         if (step === "checkout" && sessionToken) {
-          const response = await checkout(barcode);
-          setCompletedItem(response.data || null);
+          const rental = await checkout(barcode);
+          setCompletedItem({ title: rental.itemType.title });
           setSuccessMessage("Checkout Successful");
           setStep("complete");
-        } else if (step === "return" && sessionToken) {
-          const response = await returnItem(barcode);
-          setCompletedItem(response.data || null);
+        } else if (step === "return") {
+          // 返却はカード無しでもできる(E7)
+          const rental = await returnItem(barcode);
+          setCompletedItem({ title: rental.itemType.title });
           setSuccessMessage("Return Successful");
           setStep("complete");
         }
@@ -167,10 +165,15 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
     resetInactivityTimer();
   }, [resetInactivityTimer]);
 
+  // 本人確認していれば操作の選択へ、カード無しで返していたなら最初の画面へ戻る
   const backToActionSelect = useCallback(() => {
+    if (!sessionToken) {
+      handleReset();
+      return;
+    }
     setStep("action-select");
     resetInactivityTimer();
-  }, [resetInactivityTimer]);
+  }, [sessionToken, handleReset, resetInactivityTimer]);
 
   return {
     step,

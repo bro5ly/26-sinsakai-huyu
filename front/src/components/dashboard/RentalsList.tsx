@@ -56,8 +56,9 @@ export const RentalsList = ({ rentals, maxItems }: RentalsListProps) => {
                   <h3 className="font-bold text-[12px] text-slate-800 line-clamp-1 leading-none mb-2">
                     {rental.itemType.title}
                   </h3>
+                  {/* 物品のバーコードは出さない(値が分かれば、実物を持たずに返却できてしまうため。2026-10-29 BC1) */}
                   <p className="text-[10px] text-blue-500 font-bold tabular-nums">
-                    ID: {rental.item.barcode}
+                    {new Date(rental.dueDate).toLocaleDateString("ja-JP")}まで
                   </p>
                 </div>
               </CardBody>
