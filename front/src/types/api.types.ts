@@ -1,5 +1,4 @@
 import type { ErrorCode } from "@sinsakai/shared";
-import { User } from "./user.types";
 import { Rental } from "./rental.types";
 
 export class ApiError extends Error {
@@ -25,12 +24,6 @@ export interface ApiResponse<T = unknown> {
 
 
 // Tablet API Responses
-export interface TabletSigninResponse extends ApiResponse {
-  session: string;
-  user: User;
-  data: Rental[];
-}
-
 export interface CheckoutResponse extends ApiResponse {
   data: Rental;
 }

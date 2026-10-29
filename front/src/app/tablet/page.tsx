@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTabletOperations } from "@/hooks/useTabletOperations";
 import { useTabletDevice } from "@/hooks/useTabletDevice";
 import { TabletDeviceRegistration } from "@/components/tablet/TabletDeviceRegistration";
+import { TabletPinInput } from "@/components/tablet/TabletPinInput";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import BarcodeInput from "@/components/BarcodeInput";
 import { Button, Chip, Spinner, Avatar, Switch, Divider } from "@heroui/react";
@@ -20,6 +21,7 @@ export default function TabletPage() {
     successMessage,
     completedItem,
     handleScan,
+    submitPin,
     handleReset,
     selectCheckout,
     selectReturn,
@@ -53,12 +55,12 @@ export default function TabletPage() {
               key={step}
               onScan={handleScan}
               onError={() => {}}
-              isActive={step !== "action-select" && step !== "complete"}
+              isActive={step === "signin" || step === "checkout" || step === "return"}
             />
           </div>
 
           {/* 四隅の大型コーナーガイド：カメラの端にピッタリ合わせる(inset-0) */}
-          {step !== "action-select" && step !== "complete" && (
+          {(step === "signin" || step === "checkout" || step === "return") && (
             <div className="absolute inset-0 pointer-events-none z-20 animate-fade-in">
               <div className="absolute top-0 left-0 w-24 h-24 border-t-[10px] border-l-[10px] border-blue-500 rounded-tl-[5rem]" />
               <div className="absolute top-0 right-0 w-24 h-24 border-t-[10px] border-r-[10px] border-blue-500 rounded-tr-[5rem]" />
@@ -72,7 +74,7 @@ export default function TabletPage() {
         </div>
 
         {/* 下部テキスト：背景ボックスなしのクリーンな表示 */}
-        {step !== "action-select" && step !== "complete" && (
+        {(step === "signin" || step === "checkout" || step === "return") && (
           <div className="absolute bottom-16 z-30">
             <p className="text-[14px] font-black tracking-[0.5em] text-blue-600 uppercase italic">
               Active Scanning Mode
@@ -122,17 +124,20 @@ export default function TabletPage() {
           {userData && (
             <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-4 animate-appearance-in">
               <Avatar
-                name={userData.name}
+                name={userData.displayName}
                 size="sm"
                 className="bg-blue-50 text-blue-600 font-black"
               />
               <div className="flex-grow">
                 <p className="text-sm font-black text-slate-800 leading-none">
-                  {userData.name}
+                  {userData.displayName}
                 </p>
-                <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-1">
-                  {userData.studentId}
-                </p>
+                {/* 借りている物の名前・期限・延滞だけを出す(学籍番号などはAPIが返さない。R-A13) */}
+                {userData.rentals.map((rental, i) => (
+                  <p key={i} className={`text-[10px] font-bold mt-1 ${rental.state === "OVERDUE" ? "text-danger" : "text-slate-400"}`}>
+                    {rental.title}・{new Date(rental.dueDate).toLocaleDateString("ja-JP")}まで{rental.state === "OVERDUE" ? "(延滞)" : ""}
+                  </p>
+                ))}
               </div>
               <Chip
                 size="sm"
@@ -140,7 +145,7 @@ export default function TabletPage() {
                 variant="flat"
                 className="font-black"
               >
-                {userData.getRentalCount()} Items
+                {userData.rentals.length} Items
               </Chip>
             </div>
           )}
@@ -186,6 +191,16 @@ export default function TabletPage() {
             </div>
           )}
 
+          {step === "pin" && (
+            <div className="space-y-8 animate-appearance-in">
+              <div className="space-y-3">
+                <h2 className={`text-6xl font-black tracking-tighter uppercase italic leading-[0.85] ${stepInfo.color}`}>{stepInfo.title}</h2>
+                <p className="text-sm font-medium text-slate-400">{stepInfo.sub}</p>
+              </div>
+              <TabletPinInput loading={loading} onSubmit={submitPin} onCancel={handleReset} />
+            </div>
+          )}
+
           {step === "action-select" && (
             <div className="grid grid-cols-1 gap-6 animate-appearance-in">
               <Button
@@ -206,7 +221,7 @@ export default function TabletPage() {
                 className="mt-4 font-black text-xs opacity-30"
                 onPress={handleReset}
               >
-                Finish Session
+                終わる
               </Button>
             </div>
           )}
@@ -248,7 +263,7 @@ export default function TabletPage() {
                   className="font-bold text-slate-300 uppercase tracking-widest text-[10px]"
                   onPress={handleReset}
                 >
-                  Exit
+                  終わる
                 </Button>
               </div>
             </div>

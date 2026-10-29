@@ -45,7 +45,7 @@ export class ApiService {
     return data;
   }
 
-  // bearer はタブレットの今のトークンだけが使う。タブレットもCookieのセッションにする(0.8のe)ときに消す
+  // bearer はタブレットのセッション(カード + PINで作ったもの)だけが使う。画面のメモリにだけ持ち、Cookieにはしない
   private static authorization(bearer?: string): HeadersInit {
     return bearer ? { Authorization: `Bearer ${bearer}` } : {};
   }
@@ -58,8 +58,8 @@ export class ApiService {
     return this.request<T>(endpoint, { method: "PUT", body: JSON.stringify(body) });
   }
 
-  public async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: "DELETE" });
+  public async delete<T>(endpoint: string, options: { bearer?: string } = {}): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE", headers: ApiService.authorization(options.bearer) });
   }
 
   public async post<T>(

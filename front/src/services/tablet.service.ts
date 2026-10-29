@@ -1,10 +1,6 @@
-import type { CurrentTabletDevice, RegisterTabletDeviceRequest, TabletDevice } from "@sinsakai/shared";
+import type { CreateTabletSessionRequest, CurrentTabletDevice, RegisterTabletDeviceRequest, TabletDevice, TabletSession } from "@sinsakai/shared";
 import { ApiService } from "./api.service";
-import {
-  TabletSigninResponse,
-  CheckoutResponse,
-  ReturnResponse,
-} from "@/types";
+import { CheckoutResponse, ReturnResponse } from "@/types";
 
 class TabletService extends ApiService {
   // この端末が登録されているか(と名前)。されていなければ ApiError(code: DEVICE_NOT_REGISTERED)
@@ -17,10 +13,14 @@ class TabletService extends ApiService {
     return this.post<TabletDevice>("/api/tablet-devices", request);
   }
 
-  async signin(serialNumber: string): Promise<TabletSigninResponse> {
-    return this.post<TabletSigninResponse>("/api/tablet/signin", {
-      serialNumber,
-    });
+  // カードとPINを一緒に送る(カードだけでは何も分からないように。R-A12)。番号は画面のメモリにだけ持つ
+  async startSession(request: CreateTabletSessionRequest): Promise<TabletSession> {
+    return this.post<TabletSession>("/api/tablet/sessions", request);
+  }
+
+  // 「終わる」・完了の10秒・無操作で、サーバーのセッションもすぐ無効にする(R-A10)
+  async endSession(token: string): Promise<void> {
+    await this.delete<void>("/api/tablet/sessions/current", { bearer: token });
   }
 
   async checkout(barcode: string, token: string): Promise<CheckoutResponse> {
