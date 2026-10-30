@@ -148,7 +148,7 @@
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental`(2026-10-29に作った。判断表Cで判断し、借りた端末を記録する。C4・C5はどちらも`BORROWING_SUSPENDED`。E8) | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
 | `POST /api/tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }` | 201 `Rental`(返却日時入り。2026-10-29に作った。返した端末を記録する) | 404 `ACTIVE_RENTAL_NOT_FOUND` | UC-9 |
 
-PINのロックは423(Locked)にするか、409にするか(API-Q6)。
+PINのロックは423(Locked)にした(2026-10-29 E5)。
 
 ### 4.5 管理者
 

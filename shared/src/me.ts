@@ -38,6 +38,7 @@ export const setPinRequestSchema = z.object({
 // 貸し出しの状態。DBには無く、返却期限と返却日時から決める(back/src/features/rentals/rental.status.ts)
 export const rentalStateSchema = z.enum(["RENTING", "OVERDUE", "RETURNED"]);
 
+// GET /api/me/rentals の中身と、POST /api/tablet/rentals・POST /api/tablet/returns の応答(201)で同じ形を使う
 export const rentalSchema = z.object({
   id: z.string(),
   itemType: z.object({
@@ -52,8 +53,6 @@ export const rentalSchema = z.object({
   returnedAt: z.iso.datetime().nullable(),
   state: rentalStateSchema,
 });
-
-// POST /api/tablet/rentals・POST /api/tablet/returns → 201 Rental(2026-10-29)
 
 // GET /api/me/rentals → 200 { items: Rental[] }。今は借りている物だけ(返した物の履歴は後で。Me4)
 export const myRentalsSchema = z.object({ items: z.array(rentalSchema) });
