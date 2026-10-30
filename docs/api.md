@@ -158,7 +158,7 @@ PINのロックは423(Locked)にした(2026-10-29 E5)。
 |---|---|---|---|---|
 | `GET /api/admin/tablet-devices` | Web(管理者) | — | 200 `{ items: TabletDevice[] }`(取り消していない端末だけ) | UC-20 |
 | `DELETE /api/admin/tablet-devices/{id}` | Web(管理者) | — | 204(行は消さず、取り消した日時を入れる。取り消し済みでも204。無ければ404。D4) | UC-20 |
-| 在庫管理(`/api/admin/item-types`・`/api/admin/items`・`/api/admin/rentals`・`/api/admin/users/{id}`) | Web(管理者) | `docs/inventory.md`で決める | | UC-21〜UC-24 |
+| 在庫管理(`/api/admin/item-types`・`/api/admin/items`・`/api/admin/rentals`・`/api/admin/users/{studentId}`) | Web(管理者) | 叩き台は`docs/inventory.md`の10章。形は作る前にここに書く | | UC-21〜UC-24 |
 
 ### 4.6 そのほか
 
