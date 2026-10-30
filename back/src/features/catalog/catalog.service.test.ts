@@ -27,17 +27,19 @@ const macbook = (items: CatalogItemRecord[]): ItemTypeRecord => ({
 });
 
 const store = (overrides: Partial<CatalogStore> = {}): CatalogStore => ({
-  findCategories: notUsed,
-  findItemTypes: notUsed,
-  findItemType: notUsed,
+  findAllCategories: notUsed,
+  findAllItemTypes: notUsed,
+  findItemTypeById: notUsed,
   ...overrides,
 });
+
+const catalogService = (catalog: CatalogStore) => new CatalogService({ catalog });
 
 describe("listItemTypes(種類ごとの一覧)", () => {
   describe("正常系", () => {
     it("CT1 種類ごとに、貸し出せる数(使えて貸し出されていない物)と全数を数え、物品1つ1つと説明は返さない(R-31。docs/api.md 5章 ItemTypeSummary)", async () => {
       const items = [item("i1", "AVAILABLE"), item("i2", "AVAILABLE", true), item("i3", "MAINTENANCE")];
-      const service = new CatalogService(store({ findItemTypes: async () => [macbook(items)] }));
+      const service = catalogService(store({ findAllItemTypes: async () => [macbook(items)] }));
 
       const [summary] = await service.listItemTypes();
 
@@ -57,7 +59,7 @@ describe("listItemTypes(種類ごとの一覧)", () => {
   describe("境界値", () => {
     it("CT2 廃棄済みは全数に入れず、紛失は入れる(紛失は戻ってくることがある。2026-10-28 Ca4)", async () => {
       const items = [item("i1", "AVAILABLE"), item("i2", "LOST"), item("i3", "DISPOSED")];
-      const service = new CatalogService(store({ findItemTypes: async () => [macbook(items)] }));
+      const service = catalogService(store({ findAllItemTypes: async () => [macbook(items)] }));
 
       const [summary] = await service.listItemTypes();
 
@@ -65,7 +67,7 @@ describe("listItemTypes(種類ごとの一覧)", () => {
     });
 
     it("CT3 物品が1つも無い種類も、0件として返す(貸し出せる数0・全数0)", async () => {
-      const service = new CatalogService(store({ findItemTypes: async () => [macbook([])] }));
+      const service = catalogService(store({ findAllItemTypes: async () => [macbook([])] }));
 
       const [summary] = await service.listItemTypes();
 
@@ -78,8 +80,8 @@ describe("getItemType(種類の詳細)", () => {
   describe("正常系", () => {
     it("CT4 説明と、物品1つ1つの状態(貸出中はRENTED、修理中は貸し出しがあっても修理中)を返す(R-32)", async () => {
       const items = [item("i1", "AVAILABLE"), item("i2", "AVAILABLE", true), item("i3", "MAINTENANCE", true)];
-      const service = new CatalogService(
-        store({ findItemType: async (id) => (id === "type-1" ? macbook(items) : null) }),
+      const service = catalogService(
+        store({ findItemTypeById: async (id) => (id === "type-1" ? macbook(items) : null) }),
       );
 
       const detail = await service.getItemType("type-1");
@@ -101,7 +103,7 @@ describe("getItemType(種類の詳細)", () => {
 
   describe("異常系", () => {
     it("CT5 無い種類のIDなら、断る(NOT_FOUND)", async () => {
-      const service = new CatalogService(store({ findItemType: async () => null }));
+      const service = catalogService(store({ findItemTypeById: async () => null }));
 
       await expect(service.getItemType("type-x")).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
@@ -109,8 +111,8 @@ describe("getItemType(種類の詳細)", () => {
 
   describe("境界値", () => {
     it("CT6 廃棄済みの物品は、詳細の一覧にも入れない(Ca4)", async () => {
-      const service = new CatalogService(
-        store({ findItemType: async () => macbook([item("i1", "AVAILABLE"), item("i2", "DISPOSED")]) }),
+      const service = catalogService(
+        store({ findItemTypeById: async () => macbook([item("i1", "AVAILABLE"), item("i2", "DISPOSED")]) }),
       );
 
       const detail = await service.getItemType("type-1");
@@ -124,7 +126,7 @@ describe("listCategories(カテゴリとジャンル)", () => {
   describe("正常系", () => {
     it("CT7 カテゴリを、その中のジャンル付きで返す(絞り込みの選択肢)", async () => {
       const categories = [{ id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] }];
-      const service = new CatalogService(store({ findCategories: async () => categories }));
+      const service = catalogService(store({ findAllCategories: async () => categories }));
 
       expect(await service.listCategories()).toEqual(categories);
     });

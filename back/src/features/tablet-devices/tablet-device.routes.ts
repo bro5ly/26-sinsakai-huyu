@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { registerTabletDeviceRequestSchema, type TabletDevice, type TabletDevices } from "@sinsakai/shared";
+import {
+  registerTabletDeviceRequestSchema,
+  type CurrentTabletDevice,
+  type TabletDevice,
+  type TabletDevices,
+} from "@sinsakai/shared";
 import { route } from "@/lib/route.js";
 import { createPasswordFailureLimiter } from "@/lib/rate-limit.js";
 import { createAuthService } from "@/features/auth/auth.routes.js";
@@ -17,7 +22,9 @@ const toTabletDevice = (device: TabletDeviceRecord): TabletDevice => ({
   lastUsedAt: device.lastUsedAt?.toISOString() ?? null,
 });
 
-export const createTabletDeviceService = (deps: Deps) => new TabletDeviceService(deps.devices, createAuthService(deps));
+// 別の機能(タブレットのAPIの入口)でも同じ組み立てを使う
+export const createTabletDeviceService = (deps: Deps): TabletDeviceService =>
+  new TabletDeviceService({ devices: deps.devices, credentials: createAuthService(deps), secrets: deps.secrets });
 
 // 置くタブレットの上での登録(UC-20)。管理者のWebのセッションは使わず、本文の学籍番号とパスワードでその場で確かめるので、
 // /api/admin(Webのセッションのある管理者だけ)の外に置く(2026-10-29 D1・D2)
@@ -56,6 +63,23 @@ export const createAdminTabletDeviceRoutes = (deps: Deps) => {
     route({}, async ({ req, res }) => {
       await devices.revoke(String(req.params.id), new Date());
       return res.status(204).end();
+    }),
+  );
+
+  return router;
+};
+
+// /api/tablet の下。タブレットの画面が開いたときに、登録された端末か(と名前)を確かめる。
+// 入口の createDeviceMiddleware が先に確かめてあり、登録されていなければ401 DEVICE_NOT_REGISTERED(routes/index.ts。D5)
+export const createCurrentTabletDeviceRoutes = (): Router => {
+  const router = Router();
+
+  router.get(
+    "/device",
+    route({}, async ({ req, res }) => {
+      const device = req.device;
+      if (!device) throw new Error("createDeviceMiddleware の後でしか呼ばれない");
+      return res.status(200).json({ id: device.id, name: device.name } satisfies CurrentTabletDevice);
     }),
   );
 

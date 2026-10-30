@@ -15,7 +15,7 @@ export const createAuthMiddleware =
     const token: unknown = req.cookies?.[SESSION_COOKIE];
     if (typeof token !== "string" || token === "") throw new DomainError("UNAUTHENTICATED");
 
-    const result = checkSession(await sessions.findByTokenHash(hashToken(token)), "WEB", new Date());
+    const result = checkSession(await sessions.findSessionByTokenHash(hashToken(token)), "WEB", new Date());
     if (!result.ok) throw new DomainError(result.reason);
 
     req.user = result.user;

@@ -1,8 +1,14 @@
-// src/lib/mail.ts
 import nodemailer from "nodemailer";
 import type { Config } from "@/config.js";
 
-export class MailService {
+// メールを送る部品。serviceは buildDeps() から受け取る(テストでは送った物を覚える偽物を渡す)
+export interface Mailer {
+  // 宛先とコードはどちらも文字列なので、取り違えないように名前で渡す(0.7 T4)
+  sendCode(mail: { to: string; code: string }): Promise<void>;
+}
+
+// SMTPで送る。手元では docker compose の mailpit が受け取る
+export class SmtpMailer implements Mailer {
   private transporter;
 
   constructor(private readonly mail: Config["mail"]) {
@@ -14,10 +20,10 @@ export class MailService {
     });
   }
 
-  async sendCode(email: string, code: string): Promise<void> {
+  async sendCode({ to, code }: { to: string; code: string }): Promise<void> {
     const mailOptions = {
       from: this.mail.from,
-      to: email,
+      to,
       subject: "【重要】認証コードのお知らせ",
       text: `あなたの認証コードは ${code} です。15分以内に入力してください。`,
       html: `

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import request from "supertest";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
-import { hashToken, newCode, newToken } from "@/lib/session-token.js";
+import { cryptoSecrets, hashToken } from "@/lib/session-token.js";
 import { bcryptPasswords } from "@/lib/password.js";
 import { PASSWORD_FAILURE_LIMIT } from "@/lib/rate-limit.js";
 import type { SessionRecord } from "@/features/auth/auth.types.js";
@@ -216,31 +216,31 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
   const deviceById = (id: string) => [...devices.values()].find((d) => d.id === id) ?? null;
   const deps: Deps = {
     users: {
-      create: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
-      findById: async (id) => (id === "user-1" ? registered() : null),
-      findByStudentId: async (studentId) =>
+      createUser: async ({ studentId }) => ({ ...registered(), id: "user-new", studentId }),
+      findUserById: async (id) => (id === "user-1" ? registered() : null),
+      findUserByStudentId: async (studentId) =>
         studentId === "20240001" ? registered() : studentId === "90240001" ? adminUser() : null,
       saveLoginAttempt: async () => undefined,
     },
-    auth: {
-      saveTmpCode: async () => undefined as never,
+    verificationCodes: {
+      saveCode: async () => undefined as never,
       saveCodeAttempts: async () => undefined,
-      checkTmpCode: async () => ({
+      findCodeByStudentId: async () => ({
         studentId: "20260001",
         codeHash: hashToken("123456"),
         expiresAt: new Date("2099-01-01"),
         tokenHash: null,
         attempts: 0,
       }),
-      deleteTmpCode: async () => undefined as never,
+      deleteCodeByStudentId: async () => undefined as never,
       saveRegistrationToken: async () => undefined,
-      findByRegistrationTokenHash: async (hash) =>
+      findRegistrationTokenByHash: async (hash) =>
         hash === hashToken(REGISTRATION_TOKEN)
           ? { studentId: "20260001", tokenExpiresAt: new Date("2099-01-01") }
           : null,
     },
     sessions: {
-      create: async ({ tokenHash, userId, kind, expiresAt, deviceId }) => {
+      createSession: async ({ tokenHash, userId, kind, expiresAt, deviceId }) => {
         sessions.set(tokenHash, {
           kind,
           expiresAt,
@@ -250,32 +250,32 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           user: { ...member, id: userId },
         });
       },
-      touch: async (hash, now) => {
+      saveSessionLastUsedAt: async (hash, now) => {
         const session = sessions.get(hash);
         if (session) session.lastUsedAt = now;
       },
-      findByTokenHash: async (hash) => sessions.get(hash) ?? null,
-      deleteByTokenHash: async (hash) => {
+      findSessionByTokenHash: async (hash) => sessions.get(hash) ?? null,
+      deleteSessionByTokenHash: async (hash) => {
         deletedSessionHashes.push(hash);
         sessions.delete(hash);
       },
     },
     mailer: {
-      sendCode: async (to, code) => {
+      sendCode: async ({ to, code }) => {
         sentMails.push({ to, code });
         return undefined as never;
       },
     },
     roster: new FakeRoster([yamada, newcomer, takahashi]),
     catalog: {
-      findCategories: async () => [
+      findAllCategories: async () => [
         { id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] },
       ],
-      findItemTypes: async () => [macbookType],
-      findItemType: async (id) => (id === macbookType.id ? macbookType : null),
+      findAllItemTypes: async () => [macbookType],
+      findItemTypeById: async (id) => (id === macbookType.id ? macbookType : null),
     },
     me: {
-      findUser: async (userId) =>
+      findUserById: async (userId) =>
         userId === "user-1"
           ? {
               id: "user-1",
@@ -287,7 +287,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
               pin: { registered: true, locked: false },
             }
           : null,
-      findActiveRentals: async () => [
+      findActiveRentalsByUserId: async () => [
         {
           id: "rental-1",
           rentedAt: rental.rentedAt,
@@ -297,18 +297,18 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           itemType: { id: "type-1", title: "MacBook", genre: { id: "genre-1", name: "ノートパソコン" } },
         },
       ],
-      findPasswordHash: async (userId) => (userId === "user-1" ? passwordHash : null),
+      findPasswordHashByUserId: async (userId) => (userId === "user-1" ? passwordHash : null),
       savePin: async (data) => {
         savedPins.push(data);
       },
     },
     // MAC-002 は貸し出せる。MAC-001 は山田さんが借りている(返却の確かめ用)
     rentals: {
-      findItemForCheckout: async (barcode) =>
+      findCheckoutItemByBarcode: async (barcode) =>
         barcode === "MAC-002"
           ? { id: "item-2", status: "AVAILABLE", hasActiveRental: false, rentalPeriodDays: 7 }
           : null,
-      findBorrower: async (userId) =>
+      findBorrowerById: async (userId) =>
         userId === "user-1" ? { canBorrow: true, maxItems: 3, suspendedUntil: null, activeDueDates: [] } : null,
       createRental: async (data) => {
         rentalWrites.push({ kind: "rent", deviceId: data.deviceId });
@@ -320,7 +320,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
           itemType: rentalItemType,
         };
       },
-      returnByBarcode: async (data) => {
+      saveReturnByBarcode: async (data) => {
         if (data.barcode !== "MAC-001") return null;
         rentalWrites.push({ kind: "return", deviceId: data.deviceId });
         return { ...rental, returnedAt: data.returnedAt, item: { id: "item-1" }, itemType: rentalItemType };
@@ -328,13 +328,13 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     },
     // 山田 太郎(IC-CARD-001)はPIN「8068」を登録済み。ほかの人はPIN未登録
     cardHolders: {
-      findByStudentId: async (studentId) => (studentId === "20240001" ? cardHolder : null),
+      findCardHolderByStudentId: async (studentId) => (studentId === "20240001" ? cardHolder : null),
       savePinAttempt: async (data) => {
         pinAttempts.push(data);
       },
     },
     devices: {
-      create: async ({ name, tokenHash, registeredById }) => {
+      createDevice: async ({ name, tokenHash, registeredById }) => {
         const record = {
           id: `device-new-${devices.size}`,
           name,
@@ -346,20 +346,20 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         createdDevices.push({ name, registeredById });
         return record;
       },
-      findByTokenHash: async (hash) => devices.get(hash) ?? null,
-      findById: async (id) => deviceById(id),
-      findActive: async () => [...devices.values()].filter((d) => !d.revokedAt),
-      touch: async (id, now) => {
+      findDeviceByTokenHash: async (hash) => devices.get(hash) ?? null,
+      findDeviceById: async (id) => deviceById(id),
+      findActiveDevices: async () => [...devices.values()].filter((d) => !d.revokedAt),
+      saveDeviceLastUsedAt: async (id, now) => {
         const device = deviceById(id);
         if (device) device.lastUsedAt = now;
       },
-      revoke: async (id, now) => {
+      saveDeviceRevokedAt: async (id, now) => {
         const device = deviceById(id);
         if (device) device.revokedAt = now;
       },
     },
     passwords: bcryptPasswords,
-    secrets: { newCode, newToken },
+    secrets: cryptoSecrets,
     ...overrides,
   };
   return {
@@ -601,7 +601,12 @@ describe("CSRFの対策(書き換えのリクエストはOriginを確かめる�
   describe("異常系", () => {
     it("H44 Originが無い書き換えのリクエストは、Cookieがあっても、403 FORBIDDEN_ORIGINで断り、中身を見ない", async () => {
       const { app } = fakeDeps({
-        sessions: { create: notUsed, findByTokenHash: notUsed, touch: notUsed, deleteByTokenHash: notUsed },
+        sessions: {
+          createSession: notUsed,
+          findSessionByTokenHash: notUsed,
+          saveSessionLastUsedAt: notUsed,
+          deleteSessionByTokenHash: notUsed,
+        },
       });
 
       expectProblem(await request(app).delete("/api/sessions/current").set(webSession), 403, "FORBIDDEN_ORIGIN");
@@ -1107,10 +1112,10 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
       // DBに触れたらテストが落ちるようにして、ミドルウェアで止まることを見る
       const { app } = fakeDeps({
         rentals: {
-          findItemForCheckout: notUsed,
-          findBorrower: notUsed,
+          findCheckoutItemByBarcode: notUsed,
+          findBorrowerById: notUsed,
           createRental: notUsed,
-          returnByBarcode: notUsed,
+          saveReturnByBarcode: notUsed,
         },
       });
 
@@ -1132,20 +1137,20 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
     it("H69 延滞がある人なら、409 HAS_OVERDUEを返す(C6。判断表Cの細かい場合分けは rental.check.test.ts)", async () => {
       const { app } = fakeDeps({
         rentals: {
-          findItemForCheckout: async () => ({
+          findCheckoutItemByBarcode: async () => ({
             id: "item-2",
             status: "AVAILABLE",
             hasActiveRental: false,
             rentalPeriodDays: 7,
           }),
-          findBorrower: async () => ({
+          findBorrowerById: async () => ({
             canBorrow: true,
             maxItems: 3,
             suspendedUntil: null,
             activeDueDates: [new Date("2000-01-01")],
           }),
           createRental: notUsed,
-          returnByBarcode: notUsed,
+          saveReturnByBarcode: notUsed,
         },
       });
 

@@ -21,20 +21,26 @@ const toSummary = (type: ItemTypeRecord): ItemTypeSummary => {
   };
 };
 
+type Parts = { catalog: CatalogStore };
+
 // カタログ(docs/api.md 4.3)。絞り込みは今は画面でする(Ca3)ので、ここは全部を返す
 export class CatalogService {
-  constructor(private readonly store: CatalogStore) {}
+  private readonly catalog: CatalogStore;
+
+  constructor(parts: Parts) {
+    this.catalog = parts.catalog;
+  }
 
   async listCategories(): Promise<Category[]> {
-    return this.store.findCategories();
+    return this.catalog.findAllCategories();
   }
 
   async listItemTypes(): Promise<ItemTypeSummary[]> {
-    return (await this.store.findItemTypes()).map(toSummary);
+    return (await this.catalog.findAllItemTypes()).map(toSummary);
   }
 
   async getItemType(id: string): Promise<ItemTypeDetail> {
-    const type = await this.store.findItemType(id);
+    const type = await this.catalog.findItemTypeById(id);
     if (!type) throw new DomainError("NOT_FOUND");
     return {
       ...toSummary(type),

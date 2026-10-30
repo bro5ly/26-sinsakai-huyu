@@ -56,7 +56,9 @@ export {
 } from "@sinsakai/shared/tablet-devices";
 export {
   createTabletSessionRequestSchema,
+  tabletItemRequestSchema,
   tabletSessionSchema,
   type CreateTabletSessionRequest,
+  type TabletItemRequest,
   type TabletSession,
 } from "@sinsakai/shared/tablet";

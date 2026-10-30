@@ -25,5 +25,11 @@ export const tabletSessionSchema = z.object({
   ),
 });
 
+// POST /api/tablet/rentals(借りる)・POST /api/tablet/returns(返す)→ 201 Rental。どちらも物品のバーコードだけを送る
+export const tabletItemRequestSchema = z.object({
+  barcode: z.string().min(1, "バーコードは必須です"),
+});
+
 export type CreateTabletSessionRequest = z.infer<typeof createTabletSessionRequestSchema>;
+export type TabletItemRequest = z.infer<typeof tabletItemRequestSchema>;
 export type TabletSession = z.infer<typeof tabletSessionSchema>;

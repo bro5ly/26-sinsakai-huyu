@@ -4,6 +4,7 @@ import type {
   RegisterTabletDeviceRequest,
   Rental,
   TabletDevice,
+  TabletItemRequest,
   TabletSession,
 } from "@sinsakai/shared";
 import { ApiService } from "./api.service";
@@ -31,12 +32,12 @@ class TabletService extends ApiService {
 
   // 本人確認したセッションで借りる(判断表C)
   async rentItem(barcode: string, token: string): Promise<Rental> {
-    return this.post<Rental>("/api/tablet/rentals", { barcode }, { bearer: token });
+    return this.post<Rental>("/api/tablet/rentals", { barcode } satisfies TabletItemRequest, { bearer: token });
   }
 
   // 返却は、登録された端末ならカードもPINも要らない(A-Q4・E7)
   async returnItem(barcode: string): Promise<Rental> {
-    return this.post<Rental>("/api/tablet/returns", { barcode });
+    return this.post<Rental>("/api/tablet/returns", { barcode } satisfies TabletItemRequest);
   }
 }
 
