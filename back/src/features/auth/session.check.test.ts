@@ -26,22 +26,25 @@ describe("checkSession(セッションで通してよいか)", () => {
   });
 
   describe("異常系", () => {
-    it("S2 セッションが無ければ(ログアウト済み・でたらめな番号)、断る(UNAUTHENTICATED)", () => {
+    it("S2 セッションが無ければ(ログアウト済み・でたらめな番号)、UNAUTHENTICATEDで断る", () => {
       expect(checkSession(null, "WEB", now)).toEqual({ ok: false, reason: "UNAUTHENTICATED" });
     });
 
-    it("S3 期限が切れていれば、断る(UNAUTHENTICATED。A8-6)", () => {
+    // A8-6
+    it("S3 期限が切れていれば、UNAUTHENTICATEDで断る", () => {
       expect(checkSession(session({ expiresAt: new Date(now.getTime() - 1) }), "WEB", now)).toEqual({
         ok: false,
         reason: "UNAUTHENTICATED",
       });
     });
 
-    it("S4 種類が違えば(タブレットのセッションでWebを使う)、断る(UNAUTHENTICATED。R-A18)", () => {
+    // R-A18
+    it("S4 種類が違えば(タブレットのセッションでWebを使う)、UNAUTHENTICATEDで断る", () => {
       expect(checkSession(session({ kind: "TABLET" }), "WEB", now)).toEqual({ ok: false, reason: "UNAUTHENTICATED" });
     });
 
-    it("S5 無効な人(is_active = false)なら、期限内でも断る(UNAUTHENTICATED。R-A14・A8-10)", () => {
+    // R-A14・A8-10
+    it("S5 無効な人(is_active = false)なら、期限内でもUNAUTHENTICATEDで断る", () => {
       expect(checkSession(session({}, { isActive: false }), "WEB", now)).toEqual({
         ok: false,
         reason: "UNAUTHENTICATED",

@@ -56,7 +56,8 @@ const start = (service: TabletSessionService, pin = "8068", cardNumber = "IC-CAR
 
 describe("start(カードとPINでタブレットのセッションを作る)", () => {
   describe("正常系", () => {
-    it("T6 カードとPINが合えば、その端末でだけ使える3分のセッションを作り、番号はハッシュだけをDBに置く(R-A8)", async () => {
+    // R-A8
+    it("T6 カードとPINが合えば、その端末でだけ使える3分のセッションを作り、番号はハッシュだけをDBに置く", async () => {
       const created: CreatedSession[] = [];
       const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions({}, created));
 
@@ -74,7 +75,8 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       expect(result.expiresAt).toEqual(new Date(now.getTime() + 3 * 60_000));
     });
 
-    it("T6 応答は、番号と期限と表示用の名前だけ(借りている物は返さない。公共のタブレットで後ろの人に見えるため。学籍番号・学年・専攻・ID・カードの番号も返さない。R-A13・2026-10-30 A2)", async () => {
+    // 借りている物は返さない。公共のタブレットで後ろの人に見えるため。学籍番号・学年・専攻・ID・カードの番号も返さない。R-A13・2026-10-30 A2
+    it("T6 応答は、番号と期限と表示用の名前だけ", async () => {
       const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions());
 
       const result = await start(service);
@@ -107,7 +109,8 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       await expect(start(service, "8068", "IC-CARD-999")).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
     });
 
-    it("T3 PINを登録していなければ、INVALID_CARD_OR_PIN(A-Q3)", async () => {
+    // A-Q3
+    it("T3 PINを登録していなければ、INVALID_CARD_OR_PIN", async () => {
       const service = sessionService(
         new FakeRoster([suzuki]),
         holders(holder({ pinHash: null })),
@@ -141,7 +144,8 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
   });
 
   describe("境界値", () => {
-    it("T5 5回目の間違いでロックを保存し、PIN_LOCKED(R-A7・E5)", async () => {
+    // R-A7・E5
+    it("T5 5回目の間違いでロックを保存し、PIN_LOCKED", async () => {
       const attempts: Attempt[] = [];
       const service = sessionService(
         new FakeRoster([suzuki]),
@@ -167,7 +171,8 @@ const tabletSession = (overrides: Partial<SessionRecord> = {}): SessionRecord =>
 
 describe("authenticate・end(タブレットのセッションを確かめる・終える)", () => {
   describe("正常系", () => {
-    it("TA1 通るセッションなら利用者を返し、最後に使った日時を書き換える(無操作30秒を数え直す。R-A9)", async () => {
+    // 無操作30秒を数え直す。R-A9
+    it("TA1 通るセッションなら利用者を返し、最後に使った日時を書き換える", async () => {
       const touched: [string, Date][] = [];
       const service = sessionService(
         new FakeRoster([suzuki]),
@@ -185,7 +190,8 @@ describe("authenticate・end(タブレットのセッションを確かめる・
       expect(touched).toEqual([[hashToken("t-1"), now]]);
     });
 
-    it("TA2 終えると、DBのセッションを消す(「終わる」・完了の10秒。R-A10)", async () => {
+    // 「終わる」・完了の10秒。R-A10
+    it("TA2 終えると、DBのセッションを消す", async () => {
       const deleted: string[] = [];
       const service = sessionService(
         new FakeRoster([suzuki]),

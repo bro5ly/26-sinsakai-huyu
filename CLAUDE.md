@@ -41,7 +41,7 @@
 | 起動 | `docker compose up -d`(web 4545 / api 5454 / db 1919 / Prisma Studio 5555 / 開発用のメールの受け口 Mailpit 8025。認証コードはDBにハッシュでしか無いので、届いたメールをMailpitで見る) |
 | マイグレーション | `docker compose exec api npm run db:migrate`(スキーマを変えたら`--name <内容>`を付ける) |
 | テストデータ | `docker compose exec api npm run db:seed`(**全テーブルを消してから入れ直す**) |
-| テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts` |
+| テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts`(型のテストは`*.test-d.ts`で、`npm test`が一緒にtscで調べる。2026-10-30 TS2) |
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
 | リント(API) | `docker compose exec api npm run lint` |
@@ -77,9 +77,9 @@ APIと画面のコンテナはNode 24で、ビルドの起点とつなぐ場所�
 ## 開発の進め方(TDD)
 
 - 手順は`docs/backlog.md`の「進め方」。判断は副作用の無い関数に出し、テストはその関数に書く
-- **実装を優先する(2026-10-23から)。テストもClaudeが書き、TDD(赤 → 緑 → 整える)で進める**。大体の機能ができたら、**最後のほうの機能だけ開発者が練習としてテストを書く**(どれにするかはそのとき決める。そこではClaudeは例の表・`it.todo`・穴埋めの形を用意し、書かれたテストを確かめる)
+- **実装を優先する(2026-10-23から)。テストもClaudeが書き、TDD(赤 → 緑 → 整える)で進める**。大体の機能ができたら、**最後のほうの機能だけ開発者が練習としてテストを書く**(どれにするかはそのとき決める。そこではClaudeは例の表・`it.todo`・穴埋めの形を用意し、書かれたテストを確かめる)。**2026-10-30に、在庫管理でも今は考えないことにした**(`docs/backlog.md`5のINV13)
 - 緑になるたびに1コミット。整理(`refactor:`)は動きを変える修正と別のコミットにする
-- テストは、関数ごとの`describe`の中を`describe("正常系")`・`describe("異常系")`・`describe("境界値")`で分ける(当てはまるテストが無い区分は書かない)。テストの名前には仕様の番号を入れる(2026-10-24、開発者の希望)
+- テストは、関数ごとの`describe`の中を`describe("正常系")`・`describe("異常系")`・`describe("境界値")`で分ける(当てはまるテストが無い区分は書かない)。テストの名前には仕様の番号を入れる(2026-10-24、開発者の希望)。名前・型・時計の決まりは`.claude/rules/backend.md`の「テストの書き方」(2026-10-30 TS1〜TS6)
 - 作業のまとまりごとにブランチを切る(`fix/…`・`refactor/…`・`feat/…`・`docs/…`)。PRを出す・マージする前に開発者に声をかける
 
 ## 開発者との進め方(2026-10-24、開発者が「このやり方がよい」と確かめた)

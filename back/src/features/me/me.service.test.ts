@@ -48,7 +48,8 @@ const meService = (me: MeStore, roster: Roster) => new MeService({ me, roster, p
 
 describe("getMe(本人のプロフィールと貸し出しの決まり)", () => {
   describe("正常系", () => {
-    it("ME1 登録済みで名簿にいれば、名簿の名前・メール・学年・専攻と、貸し出しの決まりを返す。カードの番号は返さない(R-17。docs/api.md 5章 Me。G0)", async () => {
+    // R-17。docs/api.md 5章 Me。G0
+    it("ME1 登録済みで名簿にいれば、名簿の名前・メール・学年・専攻と、貸し出しの決まりを返す。カードの番号は返さない", async () => {
       const service = meService(store(), new FakeRoster([rosterEntry()]));
 
       const me = await service.getMe("user-3", now);
@@ -67,7 +68,8 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
       });
     });
 
-    it("ME6 PINの状態(登録済みか・ロック中か)を返す。PINそのものや残りの回数は返さない(P3。R-29)", async () => {
+    // P3。R-29
+    it("ME6 PINの状態(登録済みか・ロック中か)を返す。PINそのものや残りの回数は返さない", async () => {
       const service = meService(
         store({ findUserById: async () => ({ ...user, pin: { registered: true, locked: true } }) }),
         new FakeRoster([rosterEntry()]),
@@ -78,7 +80,8 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
       expect(me.pin).toEqual({ registered: true, locked: true });
     });
 
-    it("ME2 借りている数と、延滞があるかを数えて返す(画面で数えない。R-30)", async () => {
+    // 画面で数えない。R-30
+    it("ME2 借りている数と、延滞があるかを数えて返す", async () => {
       const rentals = [rental("1", new Date(now.getTime() + day)), rental("2", new Date(now.getTime() - day))];
       const service = meService(
         store({ findActiveRentalsByUserId: async () => rentals }),
@@ -92,13 +95,14 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
   });
 
   describe("異常系", () => {
-    it("ME3 本人がDBにいなければ、断る(UNAUTHENTICATED)", async () => {
+    it("ME3 本人がDBにいなければ、UNAUTHENTICATEDで断る", async () => {
       const service = meService(store(), new FakeRoster([rosterEntry()]));
 
       await expect(service.getMe("user-x", now)).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
     });
 
-    it("ME4 名簿から消えていれば、登録が残っていても断る(UNAUTHENTICATED。Q13)", async () => {
+    // Q13
+    it("ME4 名簿から消えていれば、登録が残っていてもUNAUTHENTICATEDで断る", async () => {
       const service = meService(store({ findActiveRentalsByUserId: notUsed }), new FakeRoster([]));
 
       await expect(service.getMe("user-3", now)).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
@@ -106,7 +110,8 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
   });
 
   describe("境界値", () => {
-    it("ME5 返却期限ちょうどの物は、まだ延滞にしない(期限を過ぎてから延滞。R-30)", async () => {
+    // 期限を過ぎてから延滞。R-30
+    it("ME5 返却期限ちょうどの物は、まだ延滞にしない", async () => {
       const service = meService(
         store({ findActiveRentalsByUserId: async () => [rental("1", now)] }),
         new FakeRoster([rosterEntry()]),
@@ -121,7 +126,8 @@ describe("getMe(本人のプロフィールと貸し出しの決まり)", () => 
 
 describe("getMyRentals(本人が借りている物)", () => {
   describe("正常系", () => {
-    it("MR1 借りている物を、返却期限から決めた状態(期限内はRENTING、過ぎたらOVERDUE)付きで返す(R-17・R-30)", async () => {
+    // R-17・R-30
+    it("MR1 借りている物を、返却期限から決めた状態(期限内はRENTING、過ぎたらOVERDUE)付きで返す", async () => {
       const rentals = [rental("1", new Date(now.getTime() + day)), rental("2", new Date(now.getTime() - day))];
       const service = meService(
         store({ findActiveRentalsByUserId: async () => rentals }),
@@ -138,7 +144,7 @@ describe("getMyRentals(本人が借りている物)", () => {
   });
 
   describe("異常系", () => {
-    it("MR2 本人がDBにいなければ、断る(UNAUTHENTICATED)", async () => {
+    it("MR2 本人がDBにいなければ、UNAUTHENTICATEDで断る", async () => {
       const service = meService(store({ findActiveRentalsByUserId: notUsed }), new FakeRoster([rosterEntry()]));
 
       await expect(service.getMyRentals("user-x", now)).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
@@ -148,7 +154,8 @@ describe("getMyRentals(本人が借りている物)", () => {
 
 describe("setPin(タブレット用のPINを登録・変更する)", () => {
   describe("正常系", () => {
-    it("PS1 パスワードが合えば、PINをbcryptのハッシュにして保存する(PINそのものは保存しない。R-A5・P1)", async () => {
+    // PINそのものは保存しない。R-A5・P1
+    it("PS1 パスワードが合えば、PINをbcryptのハッシュにして保存する", async () => {
       const saved: { userId: string; pinHash: string }[] = [];
       const service = meService(
         store({ savePin: async (data) => void saved.push(data) }),
@@ -165,7 +172,8 @@ describe("setPin(タブレット用のPINを登録・変更する)", () => {
   });
 
   describe("異常系", () => {
-    it("PS2 入れ直したパスワードが違えば、保存せずに断る(WRONG_PASSWORD。P1・P5)", async () => {
+    // P1・P5
+    it("PS2 入れ直したパスワードが違えば、保存せずにWRONG_PASSWORDで断る", async () => {
       const service = meService(store({ savePin: notUsed }), new FakeRoster([rosterEntry()]));
 
       await expect(service.setPin({ userId: "user-3", pin: "8068", password: "wrong-password" })).rejects.toMatchObject(
@@ -175,7 +183,7 @@ describe("setPin(タブレット用のPINを登録・変更する)", () => {
       );
     });
 
-    it("PS3 本人がDBにいなければ、断る(UNAUTHENTICATED)", async () => {
+    it("PS3 本人がDBにいなければ、UNAUTHENTICATEDで断る", async () => {
       const service = meService(store({ savePin: notUsed }), new FakeRoster([rosterEntry()]));
 
       await expect(service.setPin({ userId: "user-x", pin: "8068", password: "password123" })).rejects.toMatchObject({

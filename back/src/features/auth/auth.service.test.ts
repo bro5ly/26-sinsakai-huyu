@@ -20,6 +20,8 @@ beforeAll(async () => {
   passwordHash = await bcrypt.hash("password123", 4);
 });
 
+// 時計は止める(走らせた時刻で結果が変わらないように。docs/backlog.md 0.10 TS3)
+const now = new Date("2026-10-29T10:00:00.000Z");
 const minute = 60_000;
 const day = 86_400_000;
 
@@ -80,7 +82,6 @@ const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession
 const mailer = (sent: { to: string; code: string }[] = []): Mailer => ({
   sendCode: async ({ to, code }) => {
     sent.push({ to, code });
-    return undefined as never;
   },
 });
 
@@ -113,18 +114,23 @@ const sessionUser = {
 
 describe("requestVerification(登録の認証コードを送る)", () => {
   describe("正常系", () => {
-    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る(R-4)", async () => {
+    // R-4
+    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る", async () => {
       const saved: { codeHash: string; studentId: string }[] = [];
       const sent: { to: string; code: string }[] = [];
       const service = authService(
         users(),
-        codes({ saveCode: async (data) => (saved.push(data), undefined as never) }),
+        codes({
+          saveCode: async (data) => {
+            saved.push(data);
+          },
+        }),
         sessions(),
         mailer(sent),
         new FakeRoster([yamada, unregistered]),
       );
 
-      const result = await service.requestVerification("20260001", new Date());
+      const result = await service.requestVerification("20260001", now);
 
       expect(result).toBeUndefined();
       expect(saved[0]?.studentId).toBe("20260001");
@@ -137,23 +143,26 @@ describe("requestVerification(登録の認証コードを送る)", () => {
   });
 
   describe("異常系", () => {
-    it("A1 名簿に無い学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない(R-16・auth.md 4.6)", async () => {
+    // R-16・auth.md 4.6
+    it("A1 名簿に無い学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない", async () => {
       const sent: { to: string; code: string }[] = [];
       const service = authService(users(), codes(), sessions(), mailer(sent), new FakeRoster([yamada]));
 
-      expect(await service.requestVerification("99999999", new Date())).toBeUndefined();
+      expect(await service.requestVerification("99999999", now)).toBeUndefined();
       expect(sent).toEqual([]);
     });
 
-    it("A2 登録済みの学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない(R-16・auth.md 4.6)", async () => {
+    // R-16・auth.md 4.6
+    it("A2 登録済みの学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない", async () => {
       const sent: { to: string; code: string }[] = [];
       const service = authService(users(), codes(), sessions(), mailer(sent), new FakeRoster([yamada]));
 
-      expect(await service.requestVerification("20240001", new Date())).toBeUndefined();
+      expect(await service.requestVerification("20240001", now)).toBeUndefined();
       expect(sent).toEqual([]);
     });
 
-    it("A24 メールが送れなくても(SMTPが止まっているなど)、成功と同じ応答で終える(名簿にいる番号だけ失敗すると、名簿にいるかが分かるため。R-2)", async () => {
+    // 名簿にいる番号だけ失敗すると、名簿にいるかが分かるため。R-2
+    it("A24 メールが送れなくても(SMTPが止まっているなど)、成功と同じ応答で終える", async () => {
       const failing: Mailer = {
         sendCode: async () => {
           throw new Error("connect ECONNREFUSED");
@@ -167,7 +176,7 @@ describe("requestVerification(登録の認証コードを送る)", () => {
         new FakeRoster([unregistered]),
       );
 
-      await expect(service.requestVerification("20260001", new Date())).resolves.toBeUndefined();
+      await expect(service.requestVerification("20260001", now)).resolves.toBeUndefined();
     });
   });
 });
@@ -176,14 +185,15 @@ describe("verifyCode(認証コードを確かめる)", () => {
   const record = (overrides: Partial<VerificationCodeRecord> = {}): VerificationCodeRecord => ({
     studentId: "20260001",
     codeHash: hashToken("123456"),
-    expiresAt: new Date(Date.now() + 10 * minute),
+    expiresAt: new Date(now.getTime() + 10 * minute),
     tokenHash: null,
     attempts: 0,
     ...overrides,
   });
 
   describe("正常系", () => {
-    it("V1 コードが合い期限内なら、登録用トークンを作ってハッシュだけを保存し、トークンとその期限(15分後)を返す(R-6・A8-8)", async () => {
+    // R-6・A8-8
+    it("V1 コードが合い期限内なら、登録用トークンを作ってハッシュだけを保存し、トークンとその期限(15分後)を返す", async () => {
       const saved: { studentId: string; tokenHash: string; expiresAt: Date }[] = [];
       const service = authService(
         users(),
@@ -196,19 +206,18 @@ describe("verifyCode(認証コードを確かめる)", () => {
         new FakeRoster([unregistered]),
       );
 
-      const before = Date.now();
-      const result = await service.verifyCode({ studentId: "20260001", code: "123456" }, new Date());
+      const result = await service.verifyCode({ studentId: "20260001", code: "123456" }, now);
 
       expect(saved).toEqual([
         { studentId: "20260001", tokenHash: hashToken(result.token), expiresAt: result.expiresAt },
       ]);
-      expect(result.expiresAt.getTime() - before).toBeGreaterThanOrEqual(15 * minute - 1000);
-      expect(result.expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(15 * minute);
+      expect(result.expiresAt).toEqual(new Date(now.getTime() + 15 * minute));
     });
   });
 
   describe("異常系", () => {
-    it("V2 コードが違えば、断り、トークンは作らず、間違えた回数を1つ足す(R-7・R-8)", async () => {
+    // R-7・R-8
+    it("V2 コードが違えば、断り、トークンは作らず、間違えた回数を1つ足す", async () => {
       const counted: { studentId: string; attempts: number }[] = [];
       const service = authService(
         users(),
@@ -218,7 +227,7 @@ describe("verifyCode(認証コードを確かめる)", () => {
         new FakeRoster([unregistered]),
       );
 
-      await expect(service.verifyCode({ studentId: "20260001", code: "654321" }, new Date())).rejects.toMatchObject({
+      await expect(service.verifyCode({ studentId: "20260001", code: "654321" }, now)).rejects.toMatchObject({
         code: "INVALID_CODE",
       });
       expect(counted).toEqual([{ studentId: "20260001", attempts: 1 }]);
@@ -237,27 +246,29 @@ describe("verifyCode(認証コードを確かめる)", () => {
         new FakeRoster([unregistered]),
       );
 
-      await expect(service.verifyCode({ studentId: "20260001", code: "654321" }, new Date())).rejects.toMatchObject({
+      await expect(service.verifyCode({ studentId: "20260001", code: "654321" }, now)).rejects.toMatchObject({
         code: "INVALID_CODE",
       });
       expect(deleted).toEqual(["20260001"]);
     });
 
-    it("V3 期限切れなら、断る(INVALID_CODE。R-7)", async () => {
+    // R-7
+    it("V3 期限切れなら、INVALID_CODEで断る", async () => {
       const service = authService(
         users(),
-        codes({ findCodeByStudentId: async () => record({ expiresAt: new Date(Date.now() - minute) }) }),
+        codes({ findCodeByStudentId: async () => record({ expiresAt: new Date(now.getTime() - minute) }) }),
         sessions(),
         mailer(),
         new FakeRoster([]),
       );
 
-      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, new Date())).rejects.toMatchObject({
+      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, now)).rejects.toMatchObject({
         code: "INVALID_CODE",
       });
     });
 
-    it("V4 コードを申請していなければ、断る(INVALID_CODE。R-7)", async () => {
+    // R-7
+    it("V4 コードを申請していなければ、INVALID_CODEで断る", async () => {
       const service = authService(
         users(),
         codes({ findCodeByStudentId: async () => null }),
@@ -266,12 +277,13 @@ describe("verifyCode(認証コードを確かめる)", () => {
         new FakeRoster([]),
       );
 
-      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, new Date())).rejects.toMatchObject({
+      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, now)).rejects.toMatchObject({
         code: "INVALID_CODE",
       });
     });
 
-    it("V5 そのコードでもうトークンを出していれば、断る(コードは1回だけ使える。INVALID_CODE。A8-8)", async () => {
+    // コードは1回だけ使える。INVALID_CODE。A8-8
+    it("V5 そのコードでもうトークンを出していれば、断る", async () => {
       const service = authService(
         users(),
         codes({ findCodeByStudentId: async () => record({ tokenHash: "used" }) }),
@@ -280,7 +292,7 @@ describe("verifyCode(認証コードを確かめる)", () => {
         new FakeRoster([unregistered]),
       );
 
-      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, new Date())).rejects.toMatchObject({
+      await expect(service.verifyCode({ studentId: "20260001", code: "123456" }, now)).rejects.toMatchObject({
         code: "INVALID_CODE",
       });
     });
@@ -290,7 +302,7 @@ describe("verifyCode(認証コードを確かめる)", () => {
 describe("signUp(パスワードを決めて登録する)", () => {
   const tokenRecord = (overrides: Partial<{ studentId: string; tokenExpiresAt: Date }> = {}) => ({
     studentId: "20260001",
-    tokenExpiresAt: new Date(Date.now() + 10 * minute),
+    tokenExpiresAt: new Date(now.getTime() + 10 * minute),
     ...overrides,
   });
   const newUser = async (data: { studentId: string; passwordHash: string }): Promise<UserRecord> => ({
@@ -304,7 +316,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
   });
 
   describe("正常系", () => {
-    it("A4 登録用トークンがDBにあれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す(R-9・R-10)", async () => {
+    // R-9・R-10
+    it("A4 登録用トークンがDBにあれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す", async () => {
       const created: { studentId: string; passwordHash: string }[] = [];
       const service = authService(
         users({
@@ -313,14 +326,14 @@ describe("signUp(パスワードを決めて登録する)", () => {
         }),
         codes({
           findRegistrationTokenByHash: async (hash) => (hash === hashToken("token-1") ? tokenRecord() : null),
-          deleteCodeByStudentId: async () => undefined as never,
+          deleteCodeByStudentId: async () => undefined,
         }),
         sessions(),
         mailer(),
         new FakeRoster([unregistered]),
       );
 
-      const result = await service.signUp({ token: "token-1", password: "password123" }, new Date());
+      const result = await service.signUp({ token: "token-1", password: "password123" }, now);
 
       expect(created).toHaveLength(1);
       expect(created[0]?.studentId).toBe("20260001");
@@ -341,14 +354,16 @@ describe("signUp(パスワードを決めて登録する)", () => {
         users({ findUserByStudentId: async () => null, createUser: newUser }),
         codes({
           findRegistrationTokenByHash: async () => tokenRecord(),
-          deleteCodeByStudentId: async (id) => (deleted.push(id), undefined as never),
+          deleteCodeByStudentId: async (id) => {
+            deleted.push(id);
+          },
         }),
         sessions({}, created),
         mailer(),
         new FakeRoster([unregistered]),
       );
 
-      const result = await service.signUp({ token: "token-1", password: "password123" }, new Date());
+      const result = await service.signUp({ token: "token-1", password: "password123" }, now);
 
       expect(deleted).toEqual(["20260001"]);
       expect(created).toEqual([
@@ -358,7 +373,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
   });
 
   describe("異常系", () => {
-    it("A5 名簿に無ければ、作らずに断る(INVALID_TOKEN)", async () => {
+    it("A5 名簿に無ければ、作らずにINVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
         codes({ findRegistrationTokenByHash: async () => tokenRecord() }),
@@ -367,12 +382,13 @@ describe("signUp(パスワードを決めて登録する)", () => {
         new FakeRoster([]),
       );
 
-      await expect(service.signUp({ token: "token-1", password: "password123" }, new Date())).rejects.toMatchObject({
+      await expect(service.signUp({ token: "token-1", password: "password123" }, now)).rejects.toMatchObject({
         code: "INVALID_TOKEN",
       });
     });
 
-    it("A10 登録用トークンがDBに無ければ(でたらめ・使用済み)、断る(INVALID_TOKEN。A8-8)", async () => {
+    // A8-8
+    it("A10 登録用トークンがDBに無ければ(でたらめ・使用済み)、INVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
         codes({ findRegistrationTokenByHash: async () => null }),
@@ -381,28 +397,28 @@ describe("signUp(パスワードを決めて登録する)", () => {
         new FakeRoster([unregistered]),
       );
 
-      await expect(
-        service.signUp({ token: "broken-token", password: "password123" }, new Date()),
-      ).rejects.toMatchObject({
+      await expect(service.signUp({ token: "broken-token", password: "password123" }, now)).rejects.toMatchObject({
         code: "INVALID_TOKEN",
       });
     });
 
-    it("A13 登録用トークンの期限が切れていれば、断る(INVALID_TOKEN)", async () => {
+    it("A13 登録用トークンの期限が切れていれば、INVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
-        codes({ findRegistrationTokenByHash: async () => tokenRecord({ tokenExpiresAt: new Date(Date.now() - 1) }) }),
+        codes({
+          findRegistrationTokenByHash: async () => tokenRecord({ tokenExpiresAt: new Date(now.getTime() - 1) }),
+        }),
         sessions(),
         mailer(),
         new FakeRoster([unregistered]),
       );
 
-      await expect(service.signUp({ token: "token-1", password: "password123" }, new Date())).rejects.toMatchObject({
+      await expect(service.signUp({ token: "token-1", password: "password123" }, now)).rejects.toMatchObject({
         code: "INVALID_TOKEN",
       });
     });
 
-    it("A12 登録用トークンの学籍番号がすでに登録済みなら、断る(ALREADY_REGISTERED)", async () => {
+    it("A12 登録用トークンの学籍番号がすでに登録済みなら、ALREADY_REGISTEREDで断る", async () => {
       const service = authService(
         users(),
         codes({ findRegistrationTokenByHash: async () => tokenRecord({ studentId: "20240001" }) }),
@@ -411,14 +427,13 @@ describe("signUp(パスワードを決めて登録する)", () => {
         new FakeRoster([yamada]),
       );
 
-      await expect(service.signUp({ token: "token-1", password: "password123" }, new Date())).rejects.toMatchObject({
+      await expect(service.signUp({ token: "token-1", password: "password123" }, now)).rejects.toMatchObject({
         code: "ALREADY_REGISTERED",
       });
     });
   });
 
   describe("境界値", () => {
-    const now = new Date("2026-10-29T10:00:00Z");
     const serviceWithTokenUntil = (tokenExpiresAt: Date) =>
       authService(
         users({ findUserByStudentId: async () => null, createUser: newUser }),
@@ -431,7 +446,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
         new FakeRoster([unregistered]),
       );
 
-    it("A22 登録用トークンの期限ちょうどは、切れている(INVALID_TOKEN。R-6)", async () => {
+    // INVALID_TOKEN。R-6
+    it("A22 登録用トークンの期限ちょうどは、切れている", async () => {
       await expect(
         serviceWithTokenUntil(now).signUp({ token: "token-1", password: "password123" }, now),
       ).rejects.toMatchObject({
@@ -439,7 +455,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
       });
     });
 
-    it("A23 期限の1ミリ秒前なら、まだ登録できる(R-6)", async () => {
+    // R-6
+    it("A23 期限の1ミリ秒前なら、まだ登録できる", async () => {
       await expect(
         serviceWithTokenUntil(new Date(now.getTime() + 1)).signUp({ token: "token-1", password: "password123" }, now),
       ).resolves.toMatchObject({ user: { studentId: "20260001" } });
@@ -449,27 +466,27 @@ describe("signUp(パスワードを決めて登録する)", () => {
 
 describe("login(学籍番号とパスワードでログインする)", () => {
   describe("正常系", () => {
-    it("A6 パスワードが合えば、名簿の名前で返し、7日で切れるWebのセッションを作る。DBには番号のハッシュだけを置く(R-11・A8-3・A8-6)", async () => {
+    // R-11・A8-3・A8-6
+    it("A6 パスワードが合えば、名簿の名前で返し、7日で切れるWebのセッションを作る。DBには番号のハッシュだけを置く", async () => {
       const created: CreatedSession[] = [];
       const service = authService(users(), codes(), sessions({}, created), mailer(), new FakeRoster([yamada]));
 
-      const before = Date.now();
-      const result = await service.login({ studentId: "20240001", password: "password123" }, new Date());
+      const result = await service.login({ studentId: "20240001", password: "password123" }, now);
 
       expect(result.user).toEqual(sessionUser);
       expect(created).toHaveLength(1);
       expect(created[0]).toMatchObject({ tokenHash: hashToken(result.sessionToken), userId: "user-1", kind: "WEB" });
       expect(created[0]?.tokenHash).not.toBe(result.sessionToken);
-      expect(created[0]?.expiresAt.getTime()).toBeGreaterThanOrEqual(before + 7 * day);
-      expect(created[0]?.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 7 * day);
+      expect(created[0]?.expiresAt).toEqual(new Date(now.getTime() + 7 * day));
     });
 
-    it("A16 ログインするたびに別のセッションを作る(ほかの端末のログインは切らない。Q9)", async () => {
+    // ほかの端末のログインは切らない。Q9
+    it("A16 ログインするたびに別のセッションを作る", async () => {
       const created: CreatedSession[] = [];
       const service = authService(users(), codes(), sessions({}, created), mailer(), new FakeRoster([yamada]));
 
-      const first = await service.login({ studentId: "20240001", password: "password123" }, new Date());
-      const second = await service.login({ studentId: "20240001", password: "password123" }, new Date());
+      const first = await service.login({ studentId: "20240001", password: "password123" }, now);
+      const second = await service.login({ studentId: "20240001", password: "password123" }, now);
 
       expect(first.sessionToken).not.toBe(second.sessionToken);
       expect(created).toHaveLength(2);
@@ -477,7 +494,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
   });
 
   describe("異常系", () => {
-    it("A7 パスワードが違えば、断り(INVALID_CREDENTIALS。R-16)、続けて間違えた回数を1つ足す(F1)", async () => {
+    // R-16・F1
+    it("A7 パスワードが違えば、INVALID_CREDENTIALSで断り、続けて間違えた回数を1つ足す", async () => {
       const attempts: LoginAttempt[] = [];
       const service = authService(
         users({ saveLoginAttempt: async (data) => void attempts.push(data) }),
@@ -487,14 +505,14 @@ describe("login(学籍番号とパスワードでログインする)", () => {
         new FakeRoster([yamada]),
       );
 
-      await expect(service.login({ studentId: "20240001", password: "wrongpass1" }, new Date())).rejects.toMatchObject({
+      await expect(service.login({ studentId: "20240001", password: "wrongpass1" }, now)).rejects.toMatchObject({
         code: "INVALID_CREDENTIALS",
       });
       expect(attempts).toEqual([{ userId: "user-1", failedAttempts: 1, lockedUntil: null }]);
     });
 
-    it("A17 止めている間は、正しいパスワードでも、比べずに429 RATE_LIMITEDで断る(F1)", async () => {
-      const now = new Date("2026-10-29T10:00:00Z");
+    // F1
+    it("A17 止めている間は、正しいパスワードでも、比べずに429 RATE_LIMITEDで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => registered({ loginLockedUntil: new Date(now.getTime() + minute) }) }),
         codes(),
@@ -508,7 +526,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       });
     });
 
-    it("A11 学籍番号が登録されていなければ、パスワード違いと同じく断る(INVALID_CREDENTIALS。R-16)", async () => {
+    // R-16
+    it("A11 学籍番号が登録されていなければ、パスワード違いと同じくINVALID_CREDENTIALSで断る", async () => {
       const service = authService(
         users(),
         codes(),
@@ -517,24 +536,22 @@ describe("login(学籍番号とパスワードでログインする)", () => {
         new FakeRoster([yamada]),
       );
 
-      await expect(service.login({ studentId: "11111111", password: "password123" }, new Date())).rejects.toMatchObject(
-        {
-          code: "INVALID_CREDENTIALS",
-        },
-      );
+      await expect(service.login({ studentId: "11111111", password: "password123" }, now)).rejects.toMatchObject({
+        code: "INVALID_CREDENTIALS",
+      });
     });
 
-    it("A8 名簿から消えていれば、パスワードが合っても、理由を言わずに断る(INVALID_CREDENTIALS。Q13・R-A14)", async () => {
+    // Q13・R-A14
+    it("A8 名簿から消えていれば、パスワードが合っても、理由を言わずにINVALID_CREDENTIALSで断る", async () => {
       const service = authService(users(), codes(), sessions({ createSession: notUsed }), mailer(), new FakeRoster([]));
 
-      await expect(service.login({ studentId: "20240001", password: "password123" }, new Date())).rejects.toMatchObject(
-        {
-          code: "INVALID_CREDENTIALS",
-        },
-      );
+      await expect(service.login({ studentId: "20240001", password: "password123" }, now)).rejects.toMatchObject({
+        code: "INVALID_CREDENTIALS",
+      });
     });
 
-    it("A14 無効な人(is_active = false)は、パスワードが合っても、理由を言わずに断る(INVALID_CREDENTIALS。R-A14)", async () => {
+    // R-A14
+    it("A14 無効な人(is_active = false)は、パスワードが合っても、理由を言わずにINVALID_CREDENTIALSで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => registered({ isActive: false }) }),
         codes(),
@@ -543,17 +560,14 @@ describe("login(学籍番号とパスワードでログインする)", () => {
         new FakeRoster([yamada]),
       );
 
-      await expect(service.login({ studentId: "20240001", password: "password123" }, new Date())).rejects.toMatchObject(
-        {
-          code: "INVALID_CREDENTIALS",
-        },
-      );
+      await expect(service.login({ studentId: "20240001", password: "password123" }, now)).rejects.toMatchObject({
+        code: "INVALID_CREDENTIALS",
+      });
     });
   });
 });
 
 describe("login の回数(学籍番号ごとに、続けて5回で15分止める。F1)", () => {
-  const now = new Date("2026-10-29T10:00:00Z");
   const recordAttempts = (user: UserRecord) => {
     const attempts: LoginAttempt[] = [];
     const service = authService(
@@ -567,7 +581,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
   };
 
   describe("正常系", () => {
-    it("A19 間違えたあとに合えば、通して回数を0に戻す(「続けて」の5回)", async () => {
+    // 「続けて」の5回
+    it("A19 間違えたあとに合えば、通して回数を0に戻す", async () => {
       const { service, attempts } = recordAttempts(registered({ loginFailedAttempts: 3 }));
 
       await expect(service.login({ studentId: "20240001", password: "password123" }, now)).resolves.toMatchObject({
@@ -596,7 +611,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
       ]);
     });
 
-    it("A21 止める期限を過ぎていれば、また試せる。合えば通し、止めた記録を消す(F3)", async () => {
+    // F3
+    it("A21 止める期限を過ぎていれば、また試せる。合えば通し、止めた記録を消す", async () => {
       const { service, attempts } = recordAttempts(registered({ loginLockedUntil: now }));
 
       await expect(service.login({ studentId: "20240001", password: "password123" }, now)).resolves.toMatchObject({
@@ -609,7 +625,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
 
 describe("logout(ログアウトする)", () => {
   describe("正常系", () => {
-    it("L1 Cookieのセッションの番号から、DBのセッションを消す(R-15・A8-3)", async () => {
+    // R-15・A8-3
+    it("L1 Cookieのセッションの番号から、DBのセッションを消す", async () => {
       const deleted: string[] = [];
       const service = authService(
         users(),
@@ -626,7 +643,8 @@ describe("logout(ログアウトする)", () => {
   });
 
   describe("境界値", () => {
-    it("L2 番号が無ければ(Cookieが無い・ログアウト済み)、DBに触らずに終える(何度ログアウトしてもよい)", async () => {
+    // 何度ログアウトしてもよい
+    it("L2 番号が無ければ(Cookieが無い・ログアウト済み)、DBに触らずに終える", async () => {
       const service = authService(
         users(),
         codes(),

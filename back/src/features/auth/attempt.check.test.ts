@@ -17,13 +17,15 @@ describe("isLoginLocked(ログインを止めている間か)", () => {
       expect(isLoginLocked(null, now)).toBe(false);
     });
 
-    it("F1 止める期限の前なら、止めている(正しいパスワードでも断る)", () => {
+    // 正しいパスワードでも断る
+    it("F1 止める期限の前なら、止めている", () => {
       expect(isLoginLocked(new Date(now.getTime() + minute), now)).toBe(true);
     });
   });
 
   describe("境界値", () => {
-    it("F1 期限ちょうどになったら、止めていない(15分たてば解ける。F3)", () => {
+    // 15分たてば解ける。F3
+    it("F1 期限ちょうどになったら、止めていない", () => {
       expect(isLoginLocked(now, now)).toBe(false);
     });
 
@@ -35,13 +37,15 @@ describe("isLoginLocked(ログインを止めている間か)", () => {
 
 describe("afterLoginAttempt(パスワードを比べたあと、回数をどうするか)", () => {
   describe("正常系", () => {
-    it("F1 合えば、回数を0に戻して通す(「続けて」の5回なので)", () => {
+    // 「続けて」の5回なので
+    it("F1 合えば、回数を0に戻して通す", () => {
       expect(afterLoginAttempt(3, true, now)).toEqual({ ok: true, failedAttempts: 0, lockedUntil: null });
     });
   });
 
   describe("異常系", () => {
-    it("F1 違えば、回数を1つ足して、学籍番号かパスワードが違うと断る(R-16)", () => {
+    // R-16
+    it("F1 違えば、回数を1つ足して、学籍番号かパスワードが違うと断る", () => {
       expect(afterLoginAttempt(0, false, now)).toEqual({
         ok: false,
         reason: "INVALID_CREDENTIALS",
@@ -60,7 +64,8 @@ describe("afterLoginAttempt(パスワードを比べたあと、回数をどう�
       });
     });
 
-    it("F1 5回目の間違いで15分止め、回数を0に戻し、その応答から「回数が多すぎます」にする(待てばよいと分かるように)", () => {
+    // 待てばよいと分かるように
+    it("F1 5回目の間違いで15分止め、回数を0に戻し、その応答から「回数が多すぎます」にする", () => {
       expect(afterLoginAttempt(LOGIN_MAX_ATTEMPTS - 1, false, now)).toEqual({
         ok: false,
         reason: "RATE_LIMITED",
@@ -98,7 +103,8 @@ describe("afterCodeAttempt(認証コードを比べたあと、どうするか)"
       });
     });
 
-    it("A8-8 もうトークンを出したコードなら、断る(コードは1回だけ使える)", () => {
+    // コードは1回だけ使える
+    it("A8-8 もうトークンを出したコードなら、断る", () => {
       expect(afterCodeAttempt(record({ tokenHash: "used" }), true, now)).toEqual({ ok: false, action: "none" });
     });
 
@@ -120,7 +126,8 @@ describe("afterCodeAttempt(認証コードを比べたあと、どうするか)"
       });
     });
 
-    it("R-8 5回目の間違いで、コードを無効にする(行ごと消し、申請し直させる。Q1)", () => {
+    // 行ごと消し、申請し直させる。Q1
+    it("R-8 5回目の間違いで、コードを無効にする", () => {
       expect(afterCodeAttempt(record({ attempts: CODE_MAX_ATTEMPTS - 1 }), false, now)).toEqual({
         ok: false,
         action: "invalidate",

@@ -32,7 +32,8 @@ describe("toProblem(エラーを応答の形に変える)", () => {
       });
     });
 
-    it("P3 DBの一意制約違反は、409 CONFLICTにし、DBの列名・制約名を出さない(docs/api.md P14)", () => {
+    // docs/api.md P14
+    it("P3 DBの一意制約違反は、409 CONFLICTにし、DBの列名・制約名を出さない", () => {
       const err = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
         code: "P2002",
         clientVersion: "7.3.0",
@@ -54,19 +55,22 @@ describe("toProblem(エラーを応答の形に変える)", () => {
       expect(toProblem(err)).toMatchObject({ status: 404, code: "NOT_FOUND" });
     });
 
-    it("P6 壊れたJSONが送られた(Expressの読み取りの失敗)は、400 VALIDATION_ERROR(500にしない)", () => {
+    // 500にしない
+    it("P6 壊れたJSONが送られた(Expressの読み取りの失敗)は、400 VALIDATION_ERROR", () => {
       const err = Object.assign(new SyntaxError("Unexpected token"), { type: "entity.parse.failed", status: 400 });
 
       expect(toProblem(err)).toMatchObject({ status: 400, code: "VALIDATION_ERROR" });
     });
 
-    it("P8 JSONが大きすぎる(Expressの読み取りの上限を超えた)は、413 PAYLOAD_TOO_LARGE(500にしない。K8)", () => {
+    // 500にしない。K8
+    it("P8 JSONがExpressの読み取りの上限を超えたとき、413 PAYLOAD_TOO_LARGEにする", () => {
       const err = Object.assign(new Error("request entity too large"), { type: "entity.too.large", status: 413 });
 
       expect(toProblem(err)).toMatchObject({ status: 413, title: "Content Too Large", code: "PAYLOAD_TOO_LARGE" });
     });
 
-    it("P9 どのcodeの応答も、画面と共有する形(shared/ の problemSchema)に合う(サーバーと画面の形がずれない)", () => {
+    // サーバーと画面の形がずれない
+    it("P9 どのcodeの応答も、画面と共有する形(shared/ の problemSchema)に合う", () => {
       for (const code of Object.keys(errorCatalog) as ErrorCode[]) {
         expect(problemSchema.safeParse(toProblem(new DomainError(code))).success).toBe(true);
       }
