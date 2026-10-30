@@ -16,7 +16,7 @@
              SMTP(認証コードのメール。手元では mailpit が受け取り、:8025 で見る)
 ```
 
-- 4つともDocker Composeで起動する。設定はリポジトリ直下の`.env`(全サービス共通)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
+- 画面・API・DB・Prisma Studio・Mailpit(開発用のメールの受け口)の5つをDocker Composeで起動する。設定はリポジトリ直下の`.env`(DBの接続など。全サービス共通)と`back/.env`(メールの送り先など)。画面からAPIへのURLは`front/.env`の`NEXT_PUBLIC_API_URL`
 - CORSは`FRONTEND_URL`(既定`http://localhost:4545`)だけを許し、Cookieを通す(`credentials: true`)
 - すべての応答に`helmet`のセキュリティのヘッダを付ける。JSONは100kbまで
 - `POST /api/sessions`(ログイン)は、学籍番号ごとに続けて5回間違えたら15分止める(DBの回数)。加えて、接続元ごとに失敗を15分で100回まで(`express-rate-limit`、メモリで数える。成功したログインは数えない)。どちらも429 `RATE_LIMITED`。認証コードの申請は学籍番号ごとに1分に1回・1時間に5回、タブレットの本人確認は端末ごとに1分で失敗20回まで(`docs/auth.md` 4.6)
@@ -64,7 +64,7 @@
 | `GET /admin/tablet-devices` | Webのセッション(管理者) | 取り消していない端末の一覧 | 200 `{ items: TabletDevice[] }` |
 | `DELETE /admin/tablet-devices/{id}` | Webのセッション(管理者) | 端末を取り消す(行は消さない) | 204 |
 | `GET /tablet/device` | 端末 | この端末が登録されているか | 200 `{ id, name }` |
-| `POST /tablet/sessions` | 端末 | `{ cardNumber, pin }`。カードとPINで本人確認し、その端末でだけ使える3分のセッションを作る(判断表T。5回間違えるとロック) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }` |
+| `POST /tablet/sessions` | 端末 | `{ cardNumber, pin }`。カードとPINで本人確認し、その端末でだけ使える3分のセッションを作る(判断表T。5回間違えるとロック) | 201 `{ token, expiresAt, user: { displayName } }`(借りている物は返さない。A2) |
 | `DELETE /tablet/sessions/current` | 端末 + タブレットのセッション | 「終わる」・完了の10秒・無操作でセッションを消す | 204 |
 | `POST /tablet/rentals` | 端末 + タブレットのセッション | `{ barcode }`。判断表C(物品の状態・止められている・停止期間・延滞・上限)で判断して貸し出す。借りた端末を記録する | 201 `Rental` |
 | `POST /tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }`。返却する(本人でなくてよい)。返した端末を記録する | 201 `Rental`(返却日時入り) |
@@ -119,7 +119,7 @@ TabletDevice *─1 User(登録した管理者)
 | `rental` | 貸し出しの記録。`rentedAt`・`dueDate`・`returnedAt`・借りた端末・返した端末。状態の列は持たない |
 | `notification` | 通知の予定(Slack用)。未使用 |
 
-**名簿は本番では学校のDBかAPIになる前提**(2026-10-23決定)。今の`external_user`表と、`user.student_id`の外部キー・JOINは仮の形で、名簿の窓口(`Roster`)に置き換える予定(`docs/backlog.md`の0.6)。新しく名簿を読むコードを書くときは、`externalUser`のJOINを増やさない。
+**名簿は本番では学校のDBかAPIになる前提**(2026-10-23決定)。今の`external_user`表は仮の名簿で、`user`との外部キーは2026-10-24に外した(つながりは学籍番号だけ)。名簿はどれも名簿の窓口(`features/roster/roster.ts`の`Roster`、今の実装は`PrismaRoster`)から読み、名簿を読むJOINは書かない。学校の名簿の実装ができたら、`buildDeps()`の`roster`を差し替える(`docs/backlog.md`の0.6)
 
 2026-10-23に、名簿の写し・`rental_setting`・「貸出中」の二重管理をやめた(理由は`docs/spec.md`の要確認Q5と`docs/backlog.md`の0.5)。
 
@@ -127,16 +127,16 @@ TabletDevice *─1 User(登録した管理者)
 
 - `ItemStatus`は物そのものの状態だけ: `AVAILABLE`(使える) / `MAINTENANCE` / `LOST` / `DISPOSED`
 - 貸し出しの状態は列に持たず、`returnedAt`と`dueDate`から決める(`features/rentals/rental.status.ts`): 返却済み = `returnedAt`あり、延滞 = 未返却で期限切れ、それ以外は貸出中
-- 「返却されていない貸し出しは物1つにつき1件」を部分インデックス(`rental_active_item_key`、`WHERE returned_at IS NULL`)で守る。同時に借りられても2件目は一意制約違反(409)になる
-- APIは以前と同じ形で返す: 物品の`status`は貸出中なら`RENTED`、貸し出しの`status`は`RENTING`/`RETURNED`/`OVERDUE`、(2026-10-23時点の)`/items/me`の`rentalSetting`は`user`の列から組み立てる
+- 「返却されていない貸し出しは物1つにつき1件」を部分インデックス(`rental_active_item_key`、`WHERE returned_at IS NULL`)で守る。同時に借りられても2件目は一意制約違反になり、repositoryが`null`を返して、serviceが409 `ITEM_ALREADY_RENTED`で断る(0.9 D2)
+- APIでは、物品の状態を`state`(`AVAILABLE`・`RENTED`・`MAINTENANCE`・`LOST`・`DISPOSED`。貸出中は`rental.status.ts`の`itemAvailability`で決める)、貸し出しの状態を`state`(`RENTING`・`RETURNED`・`OVERDUE`)で返す(`status`はHTTPのステータスと紛らわしいため。API-Q7)
 
 ## フロントエンド
 
 | ページ | 内容 | 主に使うもの |
 |---|---|---|
 | `/auth` | ログインと、3段階の新規登録 | `useAuthForm`、`components/auth/` |
-| `/dashboard` | 自分の情報・バーコード・借りている物・カタログ(検索・ジャンル・カテゴリの絞り込みは画面でする) | `useAuth`、`useMyRentals`、`useCatalog`、`components/dashboard/` |
+| `/dashboard` | 自分の情報・PINの登録・借りている物・カタログ(検索・ジャンル・カテゴリの絞り込みは画面でする) | `useAuth`、`useMyRentals`、`useCatalog`、`components/dashboard/` |
 | `/items/[id]` | 種類の詳細(物品1つ1つの置き場所と状態) | `useItemType` |
-| `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → PIN → 操作の選択(名前と借りている物の名前・期限・延滞) → バーコード → 完了。無操作30秒・完了10秒・「終わる」で最初に戻る | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
+| `/tablet` | 受付端末の画面。未登録の端末なら登録の画面(管理者の学籍番号・パスワード・端末の名前)。登録済みなら、カード → PIN → 操作の選択(名前だけを出す。A2) → バーコード → 完了。最後にサーバーへ送ってから30秒(選ぶだけでは延ばさない。A1)・完了10秒(10秒以内なら「次の操作」で続けられる。B3)・「終わる」で最初に戻る | `useTabletDevice`、`TabletDeviceRegistration`、`useTabletOperations`、`BarcodeScanner`(html5-qrcode)、`BarcodeInput` |
 | `/admin/tablets` | 管理者だけ。タブレットの端末の一覧と取り消し | `useAdminTabletDevices` |
 | `/barcodes` | 開発のときだけ。テスト用のバーコードとカード番号の印刷ページ(seedと同じ値を直書き。`page.dev.tsx`で、本番のビルドには入らない) | `react-barcode` |

@@ -152,6 +152,23 @@ describe("requestVerification(登録の認証コードを送る)", () => {
       expect(await service.requestVerification("20240001", new Date())).toBeUndefined();
       expect(sent).toEqual([]);
     });
+
+    it("A24 メールが送れなくても(SMTPが止まっているなど)、成功と同じ応答で終える(名簿にいる番号だけ失敗すると、名簿にいるかが分かるため。R-2)", async () => {
+      const failing: Mailer = {
+        sendCode: async () => {
+          throw new Error("connect ECONNREFUSED");
+        },
+      };
+      const service = authService(
+        users(),
+        codes({ saveCode: async () => undefined }),
+        sessions(),
+        failing,
+        new FakeRoster([unregistered]),
+      );
+
+      await expect(service.requestVerification("20260001", new Date())).resolves.toBeUndefined();
+    });
   });
 });
 

@@ -993,7 +993,7 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
   const startSession = (app: App, body: object) => tabletPost(app, "/api/tablet/sessions").send(body);
 
   describe("正常系", () => {
-    it("H62 カードとPINが合えば、201でセッションの番号と、表示用の名前と借りている物だけを返す(学籍番号・学年・専攻・IDは返さない。R-A13)", async () => {
+    it("H62 カードとPINが合えば、201でセッションの番号と表示用の名前だけを返す(借りている物・学籍番号・学年・専攻・IDは返さない。R-A13・2026-10-30 A2)", async () => {
       const { app } = fakeDeps();
 
       const res = await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" });
@@ -1001,8 +1001,7 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
       expect(res.status).toBe(201);
       const body = tabletSessionSchema.parse(res.body);
       expect(body.user).toEqual({ displayName: "山田 太郎" });
-      expect(Object.keys(res.body).sort()).toEqual(["expiresAt", "rentals", "token", "user"]);
-      expect(body.rentals).toEqual([{ title: "MacBook", dueDate: "2099-01-01T00:00:00.000Z", state: "RENTING" }]);
+      expect(Object.keys(res.body).sort()).toEqual(["expiresAt", "token", "user"]);
       // 作ったセッションで、そのまま貸し出せる
       expect(
         (await tabletPost(app, "/api/tablet/rentals").set(bearer(body.token)).send({ barcode: "MAC-002" })).status,

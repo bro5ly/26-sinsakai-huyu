@@ -30,19 +30,7 @@ export const useTablet = () => {
       setLoading(true);
       setError(null);
       try {
-        const rental = await tabletService.rentItem(barcode, session.token);
-        // 借りた物を、借りている物の一覧に足す(画面に出すのは名前・期限・延滞だけ。R-A13)
-        setSession(
-          (prev) =>
-            prev && {
-              ...prev,
-              rentals: [
-                ...prev.rentals,
-                { title: rental.itemType.title, dueDate: rental.dueDate, state: rental.state },
-              ],
-            },
-        );
-        return rental;
+        return await tabletService.rentItem(barcode, session.token);
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "貸出に失敗しました");
         throw err;

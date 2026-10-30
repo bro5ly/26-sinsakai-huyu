@@ -28,7 +28,7 @@ export const createTabletDeviceService = (deps: Deps): TabletDeviceService =>
 
 // 置くタブレットの上での登録(UC-20)。管理者のWebのセッションは使わず、本文の学籍番号とパスワードでその場で確かめるので、
 // /api/admin(Webのセッションのある管理者だけ)の外に置く(2026-10-29 D1・D2)
-export const createTabletDeviceRoutes = (deps: Deps, config: Config) => {
+export const createTabletDeviceRoutes = (deps: Deps, config: Config): Router => {
   const router = Router();
   const devices = createTabletDeviceService(deps);
 
@@ -47,7 +47,7 @@ export const createTabletDeviceRoutes = (deps: Deps, config: Config) => {
 };
 
 // 管理者がWebで使う一覧と取り消し(UC-20)。/api/admin の入口で、Webのセッションと管理者かを確かめてある(D1)
-export const createAdminTabletDeviceRoutes = (deps: Deps) => {
+export const createAdminTabletDeviceRoutes = (deps: Deps): Router => {
   const router = Router();
   const devices = createTabletDeviceService(deps);
 

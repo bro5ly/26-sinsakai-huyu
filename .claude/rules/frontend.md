@@ -9,10 +9,10 @@ paths:
 
 - `app/`: ページ。データの取得や状態はhooksに出し、ページは組み立てに専念する
 - `components/<画面>/`: 部品。UIはHeroUI(`@heroui/react`)とTailwindで作る
-- `hooks/`: `useAuthForm`・`useCatalog`(種類の一覧とカテゴリ。`useFilteredItemTypes`で画面で絞り込む)・`useItemType`(詳細)・`useMyRentals`(借りている物をその都度取る。どれもログインを確かめ終えたか(`enabled`)を受け取る)・`usePinForm`(PINの登録・変更。送る前に`shared/`の`setPinRequestSchema`で確かめる)・`useTabletDevice`(この端末が登録されているか)・`useDeviceRegistrationForm`(タブレットでの端末の登録)・`useAdminTabletDevices`(管理者の端末の一覧と取り消し)・`useTablet`(タブレットのセッション。番号は画面のメモリにだけ持つ)・`useTabletOperations`(カード → PIN → 操作の選択 → 完了。無操作30秒・完了10秒・「終わる」で最初に戻し、サーバーのセッションも消す)
+- `hooks/`: `useAuthForm`・`useCatalog`(種類の一覧とカテゴリ。`useFilteredItemTypes`で画面で絞り込む)・`useItemType`(詳細)・`useMyRentals`(借りている物をその都度取る。どれもログインを確かめ終えたか(`enabled`)を受け取る)・`usePinForm`(PINの登録・変更。送る前に`shared/`の`setPinRequestSchema`で確かめる)・`useTabletDevice`(この端末が登録されているか)・`useDeviceRegistrationForm`(タブレットでの端末の登録)・`useAdminTabletDevices`(管理者の端末の一覧と取り消し)・`useTablet`(タブレットのセッション。番号は画面のメモリにだけ持つ)・`useTabletOperations`(カード → PIN → 操作の選択 → 完了。最後にサーバーへ送って通ってから30秒(選ぶだけでは延ばさない。サーバーと同じ数え方。2026-10-30 A1)・完了10秒・「終わる」で最初に戻し、サーバーのセッションも消す)
 - `contexts/`: `AuthContext`(Webのログイン状態。確かめ中かどうかと本人の`Me`だけを持ち、`useAuth()`で取り出す。借りている物は入れない)。タブレットのセッションは`useTablet`が画面のメモリに持つ(使われていなかった`TabletContext`は2026-10-29に消した)
 - `services/`: API呼び出し。`ApiService`を継承して`get`/`post`を使う(古い重複の`lib/api.ts`・`lib/auth-api.ts`は2026-10-29に消した)
-- `types/`: 画面だけで使う型(今は`ApiError`だけ。手書きのAPIの型は2026-10-29に消した)。APIはすべて包まれずに返り、成否はHTTPのステータスで分かる(失敗は`ApiError`で来る。2026-10-29に`{ success, ...data }`の形は無くなった)。`shared/`(`@sinsakai/shared`)にある形はそちらを使い、手で書き直さない(今はエラーの`code`とRFC 9457の形、登録・ログインの形(`Session`・`VerificationToken`)、本人の形(`Me`・`Rental`・`SetPinRequest`)、カタログの形(`ItemTypeSummary`・`ItemTypeDetail`・`Category`)、タブレットの端末の形(`TabletDevice`・`CurrentTabletDevice`・`RegisterTabletDeviceRequest`)、タブレットの本人確認の形(`TabletSession`・`CreateTabletSessionRequest`)。`ApiService`はエラーの応答を`problemSchema`で確かめてから読む)
+- `types/`: 画面だけで使う型(今は`ApiError`だけ。手書きのAPIの型は2026-10-29に消した)。APIはすべて包まれずに返り、成否はHTTPのステータスで分かる(失敗は`ApiError`で来る。2026-10-29に`{ success, ...data }`の形は無くなった)。`shared/`(`@sinsakai/shared`)にある形はそちらを使い、手で書き直さない(今はエラーの`code`とRFC 9457の形、登録・ログインの形(`Session`・`VerificationToken`)、本人の形(`Me`・`Rental`・`SetPinRequest`)、カタログの形(`ItemTypeSummary`・`ItemTypeDetail`・`Category`)、タブレットの端末の形(`TabletDevice`・`CurrentTabletDevice`・`RegisterTabletDeviceRequest`)、タブレットの本人確認と貸し出し・返却の形(`TabletSession`・`CreateTabletSessionRequest`・`TabletItemRequest`)。`ApiService`はエラーの応答を`problemSchema`で確かめてから読む)
 
 ## 認証
 

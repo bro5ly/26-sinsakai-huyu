@@ -7,7 +7,7 @@ import { TabletDeviceRegistration } from "@/components/tablet/TabletDeviceRegist
 import { TabletPinInput } from "@/components/tablet/TabletPinInput";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import BarcodeInput from "@/components/BarcodeInput";
-import { Button, Chip, Spinner, Avatar, Switch, Divider } from "@heroui/react";
+import { Button, Spinner, Avatar, Switch, Divider } from "@heroui/react";
 
 export default function TabletPage() {
   // 登録された端末か。登録されていなければ、受付の前に登録の画面を出す(UC-20・D5)
@@ -26,7 +26,6 @@ export default function TabletPage() {
     selectCheckout,
     selectReturn,
     backToActionSelect,
-    resetInactivityTimer,
   } = useTabletOperations(tabletDevice.markUnregistered);
 
   const [isManualInput, setIsManualInput] = useState(false);
@@ -94,7 +93,7 @@ export default function TabletPage() {
       {/* --- RIGHT: Control Panel --- */}
       <div className="w-[40%] h-full bg-[#FBFBFC] p-12 flex flex-col justify-between overflow-y-auto relative">
         <header className="space-y-8">
-          <div className="flex justify-between items-center" onClick={resetInactivityTimer}>
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black">
                 T
@@ -112,21 +111,9 @@ export default function TabletPage() {
             <div className="bg-white p-5 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-4 animate-appearance-in">
               <Avatar name={userData.displayName} size="sm" className="bg-blue-50 text-blue-600 font-black" />
               <div className="flex-grow">
+                {/* 名前だけを出す。借りている物は、後ろに並ぶ人にも見えるので出さない(ダッシュボードで見る。2026-10-30 A2) */}
                 <p className="text-sm font-black text-slate-800 leading-none">{userData.displayName}</p>
-                {/* 借りている物の名前・期限・延滞だけを出す(学籍番号などはAPIが返さない。R-A13) */}
-                {userData.rentals.map((rental, i) => (
-                  <p
-                    key={i}
-                    className={`text-[10px] font-bold mt-1 ${rental.state === "OVERDUE" ? "text-danger" : "text-slate-400"}`}
-                  >
-                    {rental.title}・{new Date(rental.dueDate).toLocaleDateString("ja-JP")}まで
-                    {rental.state === "OVERDUE" ? "(延滞)" : ""}
-                  </p>
-                ))}
               </div>
-              <Chip size="sm" color="primary" variant="flat" className="font-black">
-                {userData.rentals.length} Items
-              </Chip>
             </div>
           )}
         </header>

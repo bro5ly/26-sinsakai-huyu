@@ -5,12 +5,10 @@ import { cryptoSecrets, hashToken } from "@/lib/session-token.js";
 import { bcryptPasswords } from "@/lib/password.js";
 import type { Roster } from "@/features/roster/roster.js";
 import type { NewSession, SessionRecord, SessionStore } from "@/features/auth/auth.types.js";
-import type { RentalRecord } from "@/features/rentals/rental.types.js";
 import { TabletSessionService } from "./tablet-session.service.js";
-import type { ActiveRentalReader, CardHolderRecord, CardHolderStore, PinAttempt } from "./tablet-session.types.js";
+import type { CardHolderRecord, CardHolderStore, PinAttempt } from "./tablet-session.types.js";
 
 const now = new Date("2026-10-29T03:00:00Z");
-const day = 86_400_000;
 const suzuki = rosterEntry(); // 鈴木 次郎・20240003・IC-CARD-003
 
 let pinHash = "";
@@ -43,30 +41,12 @@ const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession
   ...overrides,
 });
 
-const rental = (dueDate: Date): RentalRecord => ({
-  id: "rental-1",
-  rentedAt: new Date(dueDate.getTime() - 7 * day),
-  dueDate,
-  returnedAt: null,
-  item: { id: "item-1" },
-  itemType: { id: "type-1", title: "MacBook Pro", genre: { id: "genre-1", name: "ノートパソコン" } },
-});
-const rentals = (items: RentalRecord[] = []): ActiveRentalReader => ({
-  findActiveRentalsByUserId: async () => items,
-});
-
 // 本物のbcryptと乱数を使う(PINのハッシュは beforeAll で作る)
-const sessionService = (
-  roster: Roster,
-  cardHolders: CardHolderStore,
-  sessions: SessionStore,
-  rentals: ActiveRentalReader,
-) =>
+const sessionService = (roster: Roster, cardHolders: CardHolderStore, sessions: SessionStore) =>
   new TabletSessionService({
     roster,
     cardHolders,
     sessions,
-    rentals,
     passwords: bcryptPasswords,
     secrets: cryptoSecrets,
   });
@@ -78,7 +58,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
   describe("正常系", () => {
     it("T6 カードとPINが合えば、その端末でだけ使える3分のセッションを作り、番号はハッシュだけをDBに置く(R-A8)", async () => {
       const created: CreatedSession[] = [];
-      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions({}, created), rentals());
+      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions({}, created));
 
       const result = await start(service);
 
@@ -94,13 +74,8 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
       expect(result.expiresAt).toEqual(new Date(now.getTime() + 3 * 60_000));
     });
 
-    it("T6 応答は、表示用の名前と、借りている物の名前・期限・延滞だけ(学籍番号・学年・専攻・ID・カードの番号は返さない。R-A13)", async () => {
-      const service = sessionService(
-        new FakeRoster([suzuki]),
-        holders(holder()),
-        sessions(),
-        rentals([rental(new Date(now.getTime() - day))]),
-      );
+    it("T6 応答は、番号と期限と表示用の名前だけ(借りている物は返さない。公共のタブレットで後ろの人に見えるため。学籍番号・学年・専攻・ID・カードの番号も返さない。R-A13・2026-10-30 A2)", async () => {
+      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions());
 
       const result = await start(service);
 
@@ -108,7 +83,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         token: expect.any(String),
         expiresAt: expect.any(Date),
         displayName: "鈴木 次郎",
-        rentals: [{ title: "MacBook Pro", dueDate: new Date(now.getTime() - day), state: "OVERDUE" }],
       });
     });
 
@@ -118,7 +92,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         new FakeRoster([suzuki]),
         holders(holder({ pinFailedAttempts: 2 }), attempts),
         sessions(),
-        rentals(),
       );
 
       await start(service);
@@ -129,12 +102,7 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
 
   describe("異常系", () => {
     it("T2 名簿に無いカードなら、INVALID_CARD_OR_PIN で、セッションを作らない", async () => {
-      const service = sessionService(
-        new FakeRoster([suzuki]),
-        holders(holder()),
-        sessions({ createSession: notUsed }),
-        rentals(),
-      );
+      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions({ createSession: notUsed }));
 
       await expect(start(service, "8068", "IC-CARD-999")).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
     });
@@ -144,7 +112,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         new FakeRoster([suzuki]),
         holders(holder({ pinHash: null })),
         sessions({ createSession: notUsed }),
-        rentals(),
       );
 
       await expect(start(service)).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
@@ -155,7 +122,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         new FakeRoster([suzuki]),
         holders(holder({ pinLockedAt: now })),
         sessions({ createSession: notUsed }),
-        rentals(),
       );
 
       await expect(start(service)).rejects.toMatchObject({ code: "PIN_LOCKED" });
@@ -167,7 +133,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         new FakeRoster([suzuki]),
         holders(holder({ pinFailedAttempts: 1 }), attempts),
         sessions({ createSession: notUsed }),
-        rentals(),
       );
 
       await expect(start(service, "1357")).rejects.toMatchObject({ code: "INVALID_CARD_OR_PIN" });
@@ -182,7 +147,6 @@ describe("start(カードとPINでタブレットのセッションを作る)", 
         new FakeRoster([suzuki]),
         holders(holder({ pinFailedAttempts: 4 }), attempts),
         sessions({ createSession: notUsed }),
-        rentals(),
       );
 
       await expect(start(service, "1357")).rejects.toMatchObject({ code: "PIN_LOCKED" });
@@ -212,7 +176,6 @@ describe("authenticate・end(タブレットのセッションを確かめる・
           findSessionByTokenHash: async (hash) => (hash === hashToken("t-1") ? tabletSession() : null),
           saveSessionLastUsedAt: async (hash, at) => void touched.push([hash, at]),
         }),
-        rentals(),
       );
 
       expect(await service.authenticate({ token: "t-1", deviceId: "device-1" }, now)).toEqual({
@@ -228,7 +191,6 @@ describe("authenticate・end(タブレットのセッションを確かめる・
         new FakeRoster([suzuki]),
         holders(holder()),
         sessions({ deleteSessionByTokenHash: async (hash) => void deleted.push(hash) }),
-        rentals(),
       );
 
       await service.end("t-1");
@@ -239,7 +201,7 @@ describe("authenticate・end(タブレットのセッションを確かめる・
 
   describe("異常系", () => {
     it("TA3 番号が無ければ、DBを見ずに UNAUTHENTICATED", async () => {
-      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions(), rentals());
+      const service = sessionService(new FakeRoster([suzuki]), holders(holder()), sessions());
 
       await expect(service.authenticate({ token: undefined, deviceId: "device-1" }, now)).rejects.toMatchObject({
         code: "UNAUTHENTICATED",
@@ -253,7 +215,6 @@ describe("authenticate・end(タブレットのセッションを確かめる・
         sessions({
           findSessionByTokenHash: async () => tabletSession({ lastUsedAt: new Date(now.getTime() - 31_000) }),
         }),
-        rentals(),
       );
 
       await expect(service.authenticate({ token: "t-1", deviceId: "device-1" }, now)).rejects.toMatchObject({

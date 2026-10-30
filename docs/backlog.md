@@ -120,32 +120,6 @@
 - [x] 直下の`package.json`のscriptsに、よく使うコマンドの呼び名をまとめる(2026-10-29、ブランチ`refactor/shared-types`)(中で`docker compose exec ...`を呼ぶ。Mac用)。CLAUDE.mdのコマンドの表も直す。**H1**(2026-10-29): `test`・`typecheck`・`lint`・`build`・`check`(全部を通す)・`db:migrate`・`db:seed`・`logs`
 - [x] 型チェック・ビルド・テスト・受け入れ基準の通しで、動きが変わっていないことを確かめる(`refactor:`)。2026-10-29、クラウドの一時的なPostgreSQLとAPI・画面で通した: テスト248件・型チェック・ビルドは緑(リントは前からの2件)。受け入れ基準はA1〜A5・A10を`curl`で、A7〜A9をPlaywrightで画面から確かめた(A6の3分は`tablet-session.check.test.ts`のテストだけ)。Macでの確かめは最後にまとめて行う(X1)
 
-## 0.9 serviceとrepositoryの形をそろえる(2026-10-29決定)
-
-0.7で中の型(T1〜T7)を済みにしたが、確かめたのは`implements`と推論の型だけで、書式・名前・引数の形・依存の書き方がファイルごとに違っていた(開発者の指摘)。根っこは、`back`に整形とリントの道具が無いこと。道具で守れる所は道具に守らせ、残りの決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書く。
-
-- **S1** Prettierを直下に1つ置き、`back`・`front`・`shared`の全部に同じ設定をかける。整形しただけの差分は`style:`の1つのコミットにする
-- **S2** Prettierの設定は既定に近い形(字下げ2つ・セミコロン有り・二重引用符・行の長さ120)。`front`と、Next.js・Prettierの既定に寄せる
-- **S3** `back`にESLint + typescript-eslintの推奨の規則を入れ、eslint-config-prettierを最後に置く。`../`の相対パスの読み込みを禁止する。型の情報を使う重い規則はCIを作るときに考える
-- **N1** 認証コードのrepositoryは`VerificationCodeRepository`(`verification-code.repository.ts`)、インターフェースは`VerificationCodeStore`、`Deps`は`verificationCodes`(表の名前と同じ)
-- **N2** repositoryのメソッドの名前: 1件を読む`find<物>`(無ければ`null`)、何件も読む`find<物>s`・`findAll<物>`、作る`create<物>`、書き換える`save<中身>`、消す`delete<物>`
-- **N3** serviceが持つ部品は中身で呼ぶ(`users`・`verificationCodes`・`sessions`・`devices`・`rentals`・`roster`・`mailer`)。`store`は使わない。`Deps`の名前と同じにする
-- **N4** `features/user/UserRepository.ts`を`features/auth/user.repository.ts`に移し、`features/user/`は消す
-- **N5** DBを読み書きするインターフェースは`<物>Store`。それ以外(名簿・メール・ハッシュ・乱数・ほかの機能に一部だけ見せる物)は役割の名前
-- **M1** serviceのメソッドの引数: 値が1つならそのまま、2つ以上なら1つのオブジェクト。時計(`now`)はいつも最後の別の引数。端末(`deviceId`)は入力のオブジェクトの中
-- **M2** serviceは部品を名前付きのオブジェクトで受け取る(`new MeService({ users, roster })`)。メソッドは`async name()`の形にし、矢印関数のプロパティにしない
-- **M3** インターフェースとrepositoryの両方に出てくる入力の型は、`*.types.ts`で名前を付けて使う
-- **M4** DBの行の型は、どこも`Prisma.XxxGetPayload<{ select: typeof xxxSelect }>`で作る(手で書かない)
-- **M5** serviceとrepositoryの公開のメソッドには、返す型を必ず書く(リントで確かめる)
-- **D1** bcryptと乱数(PIN・端末とタブレットのセッションの番号も)は、`Deps`の`passwords`・`secrets`から渡す。serviceの中で直接呼ばない
-- **D2** DBの一意制約の失敗(すでに貸し出し中)は、repositoryは「ぶつかった」ことを返すだけにし、serviceが`ITEM_ALREADY_RENTED`を投げる。`DomainError`を投げるのはserviceと判断の関数の結果だけ
-- **D3** 借りている物の形を作る`select`と変換は`rentals`の1か所に置き、`me`と`rentals`のrepositoryが使う
-- 決まりどおりに直すだけの所: 相対パスを`@/`にする、`rental.schema.ts`を`shared/`に移す、空の`auth/strategies/`を消す、何をしているかを書いたコメントを直す、別の機能のserviceの組み立ては、その機能のroutesの`create<機能>Service(deps)`から読む
-- **P1** PR1 = 道具と整形(S1〜S3)、PR2 = 形の整理(N・M・D。機能ごとに`refactor:`のコミット)
-- **P2** X1と同じく、クラウドでテスト・型チェック・ビルド・リントを通したらPRを出してマージし、Macでの確かめは最後にまとめる
-- [x] PR1 道具と整形(2026-10-29、ブランチ`chore/formatter-linter`。整形だけのコミットは`.git-blame-ignore-revs`に書いた。画面のリントのエラー2件(`BarcodeScanner`、E4)は残っている)
-- [x] PR2 形の整理(2026-10-29〜30、ブランチ`refactor/service-repository-shape`。決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書いた。名簿の窓口(`Roster`)のメソッドの名前は、repositoryでなく役割の窓口なので今のまま(N5))
-
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
 
 - 順番(2026-10-28決定 S2): カタログのPR → 0.8 → 0.7の残り(`satisfies`・画面の手書きの型・コマンドの呼び名・通しの確かめ)。タブレットの型は0.8で作り直すので、画面の手書きの型を消すのは0.8のあとにする
@@ -196,7 +170,7 @@
   - **P4** ロックは`pin_locked_at`(ロックした日時。無ければロックしていない)で持つ。R-A7は時間で解けないので「いつまで」の列は使わない
   - 失敗を数えてロックするのはタブレットの本人確認(e)で作る。cでは、登録・変更したら回数を0に戻し、ロックを解く
   - **P5** PINを変えるときに入れ直したパスワードが違ったら、403・新しい`code` `WRONG_PASSWORD`(「パスワードが違います」)で断る。ログイン中なので「学籍番号か」の文言は合わず、401だと画面がセッション切れと取り違えるため
-  - **P6** `PUT /api/me/pin`にも、ログインと同じ回数の制限(接続元ごとに、失敗を15分で20回まで)を付ける。ログインしたまま離れた人の画面から、パスワードを何度でも試せないように
+  - **P6** `PUT /api/me/pin`にも、ログインと同じ回数の制限(接続元ごとに、失敗を15分で20回まで。→ 2026-10-29 F2で100回にした)を付ける。ログインしたまま離れた人の画面から、パスワードを何度でも試せないように
   - **R8** cのPRの最初に、認証(`auth`)の中の型を0.7のT1〜T4・T7のとおりにそろえる(`refactor:`の別のコミット)。認証のAPIを移したとき(PR #13)にやっておらず、Webのセッション(PR #16)で`Pick`の型を増やしてしまったため。貸し出し(`rentals`)のT2はeで、`canCheckout`(「1」)はその後
 - [x] カード認証の応答から個人情報を外す(R-A12・A13。e1)
 - [x] 無効な人を通さない(R-A14。Webは2026-10-28、タブレットはe1)
@@ -212,6 +186,42 @@
 - [ ] パスワードの再設定(UC-4、R-33〜R-37)。認証コードの表に用途(登録・再設定)を足す。**後回し**(2026-10-29、開発者の希望。0.8・0.7の残り・「2」の後、学習の前後で決める)。G4(再設定のあとはログインの画面に戻す。自動でログインさせない)は決めてある
 
 `2. 登録・ログイン`のうち、鍵の分離・ログアウト・回数の制限はここに含める。
+
+## 0.9 serviceとrepositoryの形をそろえる(2026-10-29決定)
+
+0.7で中の型(T1〜T7)を済みにしたが、確かめたのは`implements`と推論の型だけで、書式・名前・引数の形・依存の書き方がファイルごとに違っていた(開発者の指摘)。根っこは、`back`に整形とリントの道具が無いこと。道具で守れる所は道具に守らせ、残りの決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書く。
+
+- **S1** Prettierを直下に1つ置き、`back`・`front`・`shared`の全部に同じ設定をかける。整形しただけの差分は`style:`の1つのコミットにする
+- **S2** Prettierの設定は既定に近い形(字下げ2つ・セミコロン有り・二重引用符・行の長さ120)。`front`と、Next.js・Prettierの既定に寄せる
+- **S3** `back`にESLint + typescript-eslintの推奨の規則を入れ、eslint-config-prettierを最後に置く。`../`の相対パスの読み込みを禁止する。型の情報を使う重い規則はCIを作るときに考える
+- **N1** 認証コードのrepositoryは`VerificationCodeRepository`(`verification-code.repository.ts`)、インターフェースは`VerificationCodeStore`、`Deps`は`verificationCodes`(表の名前と同じ)
+- **N2** repositoryのメソッドの名前: 1件を読む`find<物>`(無ければ`null`)、何件も読む`find<物>s`・`findAll<物>`、作る`create<物>`、書き換える`save<中身>`、消す`delete<物>`
+- **N3** serviceが持つ部品は中身で呼ぶ(`users`・`verificationCodes`・`sessions`・`devices`・`rentals`・`roster`・`mailer`)。`store`は使わない。`Deps`の名前と同じにする
+- **N4** `features/user/UserRepository.ts`を`features/auth/user.repository.ts`に移し、`features/user/`は消す
+- **N5** DBを読み書きするインターフェースは`<物>Store`。それ以外(名簿・メール・ハッシュ・乱数・ほかの機能に一部だけ見せる物)は役割の名前
+- **M1** serviceのメソッドの引数: 値が1つならそのまま、2つ以上なら1つのオブジェクト。時計(`now`)はいつも最後の別の引数。端末(`deviceId`)は入力のオブジェクトの中
+- **M2** serviceは部品を名前付きのオブジェクトで受け取る(`new MeService({ users, roster })`)。メソッドは`async name()`の形にし、矢印関数のプロパティにしない
+- **M3** インターフェースとrepositoryの両方に出てくる入力の型は、`*.types.ts`で名前を付けて使う
+- **M4** DBの行の型は、どこも`Prisma.XxxGetPayload<{ select: typeof xxxSelect }>`で作る(手で書かない)
+- **M5** serviceとrepositoryの公開のメソッドには、返す型を必ず書く(リントで確かめる)
+- **D1** bcryptと乱数(PIN・端末とタブレットのセッションの番号も)は、`Deps`の`passwords`・`secrets`から渡す。serviceの中で直接呼ばない
+- **D2** DBの一意制約の失敗(すでに貸し出し中)は、repositoryは「ぶつかった」ことを返すだけにし、serviceが`ITEM_ALREADY_RENTED`を投げる。`DomainError`を投げるのはserviceと判断の関数の結果だけ
+- **D3** 借りている物の形を作る`select`と変換は`rentals`の1か所に置き、`me`と`rentals`のrepositoryが使う
+- 決まりどおりに直すだけの所: 相対パスを`@/`にする、`rental.schema.ts`を`shared/`に移す、空の`auth/strategies/`を消す、何をしているかを書いたコメントを直す、別の機能のserviceの組み立ては、その機能のroutesの`create<機能>Service(deps)`から読む
+- **P1** PR1 = 道具と整形(S1〜S3)、PR2 = 形の整理(N・M・D。機能ごとに`refactor:`のコミット)
+- **P2** X1と同じく、クラウドでテスト・型チェック・ビルド・リントを通したらPRを出してマージし、Macでの確かめは最後にまとめる
+- [x] PR1 道具と整形(2026-10-29、ブランチ`chore/formatter-linter`。整形だけのコミットは`.git-blame-ignore-revs`に書いた。画面のリントのエラー2件(`BarcodeScanner`、E4)は残っている)
+- [x] PR2 形の整理(2026-10-29〜30、ブランチ`refactor/service-repository-shape`。決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書いた。名簿の窓口(`Roster`)のメソッドの名前は、repositoryでなく役割の窓口なので今のまま(N5))
+- 2026-10-30 一気に変えたあとのレビュー(開発者の希望)。仕様とコードを読み比べた。ブランチ`fix/review-findings`:
+  - **B3** 完了画面から10秒以内なら「次の操作」で続けられ、10秒操作が無ければセッションを無効にする(今の作りのまま。続けて借りる人は少ない。開発者が決めた)。`auth.md` R-A10に書いた
+  - **B4** 認証コードのメールが送れなくても202で終える(名簿にいる番号だけ500になると、名簿にいるかが分かるため。R-2)
+  - **C2** routesの組み立ての関数にも返す型を書き、リントで確かめる
+  - 文書だけ古かった所(T3・R-A6・R-A11・API-Q6・UC-8・UC-9・R-9・R-20・R-22・R-31・7章)を直した
+  - **C1** 画面に英語の文言が残っている(「Success」「Next Operation」「Sign In」など)。日本語にする作業は別のまとまりでする
+  - **A1** タブレットの無操作30秒は、画面もサーバーと同じく「最後にサーバーへ送って通ったときから」数える。「借りる」を選ぶだけでは延ばさない(画面だけ延ばすと、操作中なのにサーバーでは時間切れになっていたため)
+  - **A2** タブレットの本人確認のあとに、借りている物の一覧を出さない(APIも返さない)。公共のタブレットで後ろに並ぶ人にも見え、返すときは物を持ってくるので要らず、ダッシュボードで見られるため(開発者の提案)
+  - **B1** 判断表Cは、修理中・紛失・廃棄(C2)を貸出中(C3)より先に見る(コードの順を正とし、表の番号を入れ替えた)。順番で変わるのは、2つに同時に当てはまったときの文言だけ
+  - **B2** PINがロックされたカードは、PINを確かめる前に「PINがロックされています」と出す(R-A12の例外として書いた)
 
 ## 1. 貸し出し・返却(タブレット)
 
@@ -234,11 +244,14 @@
 ## 3. 掃除
 
 - [x] 利用者の情報を出す`console.log`を消す(ずれ5)。2026-10-28に、もう残っていないことを確かめた(残りはサーバーの起動の1行だけ)
-- [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
+- [x] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する(2026-10-28〜29に消した。カタログのserviceは形を作る処理があり、素通しではない)
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`は、0.7で消した。2026-10-29)
 - [x] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11。2026-10-28、カタログを新しいAPIに移すときに`item.service.ts`ごと消した)
 - [ ] 画面のリントのエラーを直す(2026-10-24に7件見つけた。2026-10-29には2件。`npm run lint`が落ちる): `components/BarcodeScanner.tsx`の宣言より前に使っている変数(2件)。警告も3件ある(2026-10-29)。`items/page.tsx`・`dashboard/page.tsx`・`contexts/AuthContext.tsx`・`barcodes/page.tsx`の分は、その所を作り直したときに消えた
 - [ ] `app/page.tsx`(Next.jsの初期のまま)をどこかへの案内にする
+- [ ] 画面に残っている英語の文言を日本語にする(「Success」「Next Operation」「Sign In」「Create new account」「Edit Profile」「MYRENTALS」など。CLAUDE.mdの「利用者の画面の文言は日本語」。2026-10-30のレビューのC1)。押しても何も起きない「Edit Profile」も、消すか決める
+- [ ] ダッシュボードで延滞を目立たせる(R-30。`docs/spec.md`のずれ7。APIは`state: "OVERDUE"`と`hasOverdue`を返している)
+- [ ] 期限の切れたセッション(Web・タブレット)の行を片付ける。今は消さずに残り続ける(使えないので害は無いが、表が増え続ける。`docs/spec.md`の利用者の表の「システム」)
 - [x] `/barcodes`(テスト用に全部の物品とカードのバーコードを印刷する画面)は、誰でも開ける。実物を持たずに借りられてしまうので、本番の前に管理者だけにするか消す(2026-10-28、Ca5の話から)。2026-10-29に、開発のときだけ使えるようにした(BC2。`page.dev.tsx`と`pageExtensions`)
 
 ## 4. フロントの認証
