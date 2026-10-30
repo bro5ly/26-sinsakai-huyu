@@ -41,7 +41,7 @@
 | 起動 | `docker compose up -d`(web 4545 / api 5454 / db 1919 / Prisma Studio 5555 / 開発用のメールの受け口 Mailpit 8025。認証コードはDBにハッシュでしか無いので、届いたメールをMailpitで見る) |
 | マイグレーション | `docker compose exec api npm run db:migrate`(スキーマを変えたら`--name <内容>`を付ける) |
 | テストデータ | `docker compose exec api npm run db:seed`(**全テーブルを消してから入れ直す**) |
-| テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts` |
+| テスト(API) | `docker compose exec api npm test`(Vitest。`npm run test:watch`で見張る)。テストは`src/`の中で元のファイルの隣に`*.test.ts`(型のテストは`*.test-d.ts`で、`npm test`が一緒にtscで調べる。2026-10-30 TS2) |
 | 型チェック(API) | `docker compose exec api npx tsc --noEmit` |
 | ビルド・リント(画面) | `docker compose exec web npm run build`、`docker compose exec web npm run lint` |
 | リント(API) | `docker compose exec api npm run lint` |
