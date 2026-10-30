@@ -143,7 +143,7 @@
 |---|---|---|---|---|---|
 | `POST /api/tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }` | 201 `TabletDevice` + Cookie`device`(400日) | 401 `INVALID_CREDENTIALS`・403 `FORBIDDEN`(管理者でない)・400・429 | UC-20 |
 | `GET /api/tablet/device` | 端末 | — | 200 `{ id, name }`(画面が開いたときに確かめる) | 401 `DEVICE_NOT_REGISTERED` | UC-8・UC-20 |
-| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。使い捨てのバーコードの`{ tabletCode, pin }`は作らない。G0) | 201 `{ token, expiresAt, user: { displayName }, rentals: { title, dueDate, state }[] }`(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429(端末ごとに1分で失敗20回) | UC-8・UC-10 |
+| `POST /api/tablet/sessions` | 端末 | `{ cardNumber, pin }`(2026-10-29に作った。使い捨てのバーコードの`{ tabletCode, pin }`は作らない。G0) | 201 `{ token, expiresAt, user: { displayName } }`(借りている物は返さない。2026-10-30 A2)(作った端末でだけ使える3分のセッション。5回目の間違いでロックし、その応答から423。E5) | 401 `DEVICE_NOT_REGISTERED`・401 `INVALID_CARD_OR_PIN`・423 `PIN_LOCKED`・429(端末ごとに1分で失敗20回) | UC-8・UC-10 |
 | `DELETE /api/tablet/sessions/current` | 端末 + 本人 | — | 204(切れていても204。2026-10-29に作った) | — | UC-8・UC-31 |
 | `POST /api/tablet/rentals` | 端末 + 本人 | `{ barcode }` | 201 `Rental`(2026-10-29に作った。判断表Cで判断し、借りた端末を記録する。C4・C5はどちらも`BORROWING_SUSPENDED`。E8) | 404 `ITEM_NOT_FOUND`・409 `ITEM_ALREADY_RENTED`・409 `ITEM_UNAVAILABLE`・409 `BORROWING_SUSPENDED`・409 `HAS_OVERDUE`・409 `LIMIT_REACHED`・401 `SESSION_EXPIRED` | UC-8 |
 | `POST /api/tablet/returns` | 端末だけ(カード・PIN不要) | `{ barcode }` | 201 `Rental`(返却日時入り。2026-10-29に作った。返した端末を記録する) | 404 `ACTIVE_RENTAL_NOT_FOUND` | UC-9 |
@@ -216,8 +216,8 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `ITEM_NOT_FOUND` | 404 | そのバーコードの物品が無い |
 | `ACTIVE_RENTAL_NOT_FOUND` | 404 | その物品は貸し出されていない(返却のとき) |
 | `ALREADY_REGISTERED` | 409 | 登録済み(登録用トークンを使うとき) |
-| `ITEM_ALREADY_RENTED` | 409 | 貸出中(判断表C2) |
-| `ITEM_UNAVAILABLE` | 409 | 修理中・紛失・廃棄(C3) |
+| `ITEM_ALREADY_RENTED` | 409 | 貸出中(判断表C3) |
+| `ITEM_UNAVAILABLE` | 409 | 修理中・紛失・廃棄(C2) |
 | `BORROWING_SUSPENDED` | 409 | 貸し出しが止められている・停止期間中(C4・C5) |
 | `HAS_OVERDUE` | 409 | 延滞中の物がある(C6) |
 | `LIMIT_REACHED` | 409 | 借りられる数の上限(C7) |
