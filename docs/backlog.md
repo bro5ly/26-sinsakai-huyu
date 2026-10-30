@@ -244,7 +244,7 @@
 ## 3. 掃除
 
 - [x] 利用者の情報を出す`console.log`を消す(ずれ5)。2026-10-28に、もう残っていないことを確かめた(残りはサーバーの起動の1行だけ)
-- [ ] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する
+- [x] 中身が素通しのserviceと空のファイル(`item.schema.ts`・`auth/strategies/`)を整理する(2026-10-28〜29に消した。カタログのserviceは形を作る処理があり、素通しではない)
 - (フロントの古いAPI呼び出し`lib/api.ts`・`lib/auth-api.ts`は、0.7で消した。2026-10-29)
 - [x] 存在しないAPIを呼ぶ`getItemsByTitle`を消す(ずれ11。2026-10-28、カタログを新しいAPIに移すときに`item.service.ts`ごと消した)
 - [ ] 画面のリントのエラーを直す(2026-10-24に7件見つけた。2026-10-29には2件。`npm run lint`が落ちる): `components/BarcodeScanner.tsx`の宣言より前に使っている変数(2件)。警告も3件ある(2026-10-29)。`items/page.tsx`・`dashboard/page.tsx`・`contexts/AuthContext.tsx`・`barcodes/page.tsx`の分は、その所を作り直したときに消えた

@@ -20,21 +20,21 @@
 | # | 問題 | 例 | 直したか |
 |---|---|---|---|
 | P1 | URLが動作の名前 | `/tablet/signin`・`/tablet/checkout`・`/tablet/return`・`/auth/verify-code`・`/auth/request-verification` | 済み(タブレットの3本は2026-10-29に`/tablet/sessions`・`/tablet/rentals`・`/tablet/returns`にした) |
-| P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | 一部(登録・ログインは2026-10-25) |
-| P3 | 置き場所がずれている | 自分の情報が`/items/me`。`/tablet/*`は資源でなく端末でまとめている | 一部(本人は2026-10-25に`/api/me`へ) |
+| P2 | URLの書き方がばらばら | `refreshSession`(キャメル)と`request-verification`(ハイフン) | 済み(2026-10-29。どのURLもハイフンの資源の名前) |
+| P3 | 置き場所がずれている | 自分の情報が`/items/me`。`/tablet/*`は資源でなく端末でまとめている | 済み(本人は2026-10-25に`/api/me`へ。`/api/tablet`は、入口で端末を確かめるためのまとまりとして残した。2026-10-29 D5) |
 | P4 | 物品の種類のAPIが無い | カタログの詳細は、全件を取って画面でタイトルで絞り込んでいる | 済み(2026-10-28) |
 | P5 | 作ったときも200 | 登録・貸し出し | 済み(2026-10-29。`sendSuccess`を消した) |
 | P6 | ステータスの意味のずれ | ログインでパスワード違いは400、利用者がいないと404(どちらも401で、違いから登録済みかが分かる)。期限切れの認証コードは410で`VERIFICATION_NOT_STARTED` | 済み(2026-10-24) |
 | P7 | 同じ`code`を別の意味に使う | `ITEM_NOT_AVAILABLE`が400と409の両方 | 済み(2026-10-24) |
 | P8 | 不正な入力で500になる(不具合) | Cookie無しのリフレッシュ、壊れた登録用トークンでの登録 | 済み(2026-10-24) |
-| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | 一部(タブレットの3本だけ残っている。0.8) |
-| P10 | DBの列がそのまま出る | 物品に`itemTypeId`・`genreId`・`notes`・`createdAt`・`updatedAt` | 一部(本人・カタログは2026-10-25〜28) |
-| P11 | 同じ名前で意味が違う | 物品の`status`は計算した値(RENTEDを含む)、貸し出しの応答の中の`item.status`はDBの値 | 一部(本人・カタログは`state`に。2026-10-25〜28) |
-| P12 | 画面の文言が応答に入る | 「認証に成功しました」など | 一部(登録・ログインは2026-10-25) |
+| P9 | 包み方がばらばら | `{ success: true, ...data }`で展開するので、`user`が外に出たり`data`に入ったりする。`success`はHTTPのステータスと同じことの二重 | 済み(2026-10-29。どのAPIも包まない) |
+| P10 | DBの列がそのまま出る | 物品に`itemTypeId`・`genreId`・`notes`・`createdAt`・`updatedAt` | 済み(2026-10-29。どの応答も`shared/`の形だけ) |
+| P11 | 同じ名前で意味が違う | 物品の`status`は計算した値(RENTEDを含む)、貸し出しの応答の中の`item.status`はDBの値 | 済み(本人・カタログ・タブレットとも`state`に。2026-10-25〜29) |
+| P12 | 画面の文言が応答に入る | 「認証に成功しました」など | 済み(2026-10-29。成功の応答に文言は入れない。文言は失敗の`detail`だけ) |
 | P13 | JSONで返らないエラーがある | 存在しないURLの404、タブレットの認証の失敗(Express既定のHTML) | 済み(2026-10-24) |
 | P14 | DBの中身がエラーに漏れる | 一意制約の違反で、制約の列名を`target`として返す | 済み(2026-10-24) |
 | P15 | `code`の一覧が無い・綴りの誤り | `SUTUDENT_ID_NOT_FOUND` | 済み(2026-10-24) |
-| P16 | 一覧が全件だけ | 物品の一覧に絞り込みもページ分けも無い | |
+| P16 | 一覧が全件だけ | 物品の一覧に絞り込みもページ分けも無い | 今は付けない(数十件。API-Q5・Ca3) |
 
 ## 3. 全体の決まり
 
@@ -164,7 +164,7 @@ PINのロックは423(Locked)にした(2026-10-29 E5)。
 
 | メソッドとURL | 成功 |
 |---|---|
-| `GET /api/health` | 200 `{ status: "ok" }`(DBにつながるか。中身は言わない) |
+| `GET /api/health` | 200 `{ status: "ok" }`(DBにつながるか。中身は言わない)。**まだ作っていない**(本番の置き方を決めるとき) |
 | 存在しないURL | 404 `code: "NOT_FOUND"`(JSON) |
 
 ## 5. 資源の形(案)
@@ -234,7 +234,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | `POST /api/auth/verify-code` | `POST /api/verification-tokens` (2026-10-25 移した) |
 | `POST /api/auth/signup` | `POST /api/users` (2026-10-25 移した) |
 | `POST /api/auth/login` | `POST /api/sessions` (2026-10-25 移した) |
-| `POST /api/auth/refreshSession` | `POST /api/sessions/refresh` (2026-10-25 移した) |
+| `POST /api/auth/refreshSession` | 無くした(2026-10-25に`POST /api/sessions/refresh`へ移したが、2026-10-28にCookieのセッションにして要らなくなった。A8-3) |
 | `POST /api/auth/logout` | `DELETE /api/sessions/current` (2026-10-25 移した) |
 | `GET /api/items` | `GET /api/item-types`(と`GET /api/categories`)(2026-10-28 移した) |
 | `GET /api/items/me` | `GET /api/me`・`GET /api/me/rentals`(2026-10-25 移した) |
@@ -254,7 +254,7 @@ Problem      { type, title, status, code, detail, errors?: { path, message }[] }
 | API-Q3 | エラーの形をRFC 9457(Problem Details)にするか | する(決まった形があり、`code`を足すだけで済む) |
 | API-Q4 | ログインのURL | `POST /api/sessions`(ログイン = セッションを作る)。`/api/auth/login`のように動作の名前を残す書き方もよく使われる |
 | API-Q5 | 一覧のページ分け | 今は付けない(数十件)。在庫管理の一覧(`/api/admin/...`)で件数が増えたら`nextCursor`を足す |
-| API-Q6 | PINのロックのステータス | 423(Locked)。分かりにくければ409 |
+| API-Q6 | PINのロックのステータス | 423(Locked)。2026-10-29に423で作った(E5) |
 | API-Q7 | 物品と貸し出しの状態の項目名を`state`にするか | する(`status`はHTTPのステータスと紛らわしい) |
 | API-Q8 | 古いURLを残すか | 残さない(画面とサーバーを同じ変更で移す) |
 | API-Q9 | カードの番号の項目名 | `cardNumber`(`serialNumber`は何の番号か分かりにくい。DBの列名は変えなくてよい) |
