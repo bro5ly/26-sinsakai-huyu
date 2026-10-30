@@ -6,7 +6,8 @@ const firstMessage = (result: { error?: { issues: { message: string }[] } }) => 
 
 describe("createTabletSessionRequestSchema(カードとPIN)", () => {
   describe("正常系", () => {
-    it("TB1 カードの番号の前後の空白は落として通す(読み取り機が改行や空白を付けることがあるため)", () => {
+    // 読み取り機が改行や空白を付けることがあるため
+    it("TB1 カードの番号の前後の空白は落として通す", () => {
       expect(createTabletSessionRequestSchema.parse({ cardNumber: " IC-CARD-001\n", pin: "8068" })).toEqual({
         cardNumber: "IC-CARD-001",
         pin: "8068",

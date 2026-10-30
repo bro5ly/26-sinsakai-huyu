@@ -20,11 +20,13 @@ describe("checkDevice(登録された端末か)", () => {
   });
 
   describe("異常系", () => {
-    it("DV2 端末が無ければ(Cookieが無い・でたらめな番号)、断る(DEVICE_NOT_REGISTERED。R-A2・T1)", () => {
+    // R-A2・T1
+    it("DV2 端末が無ければ(Cookieが無い・でたらめな番号)、DEVICE_NOT_REGISTEREDで断る", () => {
       expect(checkDevice(null)).toEqual({ ok: false, reason: "DEVICE_NOT_REGISTERED" });
     });
 
-    it("DV3 取り消した端末なら、断る(DEVICE_NOT_REGISTERED。R-A3)", () => {
+    // R-A3
+    it("DV3 取り消した端末なら、DEVICE_NOT_REGISTEREDで断る", () => {
       expect(checkDevice(device({ revokedAt: new Date("2026-10-29T01:00:00Z") }))).toEqual({
         ok: false,
         reason: "DEVICE_NOT_REGISTERED",

@@ -25,17 +25,20 @@ describe("checkCardHolder(カードの持ち主でPINを試してよいか)", ()
   });
 
   describe("異常系", () => {
-    it("T2 カードが名簿に無い・登録していない・無効な人なら、「カードかPINが違います」(どれかは言わない。R-A12・R-A14)", () => {
+    // どれかは言わない。R-A12・R-A14
+    it("T2 カードが名簿に無い・登録していない・無効な人なら、「カードかPINが違います」", () => {
       expect(checkCardHolder(holder(), false)).toEqual({ ok: false, reason: "INVALID_CARD_OR_PIN" });
       expect(checkCardHolder(null, true)).toEqual({ ok: false, reason: "INVALID_CARD_OR_PIN" });
       expect(checkCardHolder(holder({ isActive: false }), true)).toEqual({ ok: false, reason: "INVALID_CARD_OR_PIN" });
     });
 
-    it("T3 PINを登録していなければ、T2と同じく「カードかPINが違います」(A-Q3)", () => {
+    // A-Q3
+    it("T3 PINを登録していなければ、T2と同じく「カードかPINが違います」", () => {
       expect(checkCardHolder(holder({ pinHash: null }), true)).toEqual({ ok: false, reason: "INVALID_CARD_OR_PIN" });
     });
 
-    it("T4 PINがロック中なら、PIN_LOCKED(Webで登録し直すまで解けない。R-A7)", () => {
+    // Webで登録し直すまで解けない。R-A7
+    it("T4 PINがロック中なら、PIN_LOCKED", () => {
       expect(checkCardHolder(holder({ pinLockedAt: now }), true)).toEqual({ ok: false, reason: "PIN_LOCKED" });
     });
   });
@@ -68,7 +71,8 @@ describe("afterPinAttempt(PINを比べた結果で、間違えた回数とロッ
       });
     });
 
-    it("T5 5回目の間違いでロックし、その応答からPIN_LOCKEDにする(R-A7・E5)", () => {
+    // R-A7・E5
+    it("T5 5回目の間違いでロックし、その応答からPIN_LOCKEDにする", () => {
       expect(PIN_MAX_ATTEMPTS).toBe(5);
       expect(afterPinAttempt(4, false, now)).toEqual({
         ok: false,
@@ -112,7 +116,8 @@ describe("checkTabletSession(タブレットのセッションで通してよい
   });
 
   describe("異常系", () => {
-    it("TS3 セッションが無い・Webのセッション・別の端末で作ったセッションなら、UNAUTHENTICATED(R-A8・R-A18)", () => {
+    // R-A8・R-A18
+    it("TS3 セッションが無い・Webのセッション・別の端末で作ったセッションなら、UNAUTHENTICATED", () => {
       expect(checkTabletSession(null, "device-1", now)).toEqual({ ok: false, reason: "UNAUTHENTICATED" });
       expect(checkTabletSession(session({ kind: "WEB" }), "device-1", now)).toEqual({
         ok: false,
@@ -121,7 +126,8 @@ describe("checkTabletSession(タブレットのセッションで通してよい
       expect(checkTabletSession(session(), "device-2", now)).toEqual({ ok: false, reason: "UNAUTHENTICATED" });
     });
 
-    it("TS4 無効な人なら、UNAUTHENTICATED(R-A14)", () => {
+    // R-A14
+    it("TS4 無効な人なら、UNAUTHENTICATED", () => {
       expect(
         checkTabletSession(session({ user: { id: "user-1", role: "MEMBER", isActive: false } }), "device-1", now),
       ).toEqual({ ok: false, reason: "UNAUTHENTICATED" });
@@ -129,7 +135,8 @@ describe("checkTabletSession(タブレットのセッションで通してよい
   });
 
   describe("境界値", () => {
-    it("TS5 最後に使ってからちょうど30秒なら、切れている(SESSION_EXPIRED。R-A9)", () => {
+    // SESSION_EXPIRED。R-A9
+    it("TS5 最後に使ってからちょうど30秒なら、切れている", () => {
       expect(checkTabletSession(session({ lastUsedAt: new Date(now.getTime() - 30 * sec) }), "device-1", now)).toEqual({
         ok: false,
         reason: "SESSION_EXPIRED",
@@ -142,7 +149,8 @@ describe("checkTabletSession(タブレットのセッションで通してよい
       ).toBe(true);
     });
 
-    it("TS7 操作中でも、作ってから3分(期限ちょうど)なら、切れている(SESSION_EXPIRED。R-A9)", () => {
+    // SESSION_EXPIRED。R-A9
+    it("TS7 操作中でも、作ってから3分(期限ちょうど)なら、切れている", () => {
       expect(checkTabletSession(session({ expiresAt: now, lastUsedAt: now }), "device-1", now)).toEqual({
         ok: false,
         reason: "SESSION_EXPIRED",

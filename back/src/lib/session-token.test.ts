@@ -24,7 +24,8 @@ describe("hashToken(DBに置くハッシュにする)", () => {
       expect(hashToken("abc")).toBe(hashToken("abc"));
     });
 
-    it("ST4 番号そのものは返さない(DBが漏れても、そのままは使えない)", () => {
+    // DBが漏れても、そのままは使えない
+    it("ST4 番号そのものは返さない", () => {
       const token = newToken();
 
       expect(hashToken(token)).not.toContain(token);
@@ -46,7 +47,8 @@ describe("sameHash(ハッシュどうしを比べる)", () => {
   });
 
   describe("境界値", () => {
-    it("ST7 長さが違っても例外にせず、合わないとする(timingSafeEqualは長さが違うと投げるため)", () => {
+    // timingSafeEqualは長さが違うと投げるため
+    it("ST7 長さが違っても例外にせず、合わないとする", () => {
       expect(sameHash(hashToken("123456"), "ab")).toBe(false);
     });
   });
@@ -54,13 +56,15 @@ describe("sameHash(ハッシュどうしを比べる)", () => {
 
 describe("newCode(認証コードを作る)", () => {
   describe("正常系", () => {
-    it("ST8 6桁の数字を返す(R-4)", () => {
+    // R-4
+    it("ST8 6桁の数字を返す", () => {
       expect(newCode()).toMatch(/^\d{6}$/);
     });
   });
 
   describe("境界値", () => {
-    it("ST9 頭が0の番号も6桁のまま返す(000123を123にしない)", () => {
+    // 000123を123にしない
+    it("ST9 頭が0の番号も6桁のまま返す", () => {
       const codes = Array.from({ length: 2000 }, () => newCode());
 
       expect(codes.every((code) => code.length === 6)).toBe(true);

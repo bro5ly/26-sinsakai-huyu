@@ -114,7 +114,8 @@ const sessionUser = {
 
 describe("requestVerification(登録の認証コードを送る)", () => {
   describe("正常系", () => {
-    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る(R-4)", async () => {
+    // R-4
+    it("A3 名簿にいて未登録なら、6桁のコードを保存し、名簿のメールアドレスに送る", async () => {
       const saved: { codeHash: string; studentId: string }[] = [];
       const sent: { to: string; code: string }[] = [];
       const service = authService(
@@ -142,7 +143,8 @@ describe("requestVerification(登録の認証コードを送る)", () => {
   });
 
   describe("異常系", () => {
-    it("A1 名簿に無い学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない(R-16・auth.md 4.6)", async () => {
+    // R-16・auth.md 4.6
+    it("A1 名簿に無い学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない", async () => {
       const sent: { to: string; code: string }[] = [];
       const service = authService(users(), codes(), sessions(), mailer(sent), new FakeRoster([yamada]));
 
@@ -150,7 +152,8 @@ describe("requestVerification(登録の認証コードを送る)", () => {
       expect(sent).toEqual([]);
     });
 
-    it("A2 登録済みの学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない(R-16・auth.md 4.6)", async () => {
+    // R-16・auth.md 4.6
+    it("A2 登録済みの学籍番号でも、成功と同じ応答を返し、コードの保存もメールもしない", async () => {
       const sent: { to: string; code: string }[] = [];
       const service = authService(users(), codes(), sessions(), mailer(sent), new FakeRoster([yamada]));
 
@@ -158,7 +161,8 @@ describe("requestVerification(登録の認証コードを送る)", () => {
       expect(sent).toEqual([]);
     });
 
-    it("A24 メールが送れなくても(SMTPが止まっているなど)、成功と同じ応答で終える(名簿にいる番号だけ失敗すると、名簿にいるかが分かるため。R-2)", async () => {
+    // 名簿にいる番号だけ失敗すると、名簿にいるかが分かるため。R-2
+    it("A24 メールが送れなくても(SMTPが止まっているなど)、成功と同じ応答で終える", async () => {
       const failing: Mailer = {
         sendCode: async () => {
           throw new Error("connect ECONNREFUSED");
@@ -188,7 +192,8 @@ describe("verifyCode(認証コードを確かめる)", () => {
   });
 
   describe("正常系", () => {
-    it("V1 コードが合い期限内なら、登録用トークンを作ってハッシュだけを保存し、トークンとその期限(15分後)を返す(R-6・A8-8)", async () => {
+    // R-6・A8-8
+    it("V1 コードが合い期限内なら、登録用トークンを作ってハッシュだけを保存し、トークンとその期限(15分後)を返す", async () => {
       const saved: { studentId: string; tokenHash: string; expiresAt: Date }[] = [];
       const service = authService(
         users(),
@@ -211,7 +216,8 @@ describe("verifyCode(認証コードを確かめる)", () => {
   });
 
   describe("異常系", () => {
-    it("V2 コードが違えば、断り、トークンは作らず、間違えた回数を1つ足す(R-7・R-8)", async () => {
+    // R-7・R-8
+    it("V2 コードが違えば、断り、トークンは作らず、間違えた回数を1つ足す", async () => {
       const counted: { studentId: string; attempts: number }[] = [];
       const service = authService(
         users(),
@@ -246,7 +252,8 @@ describe("verifyCode(認証コードを確かめる)", () => {
       expect(deleted).toEqual(["20260001"]);
     });
 
-    it("V3 期限切れなら、断る(INVALID_CODE。R-7)", async () => {
+    // R-7
+    it("V3 期限切れなら、INVALID_CODEで断る", async () => {
       const service = authService(
         users(),
         codes({ findCodeByStudentId: async () => record({ expiresAt: new Date(now.getTime() - minute) }) }),
@@ -260,7 +267,8 @@ describe("verifyCode(認証コードを確かめる)", () => {
       });
     });
 
-    it("V4 コードを申請していなければ、断る(INVALID_CODE。R-7)", async () => {
+    // R-7
+    it("V4 コードを申請していなければ、INVALID_CODEで断る", async () => {
       const service = authService(
         users(),
         codes({ findCodeByStudentId: async () => null }),
@@ -274,7 +282,8 @@ describe("verifyCode(認証コードを確かめる)", () => {
       });
     });
 
-    it("V5 そのコードでもうトークンを出していれば、断る(コードは1回だけ使える。INVALID_CODE。A8-8)", async () => {
+    // コードは1回だけ使える。INVALID_CODE。A8-8
+    it("V5 そのコードでもうトークンを出していれば、断る", async () => {
       const service = authService(
         users(),
         codes({ findCodeByStudentId: async () => record({ tokenHash: "used" }) }),
@@ -307,7 +316,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
   });
 
   describe("正常系", () => {
-    it("A4 登録用トークンがDBにあれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す(R-9・R-10)", async () => {
+    // R-9・R-10
+    it("A4 登録用トークンがDBにあれば、学籍番号とパスワードのハッシュだけで利用者を作り、名簿の名前で返す", async () => {
       const created: { studentId: string; passwordHash: string }[] = [];
       const service = authService(
         users({
@@ -363,7 +373,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
   });
 
   describe("異常系", () => {
-    it("A5 名簿に無ければ、作らずに断る(INVALID_TOKEN)", async () => {
+    it("A5 名簿に無ければ、作らずにINVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
         codes({ findRegistrationTokenByHash: async () => tokenRecord() }),
@@ -377,7 +387,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
       });
     });
 
-    it("A10 登録用トークンがDBに無ければ(でたらめ・使用済み)、断る(INVALID_TOKEN。A8-8)", async () => {
+    // A8-8
+    it("A10 登録用トークンがDBに無ければ(でたらめ・使用済み)、INVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
         codes({ findRegistrationTokenByHash: async () => null }),
@@ -391,7 +402,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
       });
     });
 
-    it("A13 登録用トークンの期限が切れていれば、断る(INVALID_TOKEN)", async () => {
+    it("A13 登録用トークンの期限が切れていれば、INVALID_TOKENで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => null }),
         codes({
@@ -407,7 +418,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
       });
     });
 
-    it("A12 登録用トークンの学籍番号がすでに登録済みなら、断る(ALREADY_REGISTERED)", async () => {
+    it("A12 登録用トークンの学籍番号がすでに登録済みなら、ALREADY_REGISTEREDで断る", async () => {
       const service = authService(
         users(),
         codes({ findRegistrationTokenByHash: async () => tokenRecord({ studentId: "20240001" }) }),
@@ -435,7 +446,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
         new FakeRoster([unregistered]),
       );
 
-    it("A22 登録用トークンの期限ちょうどは、切れている(INVALID_TOKEN。R-6)", async () => {
+    // INVALID_TOKEN。R-6
+    it("A22 登録用トークンの期限ちょうどは、切れている", async () => {
       await expect(
         serviceWithTokenUntil(now).signUp({ token: "token-1", password: "password123" }, now),
       ).rejects.toMatchObject({
@@ -443,7 +455,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
       });
     });
 
-    it("A23 期限の1ミリ秒前なら、まだ登録できる(R-6)", async () => {
+    // R-6
+    it("A23 期限の1ミリ秒前なら、まだ登録できる", async () => {
       await expect(
         serviceWithTokenUntil(new Date(now.getTime() + 1)).signUp({ token: "token-1", password: "password123" }, now),
       ).resolves.toMatchObject({ user: { studentId: "20260001" } });
@@ -453,7 +466,8 @@ describe("signUp(パスワードを決めて登録する)", () => {
 
 describe("login(学籍番号とパスワードでログインする)", () => {
   describe("正常系", () => {
-    it("A6 パスワードが合えば、名簿の名前で返し、7日で切れるWebのセッションを作る。DBには番号のハッシュだけを置く(R-11・A8-3・A8-6)", async () => {
+    // R-11・A8-3・A8-6
+    it("A6 パスワードが合えば、名簿の名前で返し、7日で切れるWebのセッションを作る。DBには番号のハッシュだけを置く", async () => {
       const created: CreatedSession[] = [];
       const service = authService(users(), codes(), sessions({}, created), mailer(), new FakeRoster([yamada]));
 
@@ -466,7 +480,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       expect(created[0]?.expiresAt).toEqual(new Date(now.getTime() + 7 * day));
     });
 
-    it("A16 ログインするたびに別のセッションを作る(ほかの端末のログインは切らない。Q9)", async () => {
+    // ほかの端末のログインは切らない。Q9
+    it("A16 ログインするたびに別のセッションを作る", async () => {
       const created: CreatedSession[] = [];
       const service = authService(users(), codes(), sessions({}, created), mailer(), new FakeRoster([yamada]));
 
@@ -479,7 +494,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
   });
 
   describe("異常系", () => {
-    it("A7 パスワードが違えば、断り(INVALID_CREDENTIALS。R-16)、続けて間違えた回数を1つ足す(F1)", async () => {
+    // R-16・F1
+    it("A7 パスワードが違えば、INVALID_CREDENTIALSで断り、続けて間違えた回数を1つ足す", async () => {
       const attempts: LoginAttempt[] = [];
       const service = authService(
         users({ saveLoginAttempt: async (data) => void attempts.push(data) }),
@@ -495,7 +511,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       expect(attempts).toEqual([{ userId: "user-1", failedAttempts: 1, lockedUntil: null }]);
     });
 
-    it("A17 止めている間は、正しいパスワードでも、比べずに429 RATE_LIMITEDで断る(F1)", async () => {
+    // F1
+    it("A17 止めている間は、正しいパスワードでも、比べずに429 RATE_LIMITEDで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => registered({ loginLockedUntil: new Date(now.getTime() + minute) }) }),
         codes(),
@@ -509,7 +526,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       });
     });
 
-    it("A11 学籍番号が登録されていなければ、パスワード違いと同じく断る(INVALID_CREDENTIALS。R-16)", async () => {
+    // R-16
+    it("A11 学籍番号が登録されていなければ、パスワード違いと同じくINVALID_CREDENTIALSで断る", async () => {
       const service = authService(
         users(),
         codes(),
@@ -523,7 +541,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       });
     });
 
-    it("A8 名簿から消えていれば、パスワードが合っても、理由を言わずに断る(INVALID_CREDENTIALS。Q13・R-A14)", async () => {
+    // Q13・R-A14
+    it("A8 名簿から消えていれば、パスワードが合っても、理由を言わずにINVALID_CREDENTIALSで断る", async () => {
       const service = authService(users(), codes(), sessions({ createSession: notUsed }), mailer(), new FakeRoster([]));
 
       await expect(service.login({ studentId: "20240001", password: "password123" }, now)).rejects.toMatchObject({
@@ -531,7 +550,8 @@ describe("login(学籍番号とパスワードでログインする)", () => {
       });
     });
 
-    it("A14 無効な人(is_active = false)は、パスワードが合っても、理由を言わずに断る(INVALID_CREDENTIALS。R-A14)", async () => {
+    // R-A14
+    it("A14 無効な人(is_active = false)は、パスワードが合っても、理由を言わずにINVALID_CREDENTIALSで断る", async () => {
       const service = authService(
         users({ findUserByStudentId: async () => registered({ isActive: false }) }),
         codes(),
@@ -561,7 +581,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
   };
 
   describe("正常系", () => {
-    it("A19 間違えたあとに合えば、通して回数を0に戻す(「続けて」の5回)", async () => {
+    // 「続けて」の5回
+    it("A19 間違えたあとに合えば、通して回数を0に戻す", async () => {
       const { service, attempts } = recordAttempts(registered({ loginFailedAttempts: 3 }));
 
       await expect(service.login({ studentId: "20240001", password: "password123" }, now)).resolves.toMatchObject({
@@ -590,7 +611,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
       ]);
     });
 
-    it("A21 止める期限を過ぎていれば、また試せる。合えば通し、止めた記録を消す(F3)", async () => {
+    // F3
+    it("A21 止める期限を過ぎていれば、また試せる。合えば通し、止めた記録を消す", async () => {
       const { service, attempts } = recordAttempts(registered({ loginLockedUntil: now }));
 
       await expect(service.login({ studentId: "20240001", password: "password123" }, now)).resolves.toMatchObject({
@@ -603,7 +625,8 @@ describe("login の回数(学籍番号ごとに、続けて5回で15分止める
 
 describe("logout(ログアウトする)", () => {
   describe("正常系", () => {
-    it("L1 Cookieのセッションの番号から、DBのセッションを消す(R-15・A8-3)", async () => {
+    // R-15・A8-3
+    it("L1 Cookieのセッションの番号から、DBのセッションを消す", async () => {
       const deleted: string[] = [];
       const service = authService(
         users(),
@@ -620,7 +643,8 @@ describe("logout(ログアウトする)", () => {
   });
 
   describe("境界値", () => {
-    it("L2 番号が無ければ(Cookieが無い・ログアウト済み)、DBに触らずに終える(何度ログアウトしてもよい)", async () => {
+    // 何度ログアウトしてもよい
+    it("L2 番号が無ければ(Cookieが無い・ログアウト済み)、DBに触らずに終える", async () => {
       const service = authService(
         users(),
         codes(),

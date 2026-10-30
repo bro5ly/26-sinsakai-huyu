@@ -87,14 +87,14 @@ describe("canCheckout(貸し出せるか)", () => {
         borrower: borrower({ maxItems: 3, activeDueDates: [1, 2, 3].map((n) => new Date(now.getTime() + n * day)) }),
         reason: "LIMIT_REACHED",
       },
-    ] as const)("$row $whenのとき、$reason で断る", ({ item, borrower, reason }) => {
+    ] as const)("$row $whenのとき、$reasonで断る", ({ item, borrower, reason }) => {
       expect(canCheckout(item, borrower, now)).toEqual({ ok: false, reason });
     });
   });
 
   describe("境界値", () => {
     // 物そのものが使えないことを先に伝える(2026-10-30 B1)
-    it("C2 紛失で、貸し出しがまだ返却になっていないとき、貸出中(C3)より先に ITEM_UNAVAILABLE で断る", () => {
+    it("C2 紛失で、貸し出しがまだ返却になっていないとき、貸出中(C3)より先に ITEM_UNAVAILABLEで断る", () => {
       expect(canCheckout(item({ status: "LOST", hasActiveRental: true }), borrower(), now)).toEqual({
         ok: false,
         reason: "ITEM_UNAVAILABLE",

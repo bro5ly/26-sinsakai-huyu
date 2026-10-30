@@ -407,7 +407,8 @@ const expectProblem = (res: request.Response, status: number, code: string) => {
 
 describe("POST /api/sessions(ログイン)", () => {
   describe("正常系", () => {
-    it("H1 学籍番号とパスワードが合えば、201でSessionの形(利用者だけ)を返し、セッションの番号はHttpOnly・SameSite=Strict・7日のCookieにだけ入れる(R-11。A8-3・A8-6・A8-7)", async () => {
+    // R-11。A8-3・A8-6・A8-7
+    it("H1 学籍番号とパスワードが合えば、201でSessionの形(利用者だけ)を返し、セッションの番号はHttpOnly・SameSite=Strict・7日のCookieにだけ入れる", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/sessions").send({ studentId: "20240001", password: "password123" });
@@ -427,7 +428,8 @@ describe("POST /api/sessions(ログイン)", () => {
   });
 
   describe("異常系", () => {
-    it("H2 パスワードが違えば、401 INVALID_CREDENTIALSをRFC 9457の形で返す(R-16)", async () => {
+    // R-16
+    it("H2 パスワードが違えば、401 INVALID_CREDENTIALSをRFC 9457の形で返す", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/sessions").send({ studentId: "20240001", password: "wrong-password" });
@@ -436,7 +438,8 @@ describe("POST /api/sessions(ログイン)", () => {
       expect(sessionCookieOf(res)).toBeUndefined();
     });
 
-    it("H31 7文字以下の違うパスワードでも、8文字以上のときと同じく401 INVALID_CREDENTIALSを返す(長さは登録のときだけ確かめる。2026-10-25 B1-A)", async () => {
+    // 長さは登録のときだけ確かめる。2026-10-25 B1-A
+    it("H31 7文字以下の違うパスワードでも、8文字以上のときと同じく401 INVALID_CREDENTIALSを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/sessions").send({ studentId: "20240001", password: "wrong" });
@@ -457,7 +460,8 @@ describe("POST /api/sessions(ログイン)", () => {
 
 describe("登録(認証コードの申請 → 確認 → パスワードを決める)", () => {
   describe("正常系", () => {
-    it("H4 名簿にいて未登録なら、202を本文なしで返し、名簿のメールに6桁のコードを送る(R-4。docs/api.md 4.1)", async () => {
+    // R-4。docs/api.md 4.1
+    it("H4 名簿にいて未登録なら、202を本文なしで返し、名簿のメールに6桁のコードを送る", async () => {
       const { app, sentMails } = fakeDeps();
 
       const res = await post(app, "/api/verification-codes").send({ studentId: "20260001", purpose: "signup" });
@@ -467,7 +471,8 @@ describe("登録(認証コードの申請 → 確認 → パスワードを決�
       expect(sentMails).toEqual([{ to: "taro@example.com", code: expect.stringMatching(/^\d{6}$/) }]);
     });
 
-    it("H5 認証コードが合えば、201で登録用トークンと期限を返す(R-6。docs/api.md 4.1)", async () => {
+    // R-6。docs/api.md 4.1
+    it("H5 認証コードが合えば、201で登録用トークンと期限を返す", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/verification-tokens").send({
@@ -483,7 +488,8 @@ describe("登録(認証コードの申請 → 確認 → パスワードを決�
       });
     });
 
-    it("H6 登録用トークンでパスワードを決めれば、201でSessionの形を返し、セッションの番号をCookieに入れる(R-9)", async () => {
+    // R-9
+    it("H6 登録用トークンでパスワードを決めれば、201でSessionの形を返し、セッションの番号をCookieに入れる", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/users").send({ token: REGISTRATION_TOKEN, password: "password123" });
@@ -500,7 +506,8 @@ describe("登録(認証コードの申請 → 確認 → パスワードを決�
   });
 
   describe("異常系", () => {
-    it("H28 名簿に無い学籍番号でも、名簿にいるときと同じく202を本文なしで返し、メールは送らない(R-16。列挙の対策)", async () => {
+    // R-16。列挙の対策
+    it("H28 名簿に無い学籍番号でも、名簿にいるときと同じく202を本文なしで返し、メールは送らない", async () => {
       const { app, sentMails } = fakeDeps();
 
       const res = await post(app, "/api/verification-codes").send({ studentId: "99999999", purpose: "signup" });
@@ -510,7 +517,8 @@ describe("登録(認証コードの申請 → 確認 → パスワードを決�
       expect(sentMails).toEqual([]);
     });
 
-    it("H39 DBに無い登録用トークン(でたらめ・使用済み)なら、401 INVALID_TOKENを返す(A8-8)", async () => {
+    // A8-8
+    it("H39 DBに無い登録用トークン(でたらめ・使用済み)なら、401 INVALID_TOKENを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/users").send({ token: "unknown-token", password: "password123" });
@@ -530,7 +538,8 @@ describe("登録(認証コードの申請 → 確認 → パスワードを決�
 
 describe("セッション(ログイン中・ログアウト)", () => {
   describe("正常系", () => {
-    it("H7 ログインで受け取ったCookieを付ければ、ログインが要るAPIが通る(A8-3)", async () => {
+    // A8-3
+    it("H7 ログインで受け取ったCookieを付ければ、ログインが要るAPIが通る", async () => {
       const { app } = fakeDeps();
       const agent = request.agent(app);
       await agent
@@ -544,7 +553,8 @@ describe("セッション(ログイン中・ログアウト)", () => {
       expect(meSchema.parse(res.body).id).toBe("user-1");
     });
 
-    it("H8 ログアウトすれば、204を本文なしで返し、セッションのCookieとDBのセッションを消す。そのCookieはもう通らない(R-15)", async () => {
+    // R-15
+    it("H8 ログアウトすれば、204を本文なしで返し、セッションのCookieとDBのセッションを消す。そのCookieはもう通らない", async () => {
       const { app, deletedSessionHashes } = fakeDeps();
 
       const logout = await request(app).delete("/api/sessions/current").set("Origin", frontendUrl).set(webSession);
@@ -558,31 +568,36 @@ describe("セッション(ログイン中・ログアウト)", () => {
   });
 
   describe("異常系", () => {
-    it("H9 リフレッシュのURLは無くした(セッションは7日続くので要らない。A8-3)。404 NOT_FOUNDを返す", async () => {
+    // セッションは7日続くので要らない(A8-3)
+    it("H9 リフレッシュのURLを呼んだとき、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await post(app, "/api/sessions/refresh").set(webSession), 404, "NOT_FOUND");
     });
 
-    it("H40 期限が切れたセッションなら、401 UNAUTHENTICATEDを返す(A8-6)", async () => {
+    // A8-6
+    it("H40 期限が切れたセッションなら、401 UNAUTHENTICATEDを返す", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await request(app).get("/api/me").set(sessionCookie(EXPIRED_TOKEN)), 401, "UNAUTHENTICATED");
     });
 
-    it("H41 タブレットのセッションでは、Webのログインが要るAPIは通らない(R-A18)", async () => {
+    // R-A18
+    it("H41 タブレットのセッションでは、Webのログインが要るAPIは通らない", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await request(app).get("/api/me").set(sessionCookie(TABLET_KIND_TOKEN)), 401, "UNAUTHENTICATED");
     });
 
-    it("H42 アクセストークン(Authorization: Bearer)はもう受け付けない(A8-3)", async () => {
+    // A8-3
+    it("H42 アクセストークン(Authorization: Bearer)はもう受け付けない", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await request(app).get("/api/me").set(bearer(TABLET_KIND_TOKEN)), 401, "UNAUTHENTICATED");
     });
 
-    it("H30 古いURL(/api/auth/...)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
+    // API-Q8
+    it("H30 古いURL(/api/auth/...)は残さず、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       for (const url of [
@@ -627,7 +642,8 @@ describe("CSRFの対策(書き換えのリクエストはOriginを確かめる�
       );
     });
 
-    it("H45 ほかのサイトのOriginなら、403 FORBIDDEN_ORIGINで断る(似た名前のサイトも通さない)", async () => {
+    // 似た名前のサイトも通さない
+    it("H45 ほかのサイトのOriginなら、403 FORBIDDEN_ORIGINで断る", async () => {
       const { app } = fakeDeps();
 
       for (const origin of ["https://evil.example.com", `${frontendUrl}.evil.example.com`, "null"]) {
@@ -646,7 +662,8 @@ describe("CSRFの対策(書き換えのリクエストはOriginを確かめる�
 
 describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categories)", () => {
   describe("正常系", () => {
-    it("H10 GET /api/item-typesは200で、種類ごとの貸し出せる数と全数(廃棄済みを除く)を{ items }で返す(docs/api.md 4.3。Ca4)", async () => {
+    // docs/api.md 4.3。Ca4
+    it("H10 GET /api/item-typesは200で、種類ごとの貸し出せる数と全数(廃棄済みを除く)を{ items }で返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/item-types").set(webSession);
@@ -666,7 +683,8 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
       ]);
     });
 
-    it("H34 GET /api/item-types/{id}は200で、物品1つ1つの状態付きの詳細を返す(廃棄済みは入れない)", async () => {
+    // 廃棄済みは入れない
+    it("H34 GET /api/item-types/{id}は200で、物品1つ1つの状態付きの詳細を返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/item-types/type-1").set(webSession);
@@ -678,7 +696,8 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
       ]);
     });
 
-    it("H35 GET /api/categoriesは200で、カテゴリをジャンル付きで{ items }で返す(絞り込みの選択肢)", async () => {
+    // 絞り込みの選択肢
+    it("H35 GET /api/categoriesは200で、カテゴリをジャンル付きで{ items }で返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/categories").set(webSession);
@@ -699,7 +718,8 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
       expectProblem(res, 404, "NOT_FOUND");
     });
 
-    it("H37 ログインしていなければ、3本とも401 UNAUTHENTICATEDを返す(カタログはログイン必須。Q11)", async () => {
+    // カタログはログイン必須。Q11
+    it("H37 ログインしていなければ、3本とも401 UNAUTHENTICATEDを返す", async () => {
       const { app } = fakeDeps();
 
       for (const url of ["/api/item-types", "/api/item-types/type-1", "/api/categories"]) {
@@ -707,7 +727,8 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
       }
     });
 
-    it("H38 古いURL(GET /api/items)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
+    // API-Q8
+    it("H38 古いURL(GET /api/items)は残さず、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/items").set(webSession);
@@ -719,7 +740,8 @@ describe("カタログ(GET /api/item-types・/api/item-types/{id}・/api/categor
 
 describe("GET /api/me・GET /api/me/rentals(本人)", () => {
   describe("正常系", () => {
-    it("H11 Webのセッションがあれば、GET /api/meは200でMeの形(名簿の項目・貸し出しの決まり)を返す。カードの番号は返さない(docs/api.md 4.2。2026-10-29 G0)", async () => {
+    // docs/api.md 4.2。2026-10-29 G0
+    it("H11 Webのセッションがあれば、GET /api/meは200でMeの形(名簿の項目・貸し出しの決まり)を返す。カードの番号は返さない", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/me").set(webSession);
@@ -742,7 +764,8 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
       expect(JSON.stringify(res.body)).not.toContain("IC-CARD-001");
     });
 
-    it("H32 GET /api/me/rentalsは200で、借りている物を{ items }に入れ、状態とジャンル付きで返す(Me3)", async () => {
+    // Me3
+    it("H32 GET /api/me/rentalsは200で、借りている物を{ items }に入れ、状態とジャンル付きで返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/me/rentals").set(webSession);
@@ -772,7 +795,8 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
       expectProblem(await request(app).get("/api/me/rentals"), 401, "UNAUTHENTICATED");
     });
 
-    it("H13 でたらめなセッションの番号なら、401 UNAUTHENTICATEDを返す(500にしない)", async () => {
+    // 500にしない
+    it("H13 でたらめなセッションの番号なら、401 UNAUTHENTICATEDを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/me").set(sessionCookie("broken"));
@@ -780,7 +804,8 @@ describe("GET /api/me・GET /api/me/rentals(本人)", () => {
       expectProblem(res, 401, "UNAUTHENTICATED");
     });
 
-    it("H33 古いURL(/api/items/me)は残さず、404 NOT_FOUNDを返す(API-Q8)", async () => {
+    // API-Q8
+    it("H33 古いURL(/api/items/me)は残さず、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/items/me").set(webSession);
@@ -795,7 +820,8 @@ describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
     request(app).put("/api/me/pin").set("Origin", frontendUrl).set(webSession).send(body);
 
   describe("正常系", () => {
-    it("H46 パスワードが合えば、204を本文なしで返し、PINのハッシュを保存する(UC-7・R-A5・P1)", async () => {
+    // UC-7・R-A5・P1
+    it("H46 パスワードが合えば、204を本文なしで返し、PINのハッシュを保存する", async () => {
       const { app, savedPins } = fakeDeps();
 
       const res = await putPin(app, { pin: "8068", password: "password123" });
@@ -807,14 +833,16 @@ describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
   });
 
   describe("異常系", () => {
-    it("H47 入れ直したパスワードが違えば、403 WRONG_PASSWORDを返し、保存しない(P1・P5)", async () => {
+    // P1・P5
+    it("H47 入れ直したパスワードが違えば、403 WRONG_PASSWORDを返し、保存しない", async () => {
       const { app, savedPins } = fakeDeps();
 
       expectProblem(await putPin(app, { pin: "8068", password: "wrong-password" }), 403, "WRONG_PASSWORD");
       expect(savedPins).toEqual([]);
     });
 
-    it("H48 推測しやすいPIN・4桁の数字でないPINは、400 VALIDATION_ERRORで、errorsにpinを入れる(P2)", async () => {
+    // P2
+    it("H48 推測しやすいPIN・4桁の数字でないPINは、400 VALIDATION_ERRORで、errorsにpinを入れる", async () => {
       const { app, savedPins } = fakeDeps();
 
       for (const pin of ["1234", "0000", "123", "12a4"]) {
@@ -837,7 +865,8 @@ describe("PUT /api/me/pin(タブレット用のPINの登録・変更)", () => {
   });
 
   describe("境界値", () => {
-    it("H50 失敗は接続元ごとに15分で100回まで。101回目は、パスワードを確かめずに429 RATE_LIMITED(P6・F2)", async () => {
+    // P6・F2
+    it("H50 失敗は接続元ごとに15分で100回まで。101回目は、パスワードを確かめずに429 RATE_LIMITED", async () => {
       const { app, savedPins } = fakeDeps();
       for (let i = 0; i < PASSWORD_FAILURE_LIMIT; i++) await putPin(app, { pin: "8068", password: "wrong-password" });
 
@@ -851,7 +880,8 @@ describe("タブレットの端末の登録(POST /api/tablet-devices。UC-20・D
   const register = (app: App, body: object) => post(app, "/api/tablet-devices").send(body);
 
   describe("正常系", () => {
-    it("H51 管理者の学籍番号とパスワードが合えば、201でTabletDeviceを返し、番号はHttpOnly・SameSite=Strict・400日のCookieにだけ入れる(R-A1・D3)", async () => {
+    // R-A1・D3
+    it("H51 管理者の学籍番号とパスワードが合えば、201でTabletDeviceを返し、番号はHttpOnly・SameSite=Strict・400日のCookieにだけ入れる", async () => {
       const { app, createdDevices } = fakeDeps();
 
       const res = await register(app, { studentId: "90240001", password: "password123", name: "図書室入口" });
@@ -906,7 +936,8 @@ describe("タブレットの端末の登録(POST /api/tablet-devices。UC-20・D
 
 describe("タブレットのAPIは、登録された端末からだけ(D5。R-A2・R-A3)", () => {
   describe("正常系", () => {
-    it("H55 GET /api/tablet/deviceは、端末のCookieがあれば200で端末の名前を返し、最後に使った日時を書き換え、Cookieを付け直す(D3)", async () => {
+    // D3
+    it("H55 GET /api/tablet/deviceは、端末のCookieがあれば200で端末の名前を返し、最後に使った日時を書き換え、Cookieを付け直す", async () => {
       const { app, devices } = fakeDeps();
 
       const res = await request(app).get("/api/tablet/device").set(deviceCookie(DEVICE_TOKEN));
@@ -919,7 +950,8 @@ describe("タブレットのAPIは、登録された端末からだけ(D5。R-A2
   });
 
   describe("異常系", () => {
-    it("H56 端末のCookieが無ければ、どのタブレットのAPIも401 DEVICE_NOT_REGISTERED(カードの番号だけでは借りられない)", async () => {
+    // カードの番号だけでは借りられない
+    it("H56 端末のCookieが無ければ、どのタブレットのAPIも401 DEVICE_NOT_REGISTERED", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await request(app).get("/api/tablet/device"), 401, "DEVICE_NOT_REGISTERED");
@@ -957,7 +989,8 @@ describe("管理者の端末の一覧と取り消し(/api/admin/tablet-devices�
       expect(tabletDevicesSchema.parse(res.body).items.map((d) => d.name)).toEqual(["図書室入口"]);
     });
 
-    it("H59 DELETEで取り消すと204で、その端末は次の呼び出しから401 DEVICE_NOT_REGISTERED(R-A3)", async () => {
+    // R-A3
+    it("H59 DELETEで取り消すと204で、その端末は次の呼び出しから401 DEVICE_NOT_REGISTERED", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app)
@@ -975,7 +1008,8 @@ describe("管理者の端末の一覧と取り消し(/api/admin/tablet-devices�
   });
 
   describe("異常系", () => {
-    it("H60 管理者でないWebのセッションなら、403 FORBIDDEN。ログインしていなければ401 UNAUTHENTICATED(/api/adminの入口で止める)", async () => {
+    // /api/adminの入口で止める
+    it("H60 管理者でないWebのセッションなら、403 FORBIDDEN。ログインしていなければ401 UNAUTHENTICATED", async () => {
       const { app } = fakeDeps();
 
       expectProblem(await request(app).get("/api/admin/tablet-devices").set(webSession), 403, "FORBIDDEN");
@@ -1003,7 +1037,8 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
   const startSession = (app: App, body: object) => tabletPost(app, "/api/tablet/sessions").send(body);
 
   describe("正常系", () => {
-    it("H62 カードとPINが合えば、201でセッションの番号と表示用の名前だけを返す(借りている物・学籍番号・学年・専攻・IDは返さない。R-A13・2026-10-30 A2)", async () => {
+    // 借りている物・学籍番号・学年・専攻・IDは返さない。R-A13・2026-10-30 A2
+    it("H62 カードとPINが合えば、201でセッションの番号と表示用の名前だけを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" });
@@ -1020,7 +1055,8 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
   });
 
   describe("異常系", () => {
-    it("H63 PINが違う・名簿に無いカード・PIN未登録のカードは、どれも401 INVALID_CARD_OR_PIN(どれかは言わない。T2・T3・T5)", async () => {
+    // どれかは言わない。T2・T3・T5
+    it("H63 PINが違う・名簿に無いカード・PIN未登録のカードは、どれも401 INVALID_CARD_OR_PIN", async () => {
       const { app, pinAttempts } = fakeDeps();
 
       expectProblem(await startSession(app, { cardNumber: "IC-CARD-001", pin: "1357" }), 401, "INVALID_CARD_OR_PIN");
@@ -1038,7 +1074,8 @@ describe("POST /api/tablet/sessions(カードとPINで本人確認。UC-8・判�
       expect(res.body.errors.map((e: { path: string }) => e.path)).toEqual(["pin"]);
     });
 
-    it("H65 古いURL(POST /api/tablet/signin。カードだけで通っていた)は残さず、404 NOT_FOUND", async () => {
+    // カードだけで通っていた古いURLは残さない
+    it("H65 POST /api/tablet/signin を呼んだとき、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       expectProblem(
@@ -1071,7 +1108,8 @@ describe("タブレットのセッション(終える・時間切れ。R-A9・R-
   });
 
   describe("異常系", () => {
-    it("H67 無操作30秒を過ぎたセッションなら、401 SESSION_EXPIRED(もう一度カードを読む)", async () => {
+    // もう一度カードを読む
+    it("H67 無操作30秒を過ぎたセッションなら、401 SESSION_EXPIRED", async () => {
       const { app } = fakeDeps();
 
       expectProblem(
@@ -1081,7 +1119,8 @@ describe("タブレットのセッション(終える・時間切れ。R-A9・R-
       );
     });
 
-    it("H68 Webのセッションの番号は、タブレットでは通らない(R-A18)", async () => {
+    // R-A18
+    it("H68 Webのセッションの番号は、タブレットでは通らない", async () => {
       const { app } = fakeDeps();
 
       expectProblem(
@@ -1095,7 +1134,8 @@ describe("タブレットのセッション(終える・時間切れ。R-A9・R-
 
 describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
   describe("正常系", () => {
-    it("H16 タブレットのセッションがあれば、201でRentalの形(状態付き・バーコード無し)を返し、借りた端末を記録する(R-19・E3・BC1)", async () => {
+    // R-19・E3・BC1
+    it("H16 タブレットのセッションがあれば、201でRentalの形(状態付き・バーコード無し)を返し、借りた端末を記録する", async () => {
       const { app, rentalWrites } = fakeDeps();
 
       const res = await tabletPost(app, "/api/tablet/rentals")
@@ -1133,7 +1173,8 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
       expectProblem(res, 401, "UNAUTHENTICATED");
     });
 
-    it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す(C1)", async () => {
+    // C1
+    it("H18 バーコードの物品が無ければ、404 ITEM_NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       const res = await tabletPost(app, "/api/tablet/rentals")
@@ -1143,7 +1184,8 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
       expectProblem(res, 404, "ITEM_NOT_FOUND");
     });
 
-    it("H69 延滞がある人なら、409 HAS_OVERDUEを返す(C6。判断表Cの細かい場合分けは rental.check.test.ts)", async () => {
+    // C6。判断表Cの細かい場合分けは rental.check.test.ts
+    it("H69 延滞がある人なら、409 HAS_OVERDUEを返す", async () => {
       const { app } = fakeDeps({
         rentals: {
           findCheckoutItemByBarcode: async () => ({
@@ -1174,7 +1216,8 @@ describe("POST /api/tablet/rentals(借りる。UC-8・判断表C)", () => {
 
 describe("POST /api/tablet/returns(返す。UC-9)", () => {
   describe("正常系", () => {
-    it("H19 登録された端末なら、カードもセッションも無しで201、返却日時入りのRentalを返し、返した端末を記録する(A-Q4・E3・E7)", async () => {
+    // A-Q4・E3・E7
+    it("H19 登録された端末なら、カードもセッションも無しで201、返却日時入りのRentalを返し、返した端末を記録する", async () => {
       const { app, rentalWrites } = fakeDeps();
 
       const res = await tabletPost(app, "/api/tablet/returns").send({ barcode: "MAC-001" });
@@ -1187,7 +1230,8 @@ describe("POST /api/tablet/returns(返す。UC-9)", () => {
   });
 
   describe("異常系", () => {
-    it("H70 その物品の返していない貸し出しが無ければ、404 ACTIVE_RENTAL_NOT_FOUND(R-23)", async () => {
+    // R-23
+    it("H70 その物品の返していない貸し出しが無ければ、404 ACTIVE_RENTAL_NOT_FOUND", async () => {
       const { app } = fakeDeps();
 
       expectProblem(
@@ -1197,7 +1241,8 @@ describe("POST /api/tablet/returns(返す。UC-9)", () => {
       );
     });
 
-    it("H71 古いURL(POST /api/tablet/checkout・return)は残さず、404 NOT_FOUND", async () => {
+    // 古いURLは残さない
+    it("H71 POST /api/tablet/checkout・return を呼んだとき、404 NOT_FOUNDを返す", async () => {
       const { app } = fakeDeps();
 
       for (const url of ["/api/tablet/checkout", "/api/tablet/return"]) {
@@ -1225,7 +1270,8 @@ describe("存在しないURL", () => {
 
 describe("すべての応答に付くヘッダ", () => {
   describe("正常系", () => {
-    it("H21 helmetのセキュリティのヘッダを付け、Expressを使っていることを出さない(R4)", async () => {
+    // R4
+    it("H21 helmetのセキュリティのヘッダを付け、Expressを使っていることを出さない", async () => {
       const { app } = fakeDeps();
 
       const res = await request(app).get("/api/item-types");
@@ -1260,7 +1306,8 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で1
       expectProblem(res, 401, "INVALID_CREDENTIALS");
     });
 
-    it("H27 成功したログインは数えない。同じWi-Fiの大勢が続けてログインしても止めない(2026-10-24 K9-B)", async () => {
+    // 2026-10-24 K9-B
+    it("H27 成功したログインは数えない。同じWi-Fiの大勢が続けてログインしても止めない", async () => {
       const { app } = fakeDeps();
       const success = () => post(app, "/api/sessions").send({ studentId: "20240001", password: "password123" });
       for (let i = 0; i < 25; i++) await success();
@@ -1298,7 +1345,8 @@ describe("認証コードの申請の回数(学籍番号ごとに1分に1回・1
     post(app, "/api/verification-codes").send({ studentId, purpose: "signup" });
 
   describe("正常系", () => {
-    it("H72 1分たてば、同じ学籍番号でもう一度申請できる(新しいコードが届き、前のコードは通らなくなる。R-5)", async () => {
+    // 新しいコードが届き、前のコードは通らなくなる。R-5
+    it("H72 1分たてば、同じ学籍番号でもう一度申請できる", async () => {
       const { app, sentMails } = fakeDeps();
       expect((await requestCode(app, "20260001")).status).toBe(202);
 
@@ -1324,7 +1372,8 @@ describe("認証コードの申請の回数(学籍番号ごとに1分に1回・1
       expect(sentMails).toHaveLength(1);
     });
 
-    it("H75 名簿に無い学籍番号でも、同じく2回目は429(名簿にいるかを知られないため。F5・R-2)", async () => {
+    // 名簿にいるかを知られないため。F5・R-2
+    it("H75 名簿に無い学籍番号でも、同じく2回目は429", async () => {
       const { app } = fakeDeps();
       await requestCode(app, "99999999");
 
@@ -1350,7 +1399,8 @@ describe("タブレットの本人確認の回数(端末ごとに、失敗を1�
   const startSession = (app: App, body: object) => tabletPost(app, "/api/tablet/sessions").send(body);
 
   describe("正常系", () => {
-    it("H77 本人確認に成功した分は数えない(混む時間でも、普通に借りる人を止めない)", async () => {
+    // 混む時間でも、普通に借りる人を止めない
+    it("H77 本人確認に成功した分は数えない", async () => {
       const { app } = fakeDeps();
       for (let i = 0; i < 25; i++)
         expect((await startSession(app, { cardNumber: "IC-CARD-001", pin: "8068" })).status).toBe(201);
@@ -1374,7 +1424,8 @@ describe("タブレットの本人確認の回数(端末ごとに、失敗を1�
 
 describe("JSONの大きさの上限(100kb。L1)", () => {
   describe("境界値", () => {
-    it("H26 100kbを超えるJSONは、読まずに413 PAYLOAD_TOO_LARGEをRFC 9457の形で返す(500にしない。K8)", async () => {
+    // 500にしない。K8
+    it("H26 100kbを超えるJSONは、読まずに413 PAYLOAD_TOO_LARGEをRFC 9457の形で返す", async () => {
       const { app } = fakeDeps();
 
       const res = await post(app, "/api/sessions").send({ studentId: "20240001", password: "x".repeat(101 * 1024) });

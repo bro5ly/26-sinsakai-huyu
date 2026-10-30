@@ -8,7 +8,8 @@ const required = {
 
 describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => {
   describe("正常系", () => {
-    it("N1 必須の値がそろえば、型の付いた設定を返す(数字は数字にする)", () => {
+    // 数字は数字にする
+    it("N1 必須の値がそろえば、型の付いた設定を返す", () => {
       const config = loadConfig({
         ...required,
         NODE_ENV: "production",
@@ -30,7 +31,8 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
       });
     });
 
-    it("N2 既定の値があるもの(NODE_ENV・PORT・FRONTEND_URL・MAIL_PORT・MAIL_FROM)は、無ければ今の既定の値にする(G3)", () => {
+    // G3
+    it("N2 既定の値があるもの(NODE_ENV・PORT・FRONTEND_URL・MAIL_PORT・MAIL_FROM)は、無ければ今の既定の値にする", () => {
       const config = loadConfig(required);
 
       expect(config).toMatchObject({
@@ -49,7 +51,8 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
   });
 
   describe("異常系", () => {
-    it("N3 必須の値が無ければ、足りない名前をすべて挙げて投げる(サーバーを立ち上げない)", () => {
+    // サーバーを立ち上げない
+    it("N3 必須の値が無ければ、足りない名前をすべて挙げて投げる", () => {
       expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
     });
 
@@ -71,11 +74,13 @@ describe("loadConfig(環境変数を起動のときに1回だけ読む)", () => 
   });
 
   describe("境界値", () => {
-    it("N7 必須の値が空の文字列なら、無いのと同じに扱って投げる(.env.example の「DATABASE_URL=」のまま)", () => {
+    // .env.example の「DATABASE_URL=」のまま
+    it("N7 必須の値が空の文字列なら、無いのと同じに扱って投げる", () => {
       expect(() => loadConfig({ ...required, DATABASE_URL: "" })).toThrow(/DATABASE_URL/);
     });
 
-    it("N8 メールの値が空の文字列なら、無いのと同じに扱う(空のままでも起動できる。.env.example)", () => {
+    // 空のままでも起動できる。.env.example
+    it("N8 メールの値が空の文字列なら、無いのと同じに扱う", () => {
       const config = loadConfig({ ...required, MAIL_HOST: "", MAIL_USER: "", MAIL_PASS: "" });
 
       expect(config.mail).toMatchObject({ host: undefined, user: undefined, pass: undefined });

@@ -40,7 +40,8 @@ type Returned = RentalReturn;
 
 describe("checkout(タブレットで借りる)", () => {
   describe("正常系", () => {
-    it("RS1 判断表Cで貸し出せれば、返却期限と借りた端末を付けて記録し、状態付きで返す(R-19・R-20・E3)", async () => {
+    // R-19・R-20・E3
+    it("RS1 判断表Cで貸し出せれば、返却期限と借りた端末を付けて記録し、状態付きで返す", async () => {
       const created: Created[] = [];
       const service = rentalService(
         store({ createRental: async (data) => (created.push(data), rental({ dueDate: data.dueDate })) }),
@@ -62,7 +63,8 @@ describe("checkout(タブレットで借りる)", () => {
   });
 
   describe("異常系", () => {
-    it("RS2 判断表Cで断られたら、記録せずにその理由で断る(C1・C6など)", async () => {
+    // C1・C6など
+    it("RS2 判断表Cで断られたら、記録せずにその理由で断る", async () => {
       const overdue = store({
         findBorrowerById: async () => ({ ...borrower, activeDueDates: [new Date(now.getTime() - day)] }),
         createRental: notUsed,
@@ -79,7 +81,8 @@ describe("checkout(タブレットで借りる)", () => {
       ).rejects.toMatchObject({ code: "HAS_OVERDUE" });
     });
 
-    it("RS5 同時に借りられて記録がぶつかったら(repositoryが null を返す)、ITEM_ALREADY_RENTED で断る(0.9 D2)", async () => {
+    // 0.9 D2
+    it("RS5 同時に借りられてrepositoryが null を返したとき、ITEM_ALREADY_RENTEDで断る", async () => {
       const service = rentalService(store({ createRental: async () => null }));
 
       await expect(
@@ -91,7 +94,8 @@ describe("checkout(タブレットで借りる)", () => {
 
 describe("returnItem(タブレットで返す)", () => {
   describe("正常系", () => {
-    it("RS3 返していない貸し出しがあれば、返却日時と返した端末を付けて返却済みにし、状態付きで返す(R-22・A-Q4・E3)", async () => {
+    // R-22・A-Q4・E3
+    it("RS3 返していない貸し出しがあれば、返却日時と返した端末を付けて返却済みにし、状態付きで返す", async () => {
       const returned: Returned[] = [];
       const service = rentalService(
         store({ saveReturnByBarcode: async (data) => (returned.push(data), rental({ returnedAt: data.returnedAt })) }),
@@ -105,7 +109,8 @@ describe("returnItem(タブレットで返す)", () => {
   });
 
   describe("異常系", () => {
-    it("RS4 その物品の返していない貸し出しが無ければ、ACTIVE_RENTAL_NOT_FOUND(R-23)", async () => {
+    // R-23
+    it("RS4 その物品の返していない貸し出しが無ければ、ACTIVE_RENTAL_NOT_FOUND", async () => {
       const service = rentalService(store({ saveReturnByBarcode: async () => null }));
 
       await expect(service.returnItem({ barcode: "MAC-003", deviceId: "device-1" }, now)).rejects.toMatchObject({
