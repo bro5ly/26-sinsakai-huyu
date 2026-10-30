@@ -31,7 +31,7 @@ export const createAuthService = (deps: Deps): AuthService =>
   });
 
 // 失敗は throw するだけでよい(Express 5が middleware/error.middleware.ts に渡す)
-export const createAuthRoutes = (deps: Deps, config: Config) => {
+export const createAuthRoutes = (deps: Deps, config: Config): Router => {
   const router = Router();
   // ログインの失敗の回数の制限(P6でPINの変更と同じものにした)
   const loginLimiter = createPasswordFailureLimiter();

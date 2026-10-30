@@ -25,8 +25,13 @@ export default defineConfig([
     },
   },
   {
-    // serviceとrepositoryの公開のメソッドは、返す型を書く(0.9 M5)
-    files: ["src/features/**/*.service.ts", "src/features/**/*.repository.ts", "src/features/roster/*.ts"],
+    // serviceとrepositoryの公開のメソッドと、routesの組み立ての関数は、返す型を書く(0.9 M5)
+    files: [
+      "src/features/**/*.service.ts",
+      "src/features/**/*.repository.ts",
+      "src/features/**/*.routes.ts",
+      "src/features/roster/*.ts",
+    ],
     rules: { "@typescript-eslint/explicit-module-boundary-types": "error" },
   },
   // 整形と重なる規則を切る。最後に置く(eslint-config-prettier の README)
