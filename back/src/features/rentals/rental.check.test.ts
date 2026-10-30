@@ -36,17 +36,17 @@ describe("canCheckout(貸し出せるか)", () => {
       expect(canCheckout(null, borrower(), now)).toEqual({ ok: false, reason: "ITEM_NOT_FOUND" });
     });
 
-    it("C2 貸出中なら、ITEM_ALREADY_RENTED(止められている人でも、物の理由を先に言う)", () => {
+    it("C2 修理中・紛失・廃棄なら、ITEM_UNAVAILABLE", () => {
+      for (const status of ["MAINTENANCE", "LOST", "DISPOSED"] as const) {
+        expect(canCheckout(item({ status }), borrower(), now)).toEqual({ ok: false, reason: "ITEM_UNAVAILABLE" });
+      }
+    });
+
+    it("C3 貸出中なら、ITEM_ALREADY_RENTED(止められている人でも、物の理由を先に言う)", () => {
       expect(canCheckout(item({ hasActiveRental: true }), borrower({ canBorrow: false }), now)).toEqual({
         ok: false,
         reason: "ITEM_ALREADY_RENTED",
       });
-    });
-
-    it("C3 修理中・紛失・廃棄なら、ITEM_UNAVAILABLE", () => {
-      for (const status of ["MAINTENANCE", "LOST", "DISPOSED"] as const) {
-        expect(canCheckout(item({ status }), borrower(), now)).toEqual({ ok: false, reason: "ITEM_UNAVAILABLE" });
-      }
     });
 
     it("C4 借りる人の貸し出しが止められていれば、BORROWING_SUSPENDED(R-A15)", () => {
@@ -84,6 +84,13 @@ describe("canCheckout(貸し出せるか)", () => {
   });
 
   describe("境界値", () => {
+    it("C2 紛失にしたが貸し出しの記録がまだ返却になっていない物は、貸出中(C3)より先に ITEM_UNAVAILABLE(物そのものが使えないことを先に伝える。2026-10-30 B1)", () => {
+      expect(canCheckout(item({ status: "LOST", hasActiveRental: true }), borrower(), now)).toEqual({
+        ok: false,
+        reason: "ITEM_UNAVAILABLE",
+      });
+    });
+
     it("C5 停止期間の終わりちょうどの時刻からは、貸し出せる", () => {
       expect(canCheckout(item(), borrower({ suspendedUntil: now }), now).ok).toBe(true);
     });
