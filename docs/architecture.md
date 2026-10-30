@@ -27,19 +27,19 @@
 
 | ファイル | 役目 |
 |---|---|
-| `*.routes.ts` | `create○○Routes(deps)`。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → 返す」を書く(どのAPIも`shared/`の形で包まずに返す)。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
-| `*.service.ts` | 決まりごと(期限・重複・状態)。断るときは`DomainError(code)`を投げる。HTTPのステータスと文言は持たない |
-| `*.repository.ts` | Prismaでの読み書き。複数のテーブルにまたがる書き込みは`$transaction` |
-| `*.schema.ts` | Zodのスキーマ |
-| `*.types.ts` | 返す形の型(Prismaの`GetPayload`など) |
+| `*.routes.ts` | `create○○Routes(deps)`と`create○○Service(deps)`(serviceの組み立て。ほかの機能もこれを読む)。受け取った部品でserviceを作り、URL・ミドルウェア・`route()`をつなぐ。1本ごとに「入力 → service → 返す」を書く(どのAPIも`shared/`の形で包まずに返す)。Cookieの読み書きもここ。`try/catch`は書かない(失敗はthrowするだけ) |
+| `*.service.ts` | 決まりごと(期限・重複・状態)。断るときは`DomainError(code)`を投げる。HTTPのステータスと文言は持たない。部品は`Parts`型の名前付きで受け取り、`Deps`と同じ名前で持つ。乱数・ハッシュは`secrets`・`passwords`から使う(0.9) |
+| `*.repository.ts` | Prismaでの読み書きだけ。`*.types.ts`の`<物>Store`を`implements`する。メソッドは`find<物>By<鍵>`・`findAll<物>s`・`create<物>`・`save<中身>`・`delete<物>By<鍵>`。複数のテーブルにまたがる書き込みは`$transaction`。`DomainError`は投げない(ぶつかったら`null`を返す。0.9 D2) |
+| `*.types.ts` | 中の型: 記録(`<物>Record`)、repositoryへの入力(`New<物>`など)、インターフェース(`<物>Store`)。APIの入力と応答の形は`shared/`。DBの行の型は、repositoryの中で`Prisma.XxxGetPayload<{ select: typeof xxxSelect }>`で作る |
+| `*.check.ts` | 判断表の関数(副作用が無い)。`{ ok: false, reason }`を返す |
 
 組み立ては`src/deps.ts`の`buildDeps()`(本物の部品を作るのはここだけ)と`src/app.ts`の`createApp(deps, config)`(helmet・CORS・JSON・Cookie・各ルーティング・404・エラー用のミドルウェア)。環境変数を読むのは`src/config.ts`の`loadConfig()`だけで、足りなければ起動のときに止まる。`server.ts`が`getConfig()`で読み、`createApp(buildDeps(config), config).listen(config.port)`する。テストは偽の部品と設定を渡す。
 
 画面と共通の形は`shared/`(`@sinsakai/shared`): `error-codes.ts`(`code` → ステータス・文言の表。`docs/api.md`6章)、`problem.ts`(失敗の応答の形`problemSchema`)。
 
-共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`session-token.ts`(推測できない番号とそのハッシュ)、`rate-limit.ts`、`mail.ts`(nodemailer)、`prisma.ts`。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
+共通の部品は`src/lib/`: `route.ts`(`route()`。Zodで入力を検証してから型付きで渡し、`auth: true`ならログイン中の`user`を渡す)、`domain-error.ts`(`DomainError`)、`problem.ts`(エラーをRFC 9457の形に変える`toProblem`。Zodは400 `VALIDATION_ERROR`、壊れたJSONも400、Prismaの一意制約違反は409 `CONFLICT`(DBの列名は出さない)、P2025は404 `NOT_FOUND`、それ以外は500 `INTERNAL_ERROR`)、`session-token.ts`(推測できない番号とそのハッシュ)、`rate-limit.ts`、`mail.ts`(`Mailer`と、SMTPで送る`SmtpMailer`)、`password.ts`(`PasswordHasher`とbcrypt)、`prisma.ts`。`session-token.ts`には`SecretSource`もある。失敗を返すのは`middleware/error.middleware.ts`だけで、存在しないURLも同じ形の404にする。
 
-`user/`だけは`UserRepository.ts`・`UserService.ts`という古い名前で、routeを持たず`auth`から使われる。
+タブレットのAPI(`/api/tablet`)は、`routes/index.ts`で入口の`createDeviceMiddleware`を1回だけ付け、その下に端末(`tablet-devices`の`GET /device`)・本人確認(`tablet-sessions`)・貸し出しと返却(`rentals`)のroutesをつなぐ(`/api/admin`と同じ組み立て。2026-10-29 0.9)。借りている物の`select`と変換は`rentals/rental.select.ts`の1か所で、本人(`me`)も使う(D3)。
 
 ## API
 
@@ -57,7 +57,7 @@
 | `GET /categories` | Webのセッション | カテゴリとその中のジャンル(絞り込みの選択肢) | 200 `{ items: Category[] }` |
 | `GET /item-types` | Webのセッション | 種類ごとの一覧(貸し出せる数と全数。全数に廃棄済みは入れない) | 200 `{ items: ItemTypeSummary[] }` |
 | `GET /item-types/{id}` | Webのセッション | 種類の詳細と、物品1つ1つの状態(バーコードは出さない。廃棄済みは入れない) | 200 `ItemTypeDetail`、無ければ404 |
-| `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻・カードの番号)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える)、PINの状態(登録済みか・ロック中か) | 200 `Me` |
+| `GET /me` | Webのセッション | 本人のプロフィール(名簿の名前・メール・学年・専攻。カードの番号は返さない。G0)と貸し出しの決まり(借りている数・延滞の有無はサーバーで数える)、PINの状態(登録済みか・ロック中か) | 200 `Me` |
 | `GET /me/rentals` | Webのセッション | 本人が借りている物(状態とジャンル付き、借りた日の新しい順) | 200 `{ items: Rental[] }` |
 | `PUT /me/pin` | Webのセッション | `{ pin, password }`。パスワードを入れ直し、タブレット用のPIN(4桁。推測しやすいものは400)を登録・変更する。失敗の回数とロックも解く。失敗は接続元ごとに15分で100回まで | 204、パスワード違いは403 `WRONG_PASSWORD` |
 | `POST /tablet-devices` | なし(本文で管理者を確かめる) | `{ studentId, password, name }`。置くタブレットの上で端末を登録する(Webのセッションは作らない) | 201 `TabletDevice`(+Cookie`device`) |

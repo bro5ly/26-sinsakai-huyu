@@ -144,7 +144,7 @@
 - **P1** PR1 = 道具と整形(S1〜S3)、PR2 = 形の整理(N・M・D。機能ごとに`refactor:`のコミット)
 - **P2** X1と同じく、クラウドでテスト・型チェック・ビルド・リントを通したらPRを出してマージし、Macでの確かめは最後にまとめる
 - [x] PR1 道具と整形(2026-10-29、ブランチ`chore/formatter-linter`。整形だけのコミットは`.git-blame-ignore-revs`に書いた。画面のリントのエラー2件(`BarcodeScanner`、E4)は残っている)
-- [ ] PR2 形の整理
+- [x] PR2 形の整理(2026-10-29〜30、ブランチ`refactor/service-repository-shape`。決まりは`.claude/rules/backend.md`の「serviceとrepositoryの形」に書いた。名簿の窓口(`Roster`)のメソッドの名前は、repositoryでなく役割の窓口なので今のまま(N5))
 
 ## 0.8 認証の作り直し(`docs/auth.md`。要確認A-Q1〜A-Q8は2026-10-23に叩き台どおり決定)
 
