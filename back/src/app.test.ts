@@ -223,7 +223,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
       saveLoginAttempt: async () => undefined,
     },
     verificationCodes: {
-      saveCode: async () => undefined as never,
+      saveCode: async () => undefined,
       saveCodeAttempts: async () => undefined,
       findCodeByStudentId: async () => ({
         studentId: "20260001",
@@ -232,7 +232,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         tokenHash: null,
         attempts: 0,
       }),
-      deleteCodeByStudentId: async () => undefined as never,
+      deleteCodeByStudentId: async () => undefined,
       saveRegistrationToken: async () => undefined,
       findRegistrationTokenByHash: async (hash) =>
         hash === hashToken(REGISTRATION_TOKEN)
@@ -263,7 +263,6 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     mailer: {
       sendCode: async ({ to, code }) => {
         sentMails.push({ to, code });
-        return undefined as never;
       },
     },
     roster: new FakeRoster([yamada, newcomer, takahashi]),

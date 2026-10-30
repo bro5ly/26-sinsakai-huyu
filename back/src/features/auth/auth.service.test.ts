@@ -80,7 +80,6 @@ const sessions = (overrides: Partial<SessionStore> = {}, created: CreatedSession
 const mailer = (sent: { to: string; code: string }[] = []): Mailer => ({
   sendCode: async ({ to, code }) => {
     sent.push({ to, code });
-    return undefined as never;
   },
 });
 
@@ -118,7 +117,11 @@ describe("requestVerification(登録の認証コードを送る)", () => {
       const sent: { to: string; code: string }[] = [];
       const service = authService(
         users(),
-        codes({ saveCode: async (data) => (saved.push(data), undefined as never) }),
+        codes({
+          saveCode: async (data) => {
+            saved.push(data);
+          },
+        }),
         sessions(),
         mailer(sent),
         new FakeRoster([yamada, unregistered]),
@@ -313,7 +316,7 @@ describe("signUp(パスワードを決めて登録する)", () => {
         }),
         codes({
           findRegistrationTokenByHash: async (hash) => (hash === hashToken("token-1") ? tokenRecord() : null),
-          deleteCodeByStudentId: async () => undefined as never,
+          deleteCodeByStudentId: async () => undefined,
         }),
         sessions(),
         mailer(),
@@ -341,7 +344,9 @@ describe("signUp(パスワードを決めて登録する)", () => {
         users({ findUserByStudentId: async () => null, createUser: newUser }),
         codes({
           findRegistrationTokenByHash: async () => tokenRecord(),
-          deleteCodeByStudentId: async (id) => (deleted.push(id), undefined as never),
+          deleteCodeByStudentId: async (id) => {
+            deleted.push(id);
+          },
         }),
         sessions({}, created),
         mailer(),
