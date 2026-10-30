@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import type { TabletSession } from "@sinsakai/shared";
 import { useTablet } from "./useTablet";
 import { ApiError } from "@/types";
 
@@ -16,15 +15,18 @@ export interface CompletedItem {
   title: string;
 }
 
-// 画面に出す本人の情報。表示用の名前と、借りている物の名前・期限・延滞だけ(学籍番号などは受け取らない。R-A13)
+// 画面に出す本人の情報。表示用の名前だけ(借りている物・学籍番号などは受け取らない。R-A13・2026-10-30 A2)
 export interface TabletUserData {
   displayName: string;
-  rentals: TabletSession["rentals"];
 }
 
-// 無操作で最初の画面に戻すまで(サーバーのセッションも30秒で切れる。R-A9)。完了の表示から自動で終えるまで(R-A10)
+// 無操作で最初の画面に戻すまで。サーバーのセッションは、最後にサーバーへ送ってから30秒で切れる(R-A9)。
+// 画面のボタン(「借りる」を選ぶなど)はサーバーに送らないので、押したときに画面だけ延ばすと、操作中なのにサーバーでは
+// 時間切れになる。本人確認したあとは、サーバーに送って通ったときから数える(2026-10-30 A1)。完了の表示は10秒で終える(R-A10)
 const INACTIVITY_MS = 30 * 1000;
 const COMPLETE_MS = 10 * 1000;
+// サーバーのセッションが切れた・使えないことを表す code。この応答では、サーバーの時計は延びていない
+const SESSION_ENDED_CODES = new Set(["SESSION_EXPIRED", "UNAUTHENTICATED", "DEVICE_NOT_REGISTERED"]);
 
 // onDeviceNotRegistered: 操作の途中で端末が取り消された・登録されていないと分かったときに呼ぶ(登録の画面へ戻す)
 export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
@@ -38,15 +40,18 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
   const [completedItem, setCompletedItem] = useState<CompletedItem | null>(null);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 本人確認したセッションで、最後にサーバーへ送って通った時刻(サーバーが無操作30秒を数え直した時刻)
+  const lastServerTouchRef = useRef<number | null>(null);
 
   const userData: TabletUserData | null = useMemo(
-    () => (session ? { displayName: session.user.displayName, rentals: session.rentals } : null),
+    () => (session ? { displayName: session.user.displayName } : null),
     [session],
   );
 
   // 最初の画面に戻す。サーバーのセッションも無効にする(useTablet の signout)
   const handleReset = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    lastServerTouchRef.current = null;
     setStep("signin");
     setCardNumber(null);
     signout();
@@ -55,20 +60,29 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
     setCompletedItem(null);
   }, [signout]);
 
-  // 無操作30秒で最初の画面に戻す。完了の表示は10秒で終える
-  const resetInactivityTimer = useCallback(() => {
+  // 今の段の残り時間で、最初の画面に戻す時計をかけ直す。本人確認の前(PIN・カード無しの返却)は、その段に入ってから30秒。
+  // 本人確認のあとは、サーバーの時計と同じ「最後にサーバーへ送ってから30秒」。完了の表示は、そのうえで10秒まで
+  const armResetTimer = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (step !== "signin") {
-      timeoutRef.current = setTimeout(handleReset, step === "complete" ? COMPLETE_MS : INACTIVITY_MS);
-    }
+    if (step === "signin") return;
+    const touchedAt = lastServerTouchRef.current;
+    const sessionLeft = touchedAt === null ? INACTIVITY_MS : touchedAt + INACTIVITY_MS - Date.now();
+    const left = step === "complete" ? Math.min(COMPLETE_MS, sessionLeft) : sessionLeft;
+    timeoutRef.current = setTimeout(handleReset, Math.max(0, left));
   }, [step, handleReset]);
 
+  // サーバーに送って通ったとき(サーバーが無操作30秒を数え直したとき)に呼ぶ
+  const touchServer = useCallback(() => {
+    lastServerTouchRef.current = Date.now();
+    armResetTimer();
+  }, [armResetTimer]);
+
   useEffect(() => {
-    resetInactivityTimer();
+    armResetTimer();
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [step, resetInactivityTimer]);
+  }, [step, armResetTimer]);
 
   const stepInfo: StepInfo = useMemo(() => {
     switch (step) {
@@ -110,7 +124,6 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
   const handleScan = useCallback(
     async (barcode: string) => {
       if (apiLoading) return;
-      resetInactivityTimer();
       setError("");
 
       // カードを読んだら、まだ送らずにPINの入力へ進む
@@ -122,6 +135,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
       try {
         if (step === "checkout" && sessionToken) {
           const rental = await checkout(barcode);
+          touchServer();
           setCompletedItem({ title: rental.itemType.title });
           setSuccessMessage("Checkout Successful");
           setStep("complete");
@@ -133,37 +147,36 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
           setStep("complete");
         }
       } catch (err) {
+        // 貸し出しで断られても(延滞など)、セッションは通っているので、サーバーの時計は延びている
+        if (step === "checkout" && err instanceof ApiError && !SESSION_ENDED_CODES.has(err.code ?? "")) touchServer();
         handleError(err);
       }
     },
-    [step, apiLoading, sessionToken, checkout, returnItem, handleError, resetInactivityTimer],
+    [step, apiLoading, sessionToken, checkout, returnItem, handleError, touchServer],
   );
 
   // カードとPINを一緒に送る。PINが違うときは、カードを読み直さずにもう一度PINを入れられる
   const submitPin = useCallback(
     async (pin: string) => {
       if (apiLoading || !cardNumber) return;
-      resetInactivityTimer();
       setError("");
       try {
         await signin(cardNumber, pin);
+        touchServer();
         setStep("action-select");
       } catch (err) {
+        // PINを入れ直す間は、また30秒待つ(まだサーバーのセッションは無い)
+        armResetTimer();
         handleError(err);
       }
     },
-    [apiLoading, cardNumber, signin, handleError, resetInactivityTimer],
+    [apiLoading, cardNumber, signin, handleError, touchServer, armResetTimer],
   );
 
-  const selectCheckout = useCallback(() => {
-    setStep("checkout");
-    resetInactivityTimer();
-  }, [resetInactivityTimer]);
+  // 選ぶだけではサーバーに送らないので、時計は延ばさない(A1)
+  const selectCheckout = useCallback(() => setStep("checkout"), []);
 
-  const selectReturn = useCallback(() => {
-    setStep("return");
-    resetInactivityTimer();
-  }, [resetInactivityTimer]);
+  const selectReturn = useCallback(() => setStep("return"), []);
 
   // 本人確認していれば操作の選択へ、カード無しで返していたなら最初の画面へ戻る
   const backToActionSelect = useCallback(() => {
@@ -172,8 +185,7 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
       return;
     }
     setStep("action-select");
-    resetInactivityTimer();
-  }, [sessionToken, handleReset, resetInactivityTimer]);
+  }, [sessionToken, handleReset]);
 
   return {
     step,
@@ -189,6 +201,5 @@ export const useTabletOperations = (onDeviceNotRegistered?: () => void) => {
     selectCheckout,
     selectReturn,
     backToActionSelect,
-    resetInactivityTimer,
   };
 };
