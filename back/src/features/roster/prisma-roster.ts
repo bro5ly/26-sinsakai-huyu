@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/generated/prisma/client.js";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client.js";
 import type { UserType } from "@/generated/prisma/enums.js";
 import type { Roster, RosterEntry, RosterUserType } from "./roster.js";
 
@@ -19,15 +19,8 @@ const toRosterUserType: Record<UserType, RosterUserType> = {
   EXTERNAL: "EXTERNAL",
 };
 
-type Row = {
-  studentId: string;
-  name: string;
-  email: string;
-  serialNumber: string | null;
-  userType: UserType;
-  grade: string | null;
-  major: string | null;
-};
+// 行の型は select から作る(手で書くと select を変えたときにずれる。0.9 M4)
+type Row = Prisma.ExternalUserGetPayload<{ select: typeof entrySelect }>;
 
 const toEntry = (row: Row): RosterEntry => ({ ...row, userType: toRosterUserType[row.userType] });
 

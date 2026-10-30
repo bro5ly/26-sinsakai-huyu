@@ -34,7 +34,7 @@ export interface CategoryRecord {
 }
 
 export interface CatalogStore {
-  findCategories(): Promise<CategoryRecord[]>;
-  findItemTypes(): Promise<ItemTypeRecord[]>;
-  findItemType(id: string): Promise<ItemTypeRecord | null>;
+  findAllCategories(): Promise<CategoryRecord[]>;
+  findAllItemTypes(): Promise<ItemTypeRecord[]>;
+  findItemTypeById(id: string): Promise<ItemTypeRecord | null>;
 }

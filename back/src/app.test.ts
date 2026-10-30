@@ -268,11 +268,11 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
     },
     roster: new FakeRoster([yamada, newcomer, takahashi]),
     catalog: {
-      findCategories: async () => [
+      findAllCategories: async () => [
         { id: "cat-1", name: "電子機器", genres: [{ id: "genre-1", name: "ノートパソコン" }] },
       ],
-      findItemTypes: async () => [macbookType],
-      findItemType: async (id) => (id === macbookType.id ? macbookType : null),
+      findAllItemTypes: async () => [macbookType],
+      findItemTypeById: async (id) => (id === macbookType.id ? macbookType : null),
     },
     me: {
       findUserById: async (userId) =>
