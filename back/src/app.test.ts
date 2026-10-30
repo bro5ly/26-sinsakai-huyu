@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import request from "supertest";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeRoster, notUsed, rosterEntry } from "@/test/fake-roster.js";
 import { cryptoSecrets, hashToken } from "@/lib/session-token.js";
 import { bcryptPasswords } from "@/lib/password.js";
@@ -25,6 +25,17 @@ import {
   rentalSchema,
 } from "@sinsakai/shared";
 import { createApp } from "./app.js";
+
+// 時計は止める(走らせた時刻で結果が変わらないように。docs/backlog.md 0.10 TS3)。
+// HTTPを通すので、appが読む時計(Date)ごと止める。タイマーは止めない(supertestが使うため)
+const now = new Date("2026-10-29T10:00:00.000Z");
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(now);
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 // HTTPを通して、URL・ステータス・応答の形・Cookieを守るテスト(docs/backlog.md 0.7 C1の②)。
 // 判断の細かい場合分けは各serviceのテストにあるので、ここは「つながっているか」と「形」だけを見る。
@@ -137,8 +148,8 @@ const initialSessions = (): Map<string, SessionRecord> =>
       hashToken(TABLET_KIND_TOKEN),
       {
         kind: "TABLET",
-        expiresAt: new Date(Date.now() + 180_000),
-        createdAt: new Date(),
+        expiresAt: new Date(now.getTime() + 180_000),
+        createdAt: now,
         deviceId: "device-1",
         lastUsedAt: null,
         user: member,
@@ -148,10 +159,10 @@ const initialSessions = (): Map<string, SessionRecord> =>
       hashToken(IDLE_TABLET_TOKEN),
       {
         kind: "TABLET",
-        expiresAt: new Date(Date.now() + 180_000),
-        createdAt: new Date(Date.now() - 60_000),
+        expiresAt: new Date(now.getTime() + 180_000),
+        createdAt: new Date(now.getTime() - 60_000),
         deviceId: "device-1",
-        lastUsedAt: new Date(Date.now() - 31_000),
+        lastUsedAt: new Date(now.getTime() - 31_000),
         user: member,
       },
     ],
@@ -244,7 +255,7 @@ const fakeDeps = (overrides: Partial<Deps> = {}) => {
         sessions.set(tokenHash, {
           kind,
           expiresAt,
-          createdAt: new Date(),
+          createdAt: now,
           deviceId: deviceId ?? null,
           lastUsedAt: null,
           user: { ...member, id: userId },
@@ -1285,17 +1296,13 @@ describe("ログインの回数の制限(接続元ごとに、失敗を15分で1
 describe("認証コードの申請の回数(学籍番号ごとに1分に1回・1時間に5回。R-5・docs/auth.md 4.6・F5)", () => {
   const requestCode = (app: App, studentId: string) =>
     post(app, "/api/verification-codes").send({ studentId, purpose: "signup" });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
 
   describe("正常系", () => {
     it("H72 1分たてば、同じ学籍番号でもう一度申請できる(新しいコードが届き、前のコードは通らなくなる。R-5)", async () => {
-      vi.useFakeTimers({ toFake: ["Date"] });
       const { app, sentMails } = fakeDeps();
       expect((await requestCode(app, "20260001")).status).toBe(202);
 
-      vi.setSystemTime(Date.now() + 61_000);
+      vi.setSystemTime(now.getTime() + 61_000);
       expect((await requestCode(app, "20260001")).status).toBe(202);
       expect(sentMails).toHaveLength(2);
     });
@@ -1327,11 +1334,10 @@ describe("認証コードの申請の回数(学籍番号ごとに1分に1回・1
 
   describe("境界値", () => {
     it("H76 1時間に5回までは送り、6回目は1分あけても429", async () => {
-      vi.useFakeTimers({ toFake: ["Date"] });
       const { app, sentMails } = fakeDeps();
       for (let i = 0; i < 5; i++) {
         expect((await requestCode(app, "20260001")).status).toBe(202);
-        vi.setSystemTime(Date.now() + 61_000);
+        vi.setSystemTime(now.getTime() + (i + 1) * 61_000);
       }
 
       expectProblem(await requestCode(app, "20260001"), 429, "RATE_LIMITED");
