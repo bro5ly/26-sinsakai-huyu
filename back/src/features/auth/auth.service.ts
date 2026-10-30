@@ -60,7 +60,13 @@ export class AuthService {
     const code = this.secrets.newCode();
     const expiresAt = new Date(now.getTime() + CODE_MINUTES * 60 * 1000);
     await this.verificationCodes.saveCode({ studentId: student.studentId, codeHash: hashToken(code), expiresAt });
-    await this.mailer.sendCode({ to: student.email, code });
+    try {
+      await this.mailer.sendCode({ to: student.email, code });
+    } catch (err) {
+      // 送れなくても、成功と同じに終える。名簿にいる番号だけ500になると、名簿にいるかが分かってしまうため(R-2)。
+      // 利用者は申請し直せばよい。ログには種類だけを出し、宛先(メールアドレス)は出さない
+      console.error("[MAIL_FAILED]", err instanceof Error ? err.name : typeof err);
+    }
   }
 
   // 無い・期限切れ・使用済み(A8-8)・違う、はどれも同じに断る。5回間違えたらコードを消し、申請し直させる(R-8)
