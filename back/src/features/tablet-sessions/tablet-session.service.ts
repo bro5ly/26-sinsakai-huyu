@@ -1,17 +1,15 @@
 import type { SessionStore } from "@/features/auth/auth.types.js";
-import { rentalStatus } from "@/features/rentals/rental.status.js";
 import type { Roster } from "@/features/roster/roster.js";
 import { DomainError } from "@/lib/domain-error.js";
 import type { PasswordHasher } from "@/lib/password.js";
 import { hashToken, type SecretSource } from "@/lib/session-token.js";
 import { afterPinAttempt, checkCardHolder, checkTabletSession, TABLET_SESSION_MS } from "./tablet-session.check.js";
-import type { ActiveRentalReader, CardHolderStore, StartedTabletSession } from "./tablet-session.types.js";
+import type { CardHolderStore, StartedTabletSession } from "./tablet-session.types.js";
 
 type Parts = {
   roster: Roster;
   cardHolders: CardHolderStore;
   sessions: SessionStore;
-  rentals: ActiveRentalReader;
   passwords: PasswordHasher;
   secrets: SecretSource;
 };
@@ -21,7 +19,6 @@ export class TabletSessionService {
   private readonly roster: Roster;
   private readonly cardHolders: CardHolderStore;
   private readonly sessions: SessionStore;
-  private readonly rentals: ActiveRentalReader;
   private readonly passwords: PasswordHasher;
   private readonly secrets: SecretSource;
 
@@ -29,7 +26,6 @@ export class TabletSessionService {
     this.roster = parts.roster;
     this.cardHolders = parts.cardHolders;
     this.sessions = parts.sessions;
-    this.rentals = parts.rentals;
     this.passwords = parts.passwords;
     this.secrets = parts.secrets;
   }
@@ -65,17 +61,7 @@ export class TabletSessionService {
       deviceId: input.deviceId,
     });
 
-    const active = await this.rentals.findActiveRentalsByUserId(check.holder.id);
-    return {
-      token,
-      expiresAt,
-      displayName: entry.name,
-      rentals: active.map((rental) => ({
-        title: rental.itemType.title,
-        dueDate: rental.dueDate,
-        state: rentalStatus(rental, now),
-      })),
-    };
+    return { token, expiresAt, displayName: entry.name };
   }
 
   // 通ったら、最後に使った日時を書き換える(無操作30秒を数え直す。R-A9)

@@ -11,7 +11,6 @@ export const createTabletSessionService = (deps: Deps): TabletSessionService =>
     roster: deps.roster,
     cardHolders: deps.cardHolders,
     sessions: deps.sessions,
-    rentals: deps.me,
     passwords: deps.passwords,
     secrets: deps.secrets,
   });
@@ -34,7 +33,6 @@ export const createTabletSessionRoutes = (deps: Deps): Router => {
         token: session.token,
         expiresAt: session.expiresAt.toISOString(),
         user: { displayName: session.displayName },
-        rentals: session.rentals.map((rental) => ({ ...rental, dueDate: rental.dueDate.toISOString() })),
       } satisfies TabletSession);
     }),
   );
