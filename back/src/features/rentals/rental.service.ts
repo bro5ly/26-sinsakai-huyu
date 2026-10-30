@@ -3,11 +3,13 @@ import { canCheckout } from "./rental.check.js";
 import { rentalStatus } from "./rental.status.js";
 import type { RentalStore, RentalView } from "./rental.types.js";
 
+type Parts = { rentals: RentalStore };
+
 // タブレットでの貸し出しと返却(docs/spec.md UC-8・UC-9)。「今」は外から渡し、期限と延滞の境目をテストできるようにする
 export class RentalService {
   private readonly rentals: RentalStore;
 
-  constructor(parts: { rentals: RentalStore }) {
+  constructor(parts: Parts) {
     this.rentals = parts.rentals;
   }
 

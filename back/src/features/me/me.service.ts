@@ -5,13 +5,15 @@ import type { RentalView } from "@/features/rentals/rental.types.js";
 import type { PasswordHasher } from "@/lib/password.js";
 import type { MeStore, MeUserRecord, MeView } from "./me.types.js";
 
+type Parts = { me: MeStore; roster: Roster; passwords: PasswordHasher };
+
 // ログイン中の本人の情報(docs/api.md 4.2)。「今」は外から渡し、延滞の境目をテストできるようにする
 export class MeService {
   private readonly me: MeStore;
   private readonly roster: Roster;
   private readonly passwords: PasswordHasher;
 
-  constructor(parts: { me: MeStore; roster: Roster; passwords: PasswordHasher }) {
+  constructor(parts: Parts) {
     this.me = parts.me;
     this.roster = parts.roster;
     this.passwords = parts.passwords;

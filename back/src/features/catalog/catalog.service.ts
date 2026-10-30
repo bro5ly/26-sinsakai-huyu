@@ -21,11 +21,13 @@ const toSummary = (type: ItemTypeRecord): ItemTypeSummary => {
   };
 };
 
+type Parts = { catalog: CatalogStore };
+
 // カタログ(docs/api.md 4.3)。絞り込みは今は画面でする(Ca3)ので、ここは全部を返す
 export class CatalogService {
   private readonly catalog: CatalogStore;
 
-  constructor(parts: { catalog: CatalogStore }) {
+  constructor(parts: Parts) {
     this.catalog = parts.catalog;
   }
 
